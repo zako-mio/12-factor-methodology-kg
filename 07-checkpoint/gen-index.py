@@ -96,6 +96,9 @@ def main():
     <div class="card"><h3>三级下钻</h3><p>根入口 → 组页（03-groups/*.html）→ 节点页（02-node-pages/*.html）。交互图支持组→节点直接下钻。</p></div>
     <div class="card"><h3>五类关系边</h3><p>prerequisite（前置）/ variant（变体）/ combination（组合）/ cooccurrence（共现）/ dependency（依赖关联）。</p></div>
     <div class="card"><h3>自动路径</h3><p>学习路径由 prerequisite 边做拓扑排序自动生成，不硬编码。</p></div>
+    <div class="card"><h3>内容深度</h3><p>每节点 1500-3000 字，基于两库完整原文撰写，含真实技术细节与反模式详解。</p></div>
+    <div class="card"><h3>源码资产</h3><p>08-source/ 精选两库源码与原文（脚手架/工作坊/部署参考），节点页实践资源区块可直达查看。</p></div>
+    <div class="card"><h3>AI 双索引</h3><p>06-md/ 节点 MD 含源码索引段，AI 可按路径读取方法论 + 例子 + 调用对应工具源码。</p></div>
   </div>
 </main>
 </body>

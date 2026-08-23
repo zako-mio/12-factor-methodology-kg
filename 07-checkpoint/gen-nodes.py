@@ -119,6 +119,24 @@ def node_html(nid, node, content, group, edges, node_by_id):
     w.append('</div>')
     sections.append(''.join(w))
 
+    # ---------- 实践资源（源码引用） ----------
+    refs = content.get('source_refs') or []
+    if refs:
+        w = ['<div class="section"><h2>实践资源 · 源码引用</h2><div class="tblwrap"><table>'
+             '<tr><th>路径</th><th>说明</th></tr>']
+        for r in refs:
+            path = r.get('path', '')
+            note = r.get('note', '')
+            rel = path.lstrip('/')
+            if rel.startswith('08-source/'):
+                rel = rel[len('08-source/'):]
+            display = '08-source/' + rel
+            href = '../08-source/' + rel
+            w.append('<tr><td><a href="%s" target="_blank" rel="noopener">%s</a></td><td>%s</td></tr>'
+                     % (esc(href), esc(display), esc(note)))
+        w.append('</table></div></div>')
+        sections.append(''.join(w))
+
     body = '\n\n'.join(sections)
 
     crumb = ('<div class="crumb"><a href="../index.html">%s</a> / <a href="../03-groups/index.html">分组目录</a> / '

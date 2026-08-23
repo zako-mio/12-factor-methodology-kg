@@ -22,6 +22,13 @@
 
 DAG 由 prerequisite 边构成无环主干（Kahn 校验通过），学习路径由拓扑序自动生成。
 
+### 内容深度与源码资产
+
+- **38 个节点页**：每节点 1500-3000 字深度解读（what/why/how/案例/反模式），基于两库**完整原文**撰写，含真实技术细节（工具名、命令、代码机制）。
+- **10 个桥接主题**：三栏对比加深到 6-8 条/栏，全部基于原文证据。
+- **08-source/ 精选源码资产**（454 文件 / 2.3MB）：包含 12 Factor Agent 全部原文、create-12-factor-agent 脚手架全套源码、walkthroughgen、三次官方工作坊材料、12 Factor App 英文原文与部署参考。
+- **双索引**：每个节点页含「实践资源」区块（链接到 08-source 对应源码文件，点击即可查看）；`06-md/` 节点 MD 含「源码索引」段（AI 可按路径直接读取调用工具与原文）。
+
 ## 在线预览
 
 - **GitHub Pages**: <https://zako-mio.github.io/12-factor-methodology-kg/>
@@ -56,6 +63,12 @@ DAG 由 prerequisite 边构成无环主干（Kahn 校验通过），学习路径
 │   ├── 00-index.md / 01-groups.md / 02-stage.md / 03-learning-path.md
 │   └── nodes/                  # 38 个节点 MD
 ├── 07-checkpoint/              # 生成脚本 gen-*.py（可重复构建全部交付物）
+├── 08-source/                  # 精选源码资产（454 文件，2.3MB）
+│   ├── agent-content/          # 12 Factor Agent 全部原文（12 篇 + 附录 + 软件史）
+│   ├── agent-packages/         # create-12-factor-agent 脚手架 + walkthroughgen 源码
+│   ├── agent-workshops/        # 官方工作坊材料（2025-05 / 05-17 / 07-16）
+│   ├── app-content-en/         # 12 Factor App 英文原文（12 要素完整内容）
+│   └── app-deploy/             # 12factor.net 部署参考（Procfile/web.rb/app.json）
 └── research/                   # 内容来源（App 摘录 / Agent 摘录 / 联网调研）
 ```
 

@@ -1,0 +1,1245 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""生成 expansion-agent.json：12 Factor Agent 原则节点的深度扩充内容"""
+import json
+import os
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'expansion-agent.json')
+
+NODES = []
+
+NODES.append({
+    "id": "ag-nl2tool",
+    "what": [
+        "Agent 构建中最常见也最强大的模式，就是把用户的自然语言请求翻译成结构化的工具调用对象，让 LLM 既能推理任务又能驱动系统真正执行动作。",
+        "原子化应用时，它只是把一句话如『能否给 Terri 创建一笔 750 美元的付款链接，赞助二月的 AI Tinkerers 聚会』翻译成一个描述 Stripe API 调用的结构化 JSON 对象。",
+        "结构化对象包含 function.name 与 function.parameters，例如 name=create_payment_link，parameters 内含 amount=750、customer、product、price、quantity、memo 等字段。",
+        "真正的 Agent 在构造 payload 前需要先查询系统：列客户、列商品、列价格，把正确的 ID 填进参数，而不是凭空猜测 ID 值。",
+        "翻译完成后由确定性代码接手：LLM 只负责『下一步做什么』的决策，工具 payload 的执行交给普通程序逻辑，完全不依赖模型随机性。",
+        "原文给出 Python 示例：llm.determineNextStep(自然语言) 返回 nextStep 对象，再按 nextStep.function 走 if/elif 分支分发执行。",
+        "若模型返回了系统不认识的功能名，代码必须落入 else 分支做兜底处理，例如记录日志或向用户请求澄清，而不是直接崩溃。",
+        "原文明确说明：这一步刻意跳过『拿到结果后再循环、最终回给用户』的闭环，把循环留到后面其他因子（如 factor 3/8）再补全。",
+        "演示中真实返回形如『已成功为 Terri 创建 750 美元付款链接，链接见 buy.stripe.com/test_1234567890』，说明该模式最终仍要闭环交付。",
+        "该模式是后面所有因子的地基：工具即结构化输出、掌控上下文、掌控控制流都从这一个原子翻译步骤展开而来。"
+    ],
+    "why": [
+        "这是把 LLM 的『自然语言理解』与系统的『确定性执行』连接起来的最直接方式，几乎所有 Agent 应用都离不开它。",
+        "结构化输出让后续处理可以依赖完全确定的代码：一旦拿到对象，if/else 分发、参数校验、执行都不再需要模型参与，行为可预测。",
+        "相比让模型自由发挥文本，结构化输出把决策空间显式化，降低了解析失败和幻觉参数混入真实执行环节的风险。",
+        "先查询再构造 payload 的做法让参数中的 customer/product/price 等 ID 来自真实数据源，而不是模型猜测，正确性大幅提升。",
+        "原文强调这是『最常见』的模式，意味着工程上高度成熟，围绕它可以积累大量可复用工具、schema 与最佳实践模板。"
+    ],
+    "how": [
+        "先定义清晰的工具/函数名与参数 schema，例如 create_payment_link 及其 amount、customer、product、price、quantity、memo 字段。",
+        "把自然语言请求原样交给 LLM，通过 prompt 或 BAML 这类工具约束其输出为预定义的结构化对象，而非自由文本。",
+        "LLM 返回 nextStep 后，代码按 function/intent 字段用 switch 或 if/elif 分发，命中则执行真实 API（如 stripe.paymentlinks.create）。",
+        "真实 Agent 在翻译前先查询系统：调用 list_customers、list_products、list_prices 等把 ID 集齐，再填充 payload 参数。",
+        "也可以把需要的 ID 直接放进 prompt 或上下文窗口里（原文指出这与『先查询再构造』本质上是同一回事，见 factor 3）。",
+        "对未知 function 设置 else 兜底分支，避免模型输出未定义工具时程序崩溃或静默失败，至少记录并请求澄清。",
+        "把工具结果追加回上下文，让 Agent 可以基于结果继续决策，直到模型输出 done 类意图才结束循环。",
+        "将『翻译』与『执行』分离为两个独立阶段，便于单独为翻译逻辑做测试、评估与回滚，而不牵连执行链路。"
+    ],
+    "cases": [
+        "原文示例：把『创建 750 美元付款链接』翻译为 create_payment_link 结构化对象，内含完整的 Stripe 参数。",
+        "真实 Agent 参考：github.com/dexhorthy/mailcrew（附演示视频），会先列出客户、商品、价格再构建 payload。",
+        "Stripe API 的 create_payment_link 调用示例，参数含 cust_128934ddasf9 这类真实 customer ID。",
+        "Python 代码片段 llm.determineNextStep 接收自然语言并返回 nextStep 结构化对象供分发。",
+        "演示返回值：『I've successfully created a payment link for $750 to Terri… https://buy.stripe.com/test_1234567890』。",
+        "if nextStep.function=='create_payment_link' → stripe.paymentlinks.create(nextStep.parameters) 的确定性分发代码。",
+        "mailcrew 项目被原文点名作为『真实会查 ID 的 Agent』，印证先查询后构造 payload 的工程实践。"
+    ],
+    "anti_patterns": [
+        "把 ID 硬编码进参数而不做真实查询，模型给出的 customer/product/price ID 很可能不存在或与真实数据对不上号。",
+        "模型返回未知工具时没有 else 兜底，直接抛异常导致整个流程中断，用户得不到任何反馈。",
+        "只做『翻译』不做循环闭环，拿到工具结果后不继续推理，Agent 退化为一次性的单步函数调用。",
+        "依赖模型以非结构化文本表达工具调用，再靠脆弱解析去还原参数，极易因格式漂移而解析失败。",
+        "把大量系统状态硬塞进一次 prompt 让模型『记住』，而不是通过结构化查询或上下文按需提供，浪费 token 且易错。",
+        "忽略工具结果，不把执行结果喂回上下文，模型后续决策失去依据，整个循环名存实亡。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-01-natural-language-to-tool-calls.md", "note": "原文完整内容：自然语言到工具调用的原子翻译模式"},
+        {"path": "08-source/agent-content/brief-history-of-software.md", "note": "软件史背景：Agent 循环三步论（LLM 定步骤→确定性执行→结果回上下文）"},
+        {"path": "08-source/agent-content/factor-04-tools-are-structured-outputs.md", "note": "承上启下：工具本质就是结构化输出"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-prompts",
+    "what": [
+        "不要把 prompt 工程外包给框架，这是本因子最核心的一句话：prompt 必须由你亲自掌控，而不是交给黑盒。",
+        "框架常提供『黑盒』式抽象，如 agent = Agent(role=…, goal=…, personality=…, tools=[…]) 加 task = Task(instructions=…) 后 agent.run(task)。",
+        "黑盒方式适合快速起步，能借用顶级 prompt 工程经验，但往往难以调优，也无法逆向工程出『到底把哪些 token 送进了模型』。",
+        "替代方案：把 prompt 当作一等公民代码对待，用带类型签名的函数表达，例如 Rust 风格函数声明返回 DoneForNow | ListGitTags 等联合类型。",
+        "原文用 BAML 生成 prompt：在模板里用 {{ _.role(\"system\") }} / {{ _.role(\"user\") }} 组织角色与内容，通过类型签名约束输出。",
+        "签名看起来『有点怪』的部分会在 factor 4（工具即结构化输出）得到解释——函数返回的联合类型就是工具集合。",
+        "prompt 是应用逻辑与 LLM 之间的主接口，谁掌控 prompt，谁就掌控了 Agent 行为的最终决定权与可调性。",
+        "原文引用 Hamel 的博客，强调『这是远非新颖的建议』，即掌控 prompt 早已是被反复验证的工程常识。",
+        "prompt 内容直接决定模型能调用哪些工具、按什么顺序思考、何时请求人类介入，是所有后续因子落实的落点。"
+    ],
+    "why": [
+        "全权掌控：你可以写出 Agent 精确需要的指令，没有黑盒抽象遮挡任何一层，改动即可生效无需等框架。",
+        "可测试与评估：为 prompt 建测试和 evals，就像为普通代码建测试一样，每次改动都能被回归验证。",
+        "可迭代：基于真实线上表现快速修改 prompt 内容，而不必等待框架发版或逆向黑盒定位问题。",
+        "透明性：永远清楚 Agent 正在依据哪些指令工作，便于审计、排查与向利益相关方解释行为。",
+        "角色利用：可以利用支持 user/assistant 角色非标准用法的 API，例如现已废弃的 OpenAI『completions』非 chat 口味，乃至所谓 gaslighting 技巧。",
+        "你不知道什么 prompt 最好，但你想要能尝试一切的灵活性——只有真正拥有 prompt 才能做到这一点。",
+        "原文 BAML 示例把部署 Agent 的系统提示写成完整段落：职责、先查环境（staging vs production）、再验 tag、再查系统状态。"
+    ],
+    "how": [
+        "放弃框架的 Agent/Task 黑盒，直接用 BAML 或任意模板工具手写 prompt，甚至用纯字符串模板拼接也完全可以。",
+        "为 prompt 声明强类型函数签名：输入是 thread 字符串，输出是语义明确的意图联合类型（DoneForNow/ListGitTags/DeployBackend…）。",
+        "在 system 段写清楚角色与行为准则：例如『You are a helpful assistant that manages deployments…』并列出安全部署最佳实践。",
+        "在 user 段注入动态内容 {{ thread }}，末尾固定询问『What should the next step be?』引导模型输出下一步意图。",
+        "在 prompt 中显式列出可用工具（deploy_backend、deploy_frontend、check_deployment_status），并说明敏感操作要 request_approval。",
+        "引导模型先想后做：先查部署状态、验证 tag 存在、需要时请求批准、先上 staging 再上生产、最后监控部署进度。",
+        "像写代码一样为 prompt 建立版本管理与测试套件，把每次迭代纳入回归，保证既有行为不被无意破坏。",
+        "利用非标准角色 API 的能力做试验（如角色反转/gaslighting 技术），保持实验自由，寻找更好的行为空间。",
+        "用 BAML 的测试语法（test 块 + @@assert）固化关键行为，例如断言意图、断言参数，防止后续改动破坏已通过路径。"
+    ],
+    "cases": [
+        "黑盒反例：Agent(role, goal, personality, tools) + Task(instructions, expected_output) + agent.run(task) 三段式框架用法。",
+        "BAML 正向示例：DetermineNextStep 函数用类型签名加 prompt #\" … \"# 模板组织 system/user 角色与内容。",
+        "具体系统提示文本：管理 frontend/backend 部署的助理、按最佳实践安全部署、部署前检查环境/标签/系统状态。",
+        "工具列举示例：deploy_backend、deploy_frontend、check_deployment_status，敏感部署要求 request_approval 获得人工验证。",
+        "思考顺序清单：先查部署状态 → 验证 tag 存在 → 需要时请求批准 → 先上 staging 再上生产 → 监控部署进度。",
+        "类型签名联合类型：DoneForNow | ListGitTags | DeployBackend | DeployFrontend | RequestMoreInformation 五选一。",
+        "外部佐证：hamel.dev/blog/posts/prompt 关于掌控 prompt 的论述，原文以配图形式引用。",
+        "原文观点：『I don't know what's the best prompt, but I know you want the flexibility to be able to try EVERYTHING.』",
+        "原文提及的非标准 API 例子：现已废弃的 OpenAI non-chat completions API，以及 model gaslighting 技术。"
+    ],
+    "anti_patterns": [
+        "完全依赖黑盒 Agent/Task 抽象，出了问题无法定位是框架哪一层把 prompt 改坏或篡改了指令。",
+        "把 prompt 工程彻底外包给框架，丧失对『送入模型的精确 token』的控制，调优无从下手。",
+        "对 prompt 不建测试不建 evals，任何改动的风险都不可评估，线上出问题只能靠肉眼试错。",
+        "在 prompt 中重复堆砌长指令而没有结构化组织，浪费 token 且降低模型的遵循度。",
+        "不区分 system 与 user 角色内容，把动态 thread 与固定指令混在一起，破坏可复用性与可维护性。",
+        "直接复用框架默认 prompt 而从不审视其中是否含有与业务不符、甚至有害的指令。",
+        "忽略角色 API 的能力差异，白白放弃非标准角色用法能带来的行为红利与实验空间。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-02-own-your-prompts.md", "note": "原文完整内容：掌控 prompt、BAML 示例、五项收益"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/agent.baml", "note": "模板真实 BAML：DetermineNextStep 函数、ClarificationRequest/DoneForNow 等类与测试块"},
+        {"path": "08-source/agent-workshops/2025-05/walkthrough.md", "note": "workshop Chapter 6 定制 prompt 加入推理步骤；Chapter 4 为 prompt 添加 @@assert 测试"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-context",
+    "what": [
+        "你不需要拘泥于标准消息格式来向 LLM 传递上下文：『任何时刻，你给 LLM 的输入本质上就是：到目前为止发生了什么，下一步是什么』。",
+        "一切都是上下文工程。LLM 是『把输入变成输出的无状态函数』，要得到最好的输出，就必须给它最好的输入。",
+        "好的上下文包括：给模型的 prompt 与指令、检索到的文档或外部数据（如 RAG）、过去状态/工具调用/结果等历史、记忆、结构化输出指令。",
+        "原文声明不讨论 temperature/top_p/frequency_penalty/presence_penalty 等采样参数，也不讨论训练模型或微调——本指南聚焦纯上下文构造。",
+        "标准消息格式是 role=system/user/assistant/tool 的数组，assistant 消息里带 tool_calls（id/name/arguments），tool 消息里带 tool_call_id 回传结果。",
+        "替代方案：自建针对你用例优化的上下文格式，把自定义对象打包/展开进一个或多个 user/system/assistant/tool 消息中。",
+        "原文示例把整个上下文窗口放进一条 user 消息：用 <slack_message>、<list_git_tags>、<list_git_tags_result> 等 XML 标签表达事件流。",
+        "你可以完全控制『存什么 vs 传给 LLM 什么』：实验不同的上下文结构会带来明显的质量提升。",
+        "上下文窗口是你与 LLM 的主接口，掌控其结构能大幅提升 Agent 性能；原文给出信息密度对比图证明同语义可更少 token。",
+        "发布约两个月后『context engineering』开始流行：原文引用 Karpathy、Tobi 的讨论与 @lenadroid 的 Context Engineering Cheat Sheet 佐证。"
+    ],
+    "why": [
+        "信息密度：以最大化 LLM 理解的方式组织信息，相同语义用更少 token 表达，注意力更集中、理解更准。",
+        "错误处理：以有助于 LLM 恢复的格式包含错误信息，错误和失败调用解决后应主动从上下文窗口隐藏。",
+        "安全性：严格控制什么信息进入 LLM，过滤敏感数据，防止密码、密钥等意外泄露给模型。",
+        "灵活性：随着你对用例理解的深入，可以随时调整上下文格式，不必被框架锁死。",
+        "Token 效率：为 token 效率与 LLM 理解力双重优化上下文格式，长上下文成本与质量双收益。",
+        "LLM 是无状态函数，只有把『最佳输入』喂给它才能得到『最佳输出』，而这完全取决于你的上下文构造能力。",
+        "上下文工程在 2025 年中成为热门概念，社区（Karpathy 等）与工具链都验证了这一方向的正确性。"
+    ],
+    "how": [
+        "定义 Thread/Event 模型：Thread.events 为事件列表，Event 有 type（list_git_tags、deploy_backend、error 等 Literal 联合类型）与 data。",
+        "实现 event_to_prompt(event)：把事件渲染为 <type>\\n数据\\n</type> 的 XML 风格字符串，对象数据用 stringifyToYaml 嵌入。",
+        "实现 thread_to_prompt(thread)：用 \\n\\n 把各事件渲染串接成最终喂给 LLM 的上下文窗口。",
+        "上下文演进演示：初始 <slack_message> → 追加 <list_git_tags>/<list_git_tags_result> → 出错后追加 <error> → 追加 <request_more_information> 与 <human_response>。",
+        "用 determine_next_step(thread_to_prompt(thread)) 把自建上下文喂给 LLM，获取下一步意图（如 get_workflow_status + workflow_name）。",
+        "把『What's the next step?』显式写进 prompt 模板，虽然模型可能从工具 schema 推断，但显式声明总是无坏处。",
+        "把错误信息以 XML 标签结构化进上下文，同时考虑在解决后从窗口移除，避免失败历史污染后续推理。",
+        "实验性地决定『存什么 vs 传什么』，用信息密度对比（同语义更少 token）验证格式收益，再推广到全部事件类型。",
+        "工具模板实现参考：create-12-factor-agent/template/src/agent.ts 中 serializeForLLM/serializeOneEvent 把事件序列化为 <intent>k: v</intent> 格式。"
+    ],
+    "cases": [
+        "标准消息格式示例：system+user+assistant(tool_calls: list_git_tags)+tool 消息返回 v1.2.3/v1.2.2/v1.2.1 的 tags 数组。",
+        "单条 user 消息打包全部上下文的 <slack_message>…</slack_message> 方案，XML 风格事件流。",
+        "Python Thread/Event 类代码：Event.type 为 Literal[\"list_git_tags\",…,\"error\"] 联合类型定义。",
+        "event_to_prompt 的 f\"<{event.type}>\\n{data}\\n</{event.type}>\" 渲染逻辑与 stringifyToYaml 数据序列化。",
+        "错误后恢复的上下文示例：<error> error running deploy_backend: Failed to connect to deployment service </error>。",
+        "模板实现：agent.ts 的 serializeOneEvent 输出 <multiply>\\na: 3\\nb: 4\\n</multiply> 这类 XML 风格事件。",
+        "@lenadroid 的 Context Engineering Cheat Sheet（2025-07），原文配图引用作为社区资源。",
+        "Karpathy 与 Tobi（Vercel CEO）关于上下文工程的推文截图，发布于 2025 年中。",
+        "信息密度对比图：同一条消息用更少 token 表达相同含义（Loom 截图），验证格式优化收益。"
+    ],
+    "anti_patterns": [
+        "无条件沿用标准 messages 数组格式，从不针对用例优化结构，白白浪费 token 与注意力。",
+        "把未解决的错误事件长期留在上下文里，模型反复看到失败历史，严重影响后续决策质量。",
+        "用调采样参数（temperature/top_p 等）来弥补上下文构造不足，而不是去优化输入本身。",
+        "把敏感数据（密码上下文、session id 等）不加过滤直接塞进上下文，造成泄密风险。",
+        "只堆砌『发生了什么』而不显式声明『下一步是什么』，模型只能靠猜，决策稳定性差。",
+        "把工具结果以大段 JSON 原文塞入而不做压缩/结构化，token 效率与可读性双输。",
+        "上下文越长越不管理，违反『隐藏已解决错误、修剪无关节』的纪律，为错误空转埋下隐患。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-03-own-your-context-window.md", "note": "原文完整内容：上下文工程、标准 vs 自定义格式、Thread/Event 代码"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts", "note": "模板实现：serializeForLLM/serializeOneEvent 的 XML 序列化"},
+        {"path": "08-source/agent-workshops/2025-05/walkthrough.md", "note": "workshop Chapter 7 定制上下文窗口：JSON pretty-print 到 XML 序列化"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-tools",
+    "what": [
+        "工具不需要复杂，其核心就是『LLM 输出的结构化数据，用于触发确定性代码』——工具本质上只是结构化输出。",
+        "让 LLM『用其中一个工具』，本质上只是让它输出一段我们可以解析成代表这些工具的对象的 JSON，别无玄机。",
+        "示例：CreateIssue 类携带 intent='create_issue' 与嵌套的 Issue 对象（title/description/team_id/assignee_id）；SearchIssues 携带 intent='search_issues' 与 query、what_youre_looking_for。",
+        "模式三步：①LLM 输出结构化 JSON；②确定性代码执行对应动作（如调用外部 API）；③结果被捕获并喂回上下文。",
+        "这在 LLM 的『决策』与应用的『行动』之间建立了干净分离：LLM 决定做什么，但你的代码控制怎么做。",
+        "『LLM 调用了工具』不意味着你必须每次都去执行同一个固定函数——同一意图可以根据业务逻辑走不同实现。",
+        "把工具调用想成『模型输出一段描述确定性代码该做什么的 JSON』，会解锁大量灵活性，可与 factor 8 配合。",
+        "原文引用 switch 语句：nextStep.intent=='create_payment_link' → stripe.paymentlinks.create；'wait_for_a_while' → 某种 monadic 处理；else → 兜底。",
+        "『下一步』不一定原子到『执行纯函数并返回结果』，模型输出的 JSON 可以驱动更复杂、更长的控制流。",
+        "原文链接了 plain prompting vs tool calling vs JSON mode vs constrained generation 等路线权衡的资源，但声明不展开讨论。"
+    ],
+    "why": [
+        "决策与执行解耦：LLM 只输出『意图+参数』的 JSON，具体怎么执行由确定代码决定，行为可预测、可审计。",
+        "同样的 JSON 意图可以映射到不同实现，随业务变化灵活调整，不锁死工具与函数的严格一一对应。",
+        "为掌控控制流铺路：既然工具是 JSON，你就可以在 JSON 与执行之间插入审批、暂停、重试等逻辑（factor 8）。",
+        "结构化输出天然可测试：schema 明确、解析稳定，比解析自由文本可靠得多，回归有保障。",
+        "符合『Agent 循环』第一步的标准化产出，后续每一步（执行、回写、再决策）都能被确定性处理。"
+    ],
+    "how": [
+        "用数据类（Python class 或 BAML class）定义每个工具：intent 字段加业务参数，如 class Issue{title;description;team_id;assignee_id} 与 class CreateIssue{intent:'create_issue';issue:Issue}。",
+        "让 LLM 基于 schema 输出 JSON，用 BAML 的 type 联合（如 HumanTools | CalculatorTools）约束可选项，从类型上杜绝未知意图。",
+        "在确定性代码里按 intent 做 switch/if 分发：命中执行外部 API，未命中走 else 兜底，保证流程不中断。",
+        "把每次工具调用的结果捕获并追加回上下文（thread.events），供模型决定下一步，形成闭环。",
+        "模板实现：agent.ts 的 handleNextStep 对 add/subtract/multiply/divide 分别计算并把 tool_response 事件 push 进 thread。",
+        "用 @description 注解给 BAML 类补充行为约束，例如 ProcessRefund 注明『退款前必须先向经理请求批准』。",
+        "用 @description 给字段补充说明，例如 DoneForNow.message 注明『写给用户的工作完成说明』。",
+        "把工具输出与意图组合成联合类型返回（DetermineNextStep -> HumanTools | CalculatorTools | CustomerSupportTools），让类型系统承接工具集。"
+    ],
+    "cases": [
+        "CreateIssue / SearchIssues 两个工具类的定义示例，intent 字段加业务参数结构。",
+        "Issue 嵌套对象：title/description/team_id/assignee_id 四个字段的完整定义。",
+        "switch 语句示例：nextStep.intent == 'create_payment_link' → stripe.paymentlinks.create 的执行分支。",
+        "模板 BAML 工具：AddTool/SubtractTool/MultiplyTool/DivideTool 四个计算器类（intent add/subtract/multiply/divide，a/b 为 int|float）。",
+        "ProcessRefund 类：intent 'process_refund'，含 order_id/amount/reason，注解要求退款前请求经理批准。",
+        "type CalculatorTools = AddTool | SubtractTool | MultiplyTool | DivideTool 的联合类型定义。",
+        "模板 agent.ts 的 handleNextStep：按 intent 分发并返回更新后的 thread，供外层循环继续。",
+        "原文链接资源：boundaryml schema-aligned parsing、Vellum 的 function calling vs structured outputs vs JSON mode、LlamaIndex 对比。"
+    ],
+    "anti_patterns": [
+        "把每个工具与固定函数一一绑定，丧失『同一意图不同实现』的灵活性，业务变化时不得不重构。",
+        "让 LLM 直接输出要执行的代码字符串，而不是结构化的『意图+参数』JSON，解析与安全风险陡增。",
+        "模型返回未知意图时不设 else 兜底，直接抛错中断，整个 Agent 流程随之失败。",
+        "忽略工具结果、不把执行结果喂回上下文，破坏循环闭环，模型无法基于结果继续决策。",
+        "为每个细微动作都定义独立工具，工具爆炸导致 schema 庞大、模型选择困难、维护成本失控。",
+        "把高风险执行逻辑直接交给 LLM 驱动的函数而不做控制流介入，缺少 factor 8 的保护。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-04-tools-are-structured-outputs.md", "note": "原文完整内容：工具即结构化输出的三步模式"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/tool_calculator.baml", "note": "模板计算器工具类：Add/Subtract/Multiply/Divide"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/agent.baml", "note": "模板工具联合类型与函数签名（HumanTools/CalculatorTools/CustomerSupportTools）"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts", "note": "模板 handleNextStep 按 intent 分发执行的确定性代码"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-state",
+    "what": [
+        "在 AI 世界之外，许多基础设施系统也倾向于把『执行状态』与『业务状态』分开管理；对 AI 应用而言这可能需要跟踪当前步骤、下一步、等待状态、重试计数等。",
+        "这种分离会引入复杂度，有时值得，但很可能对你这个用例是过度设计——是否分开管理完全由你决定，别以为非分开不可。",
+        "执行状态（execution state）指：当前步骤、下一步、等待状态、重试次数等过程性的元数据。",
+        "业务状态（business state）指：Agent 工作流迄今为止发生的事，例如 OpenAI 消息列表、工具调用及其结果的列表。",
+        "核心建议：尽可能简化，把两者尽量统一成一份状态，而不是维护两套并行数据。",
+        "实际上你可以这样设计应用：让所有执行状态都能从上下文窗口推断出来，很多情况下执行状态只是『发生了什么』的元数据。",
+        "确实有些东西放不进上下文窗口，如 session id、密码上下文等，但你的目标应该是把这类东西最小化。",
+        "借助 factor 3（掌控上下文窗口），你可以精确控制到底什么进 LLM、什么只留在外部状态存储里。",
+        "原文用动画演示统一前后：分离的两列状态（execution/business）最终合并为单一的 thread 事件流。"
+    ],
+    "why": [
+        "简单性：所有状态的唯一事实来源，不再有两套系统互相不同步，心智负担大幅下降。",
+        "可序列化：thread 可以轻松地序列化/反序列化，持久化、传输、恢复都毫无负担。",
+        "可调试：完整历史在一个地方可见，问题定位快，不用跨多个存储拼凑现场。",
+        "灵活性：新增状态只需新增事件类型，无需改动存储 schema 或迁移数据。",
+        "可恢复：只要加载 thread 就能从任意断点恢复执行，暂停/恢复天然成立。",
+        "可分叉：复制 thread 的一部分到新的上下文/状态 ID，就能在任意点 fork 出分支试验。",
+        "人机界面与可观测性：把 thread 转成人类可读的 markdown 或富 Web UI 极其容易，可观测性免费获得。",
+        "把执行状态收编进上下文元数据后，暂停/恢复（factor 6）与恢复逻辑自然成立，无需额外同步。"
+    ],
+    "how": [
+        "用 thread（事件流）作为承载一切的单一结构：Thread.events 保存 user_input、tool_call、tool_response、error、human_response 等事件。",
+        "从 thread 推断执行状态：当前步骤 = 最后一个未完成事件，等待状态 = 最后事件是否为 request_more_information/done_for_now（见 awaitingHumanResponse）。",
+        "让所有需要决策的信息都进上下文，session id、密码等机密留在外部存储，只把脱敏引用传入。",
+        "用 factor 3 的序列化函数（serializeForLLM）决定 thread 中哪些事件、以什么格式进入 LLM。",
+        "实现 FileSystemThreadStore（create/get/update），thread 落盘为 JSON 与 LLM 序列化文本双份（存 .threads 目录）。",
+        "新增业务能力时新增 Event.type 与对应 data，而不是另起一套执行状态表来维护。",
+        "持久化时机：每次工具执行或等待人类前先 save_state(thread)，恢复时 load_state(thread_id)。",
+        "可替换任意简单状态管理：Redis/SQLite/Postgres 皆可，接口不变，存储迁移成本低。"
+    ],
+    "cases": [
+        "原文 7 条收益清单：Simplicity/Serialization/Debugging/Flexibility/Recovery/Forking/Human Interfaces & Observability。",
+        "执行状态与业务状态的定义对比列表（原文明确列出两类字段的归属）。",
+        "模板 src/state.ts：FileSystemThreadStore 用 crypto.randomUUID 生成 id，写 .threads/{id}.json 与 {id}.txt 双文件。",
+        "agent.ts 的 awaitingHumanResponse()：lastEvent 意图为 request_more_information/done_for_now 时判定在等人。",
+        "awaitingHumanApproval()：lastEvent 意图为 divide 时判定需审批（workshop 演示场景）。",
+        "unify-state 动画/GIF（155-unify-state-animation.gif）演示两列状态合并为单线程。",
+        "server.ts 中 create/update 线程，webhook 后 load_state 恢复并继续循环的完整链路。"
+    ],
+    "anti_patterns": [
+        "为执行状态与业务状态建立两套独立系统，同步逻辑成为维护噩梦，状态极易不一致。",
+        "把 session id、密码等不该进上下文的东西硬塞给 LLM，引入安全与泄露风险。",
+        "把执行状态藏进全局可变变量或进程内存，进程一挂全丢，无法恢复。",
+        "状态没有单一序列化路径，调试时需要跨多个存储拼历史，问题定位困难。",
+        "新增状态时改动存储 schema 而不是新增事件类型，破坏向后兼容性。",
+        "不在暂停/等待前持久化，导致恢复时丢失中间过程，恢复残缺。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-05-unify-execution-state.md", "note": "原文完整内容：统一执行/业务状态与 7 条收益"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/state.ts", "note": "模板 FileSystemThreadStore：thread 持久化的 create/get/update"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts", "note": "模板 Thread 类：事件流与 awaitingHumanResponse 状态推断"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-pause",
+    "what": [
+        "Agent 只是程序，我们理应对它们如何被启动、查询、恢复、停止有明确预期——这就是 Launch/Pause/Resume 的诉求。",
+        "用户、应用、流水线和其他 Agent 应该能用简单的 API 轻易地启动一个 Agent，而不需要了解内部编排细节。",
+        "Agent 及其编排的确定性代码应该在需要长时运行操作（如等人类回复、跑长任务）时能暂停它。",
+        "外部触发器（如 webhook）应该能让 Agent 从上次停下的地方恢复，而不需要与 Agent 编排器深度集成。",
+        "本因子与 factor 5（统一执行/业务状态）和 factor 8（掌控控制流）紧密相关，但可以独立实现。",
+        "原文特别提醒：很多 AI 编排器允许暂停/恢复，但恰恰不允许在『工具选择』与『工具执行』之间暂停。",
+        "这个『选择与执行之间』的暂停点正是高价值操作的审批/复核窗口，缺失它就无法在工具运行前审查。",
+        "与 factor 7（用工具调用联系人类）和 factor 11（随处触发）配合，暂停/恢复才能支撑多人在线工作流。",
+        "workshop 实现：把 /thread 端点改成异步处理并立即返回 {'status':'processing'}，联系人类后结束处理，由 webhook 恢复。"
+    ],
+    "why": [
+        "Agent 也是程序，用户与系统对它有与普通程序一致的操作预期：能启动、能查状态、能暂停、能恢复、能停止。",
+        "webhook 恢复意味着外部事件（邮件回复、Slack 消息）能无缝把 Agent 唤醒，无需深耦合编排器内部。",
+        "暂停点是确定性代码干预的窗口：审批、复核、长任务等待都依赖它，缺失则无法做高价值操作。",
+        "配合 factor 5 的 thread 序列化，暂停/恢复成本极低——存 thread、load thread 即完成恢复。",
+        "编排器普遍缺『选择与执行之间』的暂停能力，自己实现才能获得完整的控制粒度。"
+    ],
+    "how": [
+        "暴露简单 API：POST /thread 启动、GET /thread/:id 查询状态、/thread/:id/response 或 /webhook 提交回复。",
+        "长操作前让确定性代码暂停：检测 awaitingHumanResponse() 时先 save 状态再返回，不再继续循环。",
+        "用 webhook 接收外部结果：app.post('/webhook') 解析事件（如 V1Beta2HumanContactCompleted），从 event.spec.state.thread_id 恢复 thread。",
+        "恢复流程：load_state(thread_id) → 把 response_from_human 事件 push 进 thread → 重新跑 determine_next_step → 继续循环。",
+        "异步化端点：POST /thread 立即返回 {'status':'processing'}，处理在 Promise.resolve().then() 后台进行。",
+        "在 createHumanContact 时把 state.thread_id 塞进 spec，让 webhook 回程能精确定位线程。",
+        "模板 server.ts 的 outerLoop：根据 conversation.created / human_contact.completed / function_call.completed 三种事件新建或恢复线程。",
+        "与 factor 8 配合：暂停后编排器可以自由决定何时、由谁来恢复，形成自然的中断/恢复工作流。"
+    ],
+    "cases": [
+        "原文动画 165-pause-resume-animation.gif 演示暂停/恢复过程，直观展示 API 语义。",
+        "workshop webhook 集成：POST /thread 立即返回 processing，humanlayer 云回调 /webhook 恢复执行。",
+        "server.ts 的 outerLoop 用 body.type 区分 conversation.created / human_contact.completed / function_call.completed。",
+        "createHumanContact spec 携带 state: { thread_id }，webhook 回程通过 spec.state.thread_id 找回线程。",
+        "异步端点实现：Promise.resolve().then(async () => { const threadId = store.create(thread); … }) 后 res.json({status:'processing'})。",
+        "handleHumanResponse：校验 thread.awaitingHumanResponse() 后 push 人类回复并继续 agentLoop 循环。",
+        "原文提醒的编排器缺口：『between tool selection and tool execution』没有暂停点的常见缺陷。"
+    ],
+    "anti_patterns": [
+        "依赖不允许在工具选择与执行之间暂停的编排器，丧失审批与复核窗口，高价值操作无从保障。",
+        "恢复逻辑与编排器深度耦合，外部 webhook 无法独立唤醒 Agent，集成面窄。",
+        "暂停时把任务挂在内存里 while...sleep 空转等待，进程一断就得从头再来。",
+        "缺少查询端点（GET /thread/:id），外部系统无法知道 Agent 当前卡在哪一步。",
+        "恢复时从零重启整条流程，而不是加载 thread 从断点继续，浪费且易错。",
+        "不把线程状态落盘，暂停后进程重启即丢失全部上下文，无法恢复。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-06-launch-pause-resume.md", "note": "原文完整内容：Launch/Pause/Resume 简单 API 与编排器缺口"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/server.ts", "note": "模板实现：outerLoop 按事件新建/恢复线程，webhook 恢复"},
+        {"path": "08-source/agent-workshops/2025-05/walkthrough.md", "note": "workshop Chapter 12 humanlayer-webhook：异步 /thread 加 /webhook 恢复"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-human",
+    "what": [
+        "默认情况下 LLM API 依赖一个高风险的『首个 token』选择：返回纯文本内容，还是返回结构化数据，赌注都押在这一个 token 上。",
+        "第一个 token 就被赋予了重担：weather in tokyo 场景下是 'the'，fetch_weather 场景下是标记 JSON 开头的特殊 token（如 |JSON>）。",
+        "更好的做法：让 LLM 永远输出 JSON，并用 request_human_input、done_for_now 这类自然语言意图（而非 check_weather 类『正经』工具）来声明它想联系人类。",
+        "你可能不会因此获得性能提升，但应该保持实验自由——去尝试奇怪的方式以获得最好的结果，不被惯例束缚。",
+        "把『请求人类输入』建模成工具调用：class RequestHumanInput 含 intent/question/context/options，options 设 urgency(low/medium/high)、format(free_text/yes_no/multiple_choice)、choices。",
+        "Agent 循环里命中 request_human_input 时：把 human_input_requested 事件追加进 thread、save_state、notify_human，然后 break 跳出循环等回复。",
+        "回复通过 webhook 回来：POST /webhook 里 load_state(thread_id)、push response_from_human 事件、再跑 determine_next_step 继续循环。",
+        "配合 factor 3 的 XML 上下文，多次对话后的窗口形如：<slack_message> 之后跟 <request_human_input>、<human_response>、<deploy_backend> 与 <deploy_backend_result>。",
+        "这与传统 chatGPT 式界面不同，支持外循环（outer loop）：控制流与上下文初始化是 Agent→Human，而不是 Human→Agent，例如由 cron 或事件启动的 Agent。"
+    ],
+    "why": [
+        "清晰指令：为不同类型的人类接触定义工具，LLM 能给出更具体的请求，包括问题、上下文与选项格式。",
+        "内外循环：支持 chatGPT 式聊天界面之外的 Agent→Human 工作流，Agent 可以由 cron 或事件主动发起。",
+        "多人类接入：通过结构化事件轻松跟踪和协调来自不同人类的输入，谁批准谁拒绝一目了然。",
+        "多 Agent：简单抽象可轻松扩展为 Agent→Agent 的请求/响应模式，扩展开销极低。",
+        "持久化：配合 factor 6（Launch/Pause/Resume），能构建持久、可靠、可内省的多人在线工作流。",
+        "首 token 抉择的赌注太大，把『是否联系人类』从 token 层的隐式选择提升为显式的结构化意图更稳妥。",
+        "外循环 Agent 是『agent 像数字同事』体验的基础，详见 theouterloop 博客与 factor 11。"
+    ],
+    "how": [
+        "在 BAML 里定义人类工具类：ClarificationRequest（intent request_more_information + message）、DoneForNow、RequestApprovalFromManager（intent request_approval_from_manager + message）。",
+        "用 Options 对象给人类请求加交互规格：urgency、format（free_text/yes_no/multiple_choice）、choices，指导呈现方式。",
+        "Agent 循环中命中 request_human_input：thread.events.push(human_input_requested)、save_state、notify_human、break 等回复。",
+        "提供 /webhook 端点接收人类回复：解析出 thread_id，load_state，push response_from_human 事件。",
+        "恢复循环：determine_next_step(thread_to_prompt(thread)) → handle_next_step → 决定继续还是再次等待。",
+        "用 awaitingHumanResponse() 判断 thread 是否卡在等人，避免对不需要人类参与的线程发出请求。",
+        "模板 a2h.ts 定义 A2H 消息协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec(agentMessage/response_schema/channel_id)、status(humanMessage/response)。",
+        "用 Zod schema（如 ApprovalSchema {approved, comment}）定义人类响应的结构化期望，approval 与 human request 复用同一 Message 类型。"
+    ],
+    "cases": [
+        "RequestHumanInput 类：intent/question/context/options(urgency/format/choices) 的完整字段定义。",
+        "webhook 处理代码：@app.post('/webhook') 里 load thread、push response_from_human、重新 determine_next_step。",
+        "XML 上下文演进示例：<request_human_input>（question: 是否部署 v1.2.3 到生产，urgency high, format yes_no）随后 <human_response>（yes please proceed / approved true / user alex@company.com）。",
+        "模板 BAML：ClarificationRequest、DoneForNow、RequestApprovalFromManager、ProcessRefund（含必须批准注解）组成 HumanTools 联合。",
+        "模板 src/a2h.ts：ApprovalSchema（approved/comment）、Message 协议、NewConversation（user_message/channel_id/agent_name）。",
+        "workshop Chapter 5：CLI 里 askHuman 用 readline 收集回复；Chapter 11 改为 email 审批（divide 走 fetchHumanApproval）。",
+        "外循环参考：theouterloop.substack.com 关于 OpenAI realtime API 是朝外循环的一步；deploybot 真实对话截图。",
+        "原文 5 条收益：Clear Instructions / Inner vs Outer Loop / Multiple Human Access / Multi-Agent / Durable。"
+    ],
+    "anti_patterns": [
+        "依赖模型在首个 token 上做『文本 vs 结构化』的隐式赌博，而不是用结构化意图显式声明是否联系人类。",
+        "只支持 chatGPT 式聊天界面，Agent 永远由人类发起，无法被 cron/事件启动并主动找人。",
+        "把人类请求与普通工具混在同一 schema，无法区分『执行动作』与『联系人类』两类分支，控制流无从下手。",
+        "人类回复没有结构化事件记录（谁、何时、批准与否），审计与多人类协调无从谈起。",
+        "同步阻塞等待人类回复（while...sleep 轮询），而不是 save 状态加 break 加 webhook 恢复。",
+        "请求人类时丢失 thread_id 引用，webhook 回来无法定位线程，恢复失败。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-07-contact-humans-with-tools.md", "note": "原文完整内容：人类交互建模为工具调用、webhook 收回复、5 条收益"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/a2h.ts", "note": "模板 A2H 协议：Message/ApprovalSchema/HumanRequest/NewConversation"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/agent.baml", "note": "模板 HumanTools：ClarificationRequest/RequestApprovalFromManager/ProcessRefund"},
+        {"path": "08-source/agent-workshops/2025-05/walkthrough.md", "note": "workshop Chapter 5 CLI 人机交互、Chapter 11 email 审批、Chapter 12 webhook"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-control",
+    "what": [
+        "如果你掌控自己的控制流，就能做很多有趣的事：为你的特定用例构建自己的控制结构，而不是被框架规定死。",
+        "某些类型的工具调用可能是跳出循环的理由——例如等待人类回复，或等待训练流水线这类长任务完成。",
+        "你也可以融入自定义实现：工具结果的汇总/缓存、对结构化输出做 LLM-as-judge、上下文压缩或其他记忆管理、日志/tracing/指标、客户端限流、持久 sleep/暂停/等事件。",
+        "原文给出三种控制流模式示例：request_clarification（模型要求更多信息，跳出循环等人）、fetch_git_tags（取标签、追加上下文、直接交回模型）、deploy_backend（高价值，跳出循环等人批准）。",
+        "handle_next_step 里用 while True 循环：determine_next_step → 按 intent 分支，async 步骤 break 等 webhook，sync 步骤 continue 直接再喂模型。",
+        "核心诉求：『我们需要能在工具选择与工具调用之间打断正在工作的 Agent 并在之后恢复』——这是作者对每个 AI 框架的头号功能请求。",
+        "没有这种恢复粒度，就无法在工具运行前审查/批准调用，被迫在三者中选：内存里 sleep 等长任务、只让 Agent 做低风险调用、或让 Agent 放手干高风险事赌它不搞砸。",
+        "该模式允许你随意中断/恢复 Agent 流程，创造更自然的多轮对话与工作流。",
+        "与 factor 5（统一状态）和 factor 6（暂停/恢复）紧密相关，但可以独立实现。",
+        "掌控控制流的本质：循环 + switch 语句 + 事件累积三者全在你的代码里，而非框架黑盒。"
+    ],
+    "why": [
+        "工具选择与执行之间的中断点是审批与复核的必需窗口，缺失它就无法安全地执行高价值操作。",
+        "自定义控制结构才能支持自然工作流：中断等人、等待长任务、再无缝恢复，体验接近真实协作。",
+        "可以按需插入缓存、LLM-judge、限流、日志、指标等横切逻辑，框架黑盒做不到这一点。",
+        "没有该粒度的三种被迫选项（while...sleep / 只做低风险 / yolo）全部不可接受，掌控控制流是唯一解。",
+        "只有自建控制流才能把『工具调用』真正当作 JSON 驱动的可编排步骤，而非不可中断的函数执行。"
+    ],
+    "how": [
+        "实现 while True 循环：determine_next_step(thread_to_prompt(thread)) 取下一步意图，形成主循环骨架。",
+        "按 intent 分支：request_clarification → push 事件、send_message_to_human、db.save_thread、break（async，等 webhook）；fetch_open_issues → push、调 linear_client.issues()、push 结果、continue（sync 回喂）。",
+        "create_issue → push 事件、request_human_approval、save_thread、break（async），等人类批准后由 webhook 恢复。",
+        "把中断点刻意放在『工具选择之后、工具执行之前』，让确定性代码有机会先审批再放行。",
+        "恢复时由 webhook 或调用方 push 新事件后重新进入循环（复用 factor 6 的加载机制）。",
+        "融入自定义横切逻辑：工具结果缓存、LLM-as-judge 校验结构化输出、上下文压缩、客户端限流、日志/指标。",
+        "持久 sleep 用『保存状态 + 等事件』实现，而非内存 sleep，保证可恢复性。",
+        "模板 handleNextStep（switch 分发工具）加外层 while true（agentLoop）即最小化掌控控制流的骨架。"
+    ],
+    "cases": [
+        "原文 handle_next_step 三分支：request_clarification / fetch_open_issues / create_issue 的 break 与 continue 控制。",
+        "头号功能请求引述：『interrupt a working agent and resume later, ESPECIALLY between the moment of tool selection and tool invocation』。",
+        "没有粒度时的三选一困境：① while...sleep 内存等待 ② 只做研究/汇总类低风险调用 ③ yolo 放手。",
+        "可融入的自定义实现清单：summarization/caching、LLM-as-judge、context compaction、logging/tracing/metrics、rate limiting、durable sleep。",
+        "模板 agent.ts 的 agentLoop（while true + switch intent + tool_response 回写）。",
+        "workshop Chapter 3 的 agentLoop 初版：done_for_now 返回、add 执行并 continue、default 抛 Unknown intent。",
+        "deploybot 场景：确定性代码在 Agent 每次部署请求之间请求人类批准，Agent 只输出 JSON 意图。"
+    ],
+    "anti_patterns": [
+        "在内存里 while...sleep 等待长任务，进程一断必须从头重启，可恢复性为零。",
+        "把 Agent 限制为只做低风险、低价值调用（研究/汇总），白白浪费 Agent 的决策能力。",
+        "给 Agent 高价值工具却不设审批点，纯靠赌（yolo）它不会搞砸，风险不可控。",
+        "把控制流交给框架黑盒，无法在工具选择与执行之间插入任何逻辑。",
+        "所有工具都同步执行返回，没有任何 async break 的等待路径，无法处理长任务。",
+        "没有 while True 主循环，Agent 退化为单步函数调用，无法完成多步任务。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-08-own-your-control-flow.md", "note": "原文完整内容：自建控制结构、handle_next_step 三分支、头号需求"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts", "note": "模板 agentLoop/handleNextStep：while+switch 控制流骨架"},
+        {"path": "08-source/agent-workshops/2025-05/walkthrough.md", "note": "workshop Chapter 3 工具循环、Chapter 8/9 服务端控制流"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-errors",
+    "what": [
+        "Agent 的一大好处是『自愈』：对短任务，LLM 调用工具失败时，好的模型相当有机会读懂错误消息或堆栈并想出在后续调用中改什么。",
+        "大多数框架都实现了这一点，但你可以只做这一件事而不做其他 11 条因子——它独立成立，投入产出比极高。",
+        "基础版实现：try handle_next_step，异常时把 {type:'error', data: format_error(e)} 追加进 thread，继续循环重试。",
+        "进阶版：为具体工具调用实现 errorCounter，把单工具重试限制在约 3 次，防止无限空转。",
+        "计数逻辑：成功执行后 consecutive_errors 归零；异常时自增，小于 3 则把错误写入上下文再循环，否则 break。",
+        "达到连续错误阈值是升级到人类的好时机：可以由模型决定，也可以由确定性代码接管控制流去请求人类。",
+        "原文提醒：如果错误压缩做得太多，Agent 会开始空转（spin out），反复重试同一个错误。",
+        "此时 factor 8（掌控控制流）和 factor 3（掌控上下文）登场：你不需要把原始错误原样塞回，可以重构其表示、移走先前事件，或用任何有效的确定性手段把它拉回正轨。",
+        "防止错误空转的头号方法是拥抱 factor 10（小而专注的 Agent），让上下文短到错误无从累积。",
+        "自愈依赖『把错误消息喂给 LLM 让它改错』，因此错误的格式与上下文保留策略直接决定自愈质量。"
+    ],
+    "why": [
+        "自愈：LLM 能读懂错误消息并在下一次工具调用中自行修正，无需人工介入，减少运维负担。",
+        "持久化：即使一个工具调用失败，Agent 也能继续运行，整体任务不因单点失败而夭折。",
+        "错误+重试阈值是『拉人类进循环』的天然触发点，为升级处理提供明确信号。",
+        "这是唯一可以脱离其他 11 条因子单独落地的一条，单独实施就能获得大量价值。",
+        "配合上下文管理（factor 3），可以主动修剪错误与失败事件，防止失败历史污染后续推理。"
+    ],
+    "how": [
+        "基础循环：while True 里 determine_next_step → push intent 事件 → try handle_next_step → except 时 push {type:'error', data: format_error(e)} 并继续。",
+        "格式化错误：用 format_error(e) 把异常转成适合 LLM 阅读的简洁文本，而非原始堆栈噪音。",
+        "计数进阶：consecutive_errors 变量，成功即归零，失败自增，达到 3 则 break。",
+        "阈值处理：连续失败达到阈值时，选择『重置部分上下文 / 升级人类 / 其他你想做的事』。",
+        "升级人类：在错误重试耗尽后调用 factor 7 的人类联系机制，让真人接手排障。",
+        "重构错误表示：不原样塞回原始错误，用 factor 3 的 XML 标签（如 <error> 块）结构化表达。",
+        "从窗口移除已解决错误：事件解决后从上下文隐藏，避免 LLM 反复看到失败史。",
+        "结合 factor 10：把长任务拆成小 Agent，让每个 Agent 的上下文短到错误空转无从发生。"
+    ],
+    "cases": [
+        "基础版代码：thread['events'].append({type:'error', data: format_error(e)}) 后继续循环。",
+        "计数进阶代码：consecutive_errors 成功归零/失败自增/达到 3 则 break 的完整片段。",
+        "原文句式：『Good LLMs have a fairly good chance of reading an error message or stack trace and figuring out what to change』。",
+        "升级人类建议：『Hitting some consecutive-error-threshold might be a great place to escalate to a human』。",
+        "空转警示：『if you do this TOO much, your agent will start to spin out and might repeat the same error over and over』。",
+        "动画 195-factor-09-errors.gif 演示错误写入上下文后模型自我修正的过程。",
+        "与 factor 3 的结合示例：错误解决后从上下文移除、用自定义格式表示错误。"
+    ],
+    "anti_patterns": [
+        "无节制的无限重试（无 errorCounter），Agent 空转反复重试同一个错误，浪费资源。",
+        "把原始堆栈/错误原文不加格式化地塞回上下文，浪费 token 且难以被模型有效解读。",
+        "错误解决后仍把失败事件留在上下文，模型被失败历史持续影响。",
+        "达到重试阈值后不升级人类也不换策略，死循环到底。",
+        "用单体大 Agent 承载长任务，错误累积进长上下文后彻底迷失。",
+        "把错误吞掉不写入上下文，LLM 毫不知情、自愈无从谈起。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-09-compact-errors.md", "note": "原文完整内容：错误写回上下文自愈、errorCounter 计数"},
+        {"path": "08-source/agent-content/factor-08-own-your-control-flow.md", "note": "控制流关联：错误处理是自定义控制结构的一部分"},
+        {"path": "08-source/agent-content/factor-03-own-your-context-window.md", "note": "上下文管理：错误事件格式化与已解决错误隐藏策略"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-small",
+    "what": [
+        "与其构建想包办一切的单体 Agent，不如构建小而专注、一件事做到位的 Agent——Agent 只是更大的、基本确定性系统中的构件。",
+        "关键洞见在于 LLM 的局限：任务越大越复杂，步骤越多，上下文就越长；随着上下文增长，LLM 更容易迷失或失去焦点。",
+        "把 Agent 保持在特定领域、3-10 步（最多 20 步）的规模，就能让上下文窗口可控、LLM 性能保持高位。",
+        "核心原则是『随着上下文增长，LLM 更容易迷失或失去焦点』，这是拆分规模的根本理由。",
+        "收益：可控的上下文（小窗口=更好性能）、清晰的职责（每 Agent 范围明确）、更高的可靠性（复杂流程中不易迷路）、更易测试、更易调试。",
+        "关于『如果 LLM 变聪明了呢』：即使模型能处理 100+ 步工作流，答案依然是『要』——该做法让你今天就能交付成果，同时为将来逐步扩展范围做准备。",
+        "这就像重构大型确定性代码库：有意识地拆分与逐步扩展是保持质量的关键。",
+        "原文引用 NotebookLM 团队的话：『最神奇的 AI 构建时刻，总是发生在我极度贴近模型能力边界的时候』。",
+        "不管边界在哪里，只要你能稳定地找到它并做对，就能构建出魔法般的体验；可以建立很多护城河，但它们都需要工程严谨性。",
+        "brief-history 补充：长上下文问题让多数构建者把『工具调用循环』推到一边——超过 10-20 轮就成一团乱，90% 正确率也远不够交付给客户。"
+    ],
+    "why": [
+        "上下文可控：小上下文窗口意味着更好的 LLM 性能与更低的失败率，输出质量有保障。",
+        "职责清晰：每个 Agent 有明确定义的范围与目的，系统整体易推理、易演进。",
+        "更可靠：在复杂工作流中不易迷失，错误不易在长链条里传播放大。",
+        "更易测试/调试：单 Agent 功能边界小，测试用例与问题定位都简单直接。",
+        "防止错误空转：短上下文里错误不累积，是 factor 9 防 spin-out 的头号手段。",
+        "即便模型更强，小 Agent 方式保证今天可交付，同时为未来扩范围留好结构（与重构大代码库同理）。"
+    ],
+    "how": [
+        "把任务按领域拆成多个小 Agent，每个只管一件事，由确定性 DAG 编排（micro-agent DAG 模式）。",
+        "限制每 Agent 的步骤规模在 3-10 步，硬上限 20 步，超出就继续拆分。",
+        "隔离任务与上下文：让 LLM 只关注一个小的 5-10 步工作流（如 deploybot 的做法）。",
+        "用确定性代码处理结构化流程，只在『解析人类反馈、提出更新行动方案』等关键点引入 LLM。",
+        "配合 factor 7 把人类反馈翻译成工作流步骤，避免在长上下文里错误循环。",
+        "保持循环三件套（prompt/switch/context 累积）在每个小 Agent 内小而齐整，职责单一。",
+        "随着模型上下文可靠性提升，再逐步扩大 Agent 范围（agent-scope-grow 动画），而非一步到位。",
+        "reducer 视角收束：每个小 Agent 就是一个 reducer，输入历史事件输出下一步，职责单一便于推理。"
+    ],
+    "cases": [
+        "原文 5 条收益清单：Manageable Context / Clear Responsibilities / Better Reliability / Easier Testing / Improved Debugging。",
+        "NotebookLM 团队名言：紧贴模型能力边界的时刻最神奇（引用 swyx 的 substack 文章）。",
+        "deploybot 实例（got-agents/agents repo）：确定性代码部署 staging、跑 e2e、把『deploy SHA 4af9ec0 to production』交给 Agent。",
+        "deploybot 收束：『We isolate tasks and contexts as much as possible to keep the LLM focused on a small, 5-10 step workflow』。",
+        "agent-scope-grow GIF（1a5-agent-scope-grow.gif）演示 Agent 范围随能力提升渐进扩展。",
+        "brief-history 的 micro-agent DAG 图与『10-20 轮后一团乱』的行业观察。",
+        "chainlit 的 support/chatbot 演示（更多经典案例），作为社区佐证。",
+        "『Even as models support longer context windows, you'll ALWAYS get better results with a small, focused prompt and context』的论断。"
+    ],
+    "anti_patterns": [
+        "构建什么都能做的单体 Agent，上下文随任务膨胀到失控，迷失与失败成为常态。",
+        "在上下文不可靠时激进扩大 Agent 范围，质量崩坏而不可逆。",
+        "让单个 Agent 跑 100+ 步的长链条，迷失与错误累积成为常态。",
+        "不在确定性 DAG 中编排小 Agent，而是让一个 Agent 全流程自行其事。",
+        "忽略『贴近模型能力边界』的质量纪律，为了炫技而超规模设计。",
+        "把小 Agent 的上下文与任务混在一起共享，违背隔离原则。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-10-small-focused-agents.md", "note": "原文完整内容：小而专注的 Agent、收益、LLM 变聪明了怎么办"},
+        {"path": "08-source/agent-content/brief-history-of-software.md", "note": "背景：长上下文问题、micro-agent DAG、deploybot 实例"},
+        {"path": "08-source/agent-content/factor-09-compact-errors.md", "note": "关联：防错误空转的头号手段是小而专注的 Agent"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-trigger",
+    "what": [
+        "让用户能从 slack、email、sms 或其他任何他们喜欢的渠道触发 Agent，并让 Agent 通过同样的渠道回复——在用户所在的地方遇见他们。",
+        "这是对 factor 6（Launch/Pause/Resume）与 factor 7（Contact Humans With Tools）的自然延伸：做好前两条，你就有资格引入这条。",
+        "收益一：在用户所在之处服务用户，帮助构建感觉像真人的 AI 应用，至少像一位靠谱的数字同事。",
+        "收益二：外循环 Agent（Outer Loop Agents）——允许 Agent 被非人类触发：事件、cron、宕机警报等；它们可能工作 5、20、90 分钟，到关键点联系人类请求帮助。",
+        "收益三：高价值工具（High Stakes Tools）——能快速拉进各种人类后，你可以给 Agent 更高风险的操作权限，比如发送外部邮件、更新生产数据等。",
+        "保持清晰标准能带来可审计性与对『执行更大更好事情』的 Agent 的信心。",
+        "与 factor 7 的 RequestHumanInput/webhook 配合，多渠道触发→等待→多渠道回复形成完整闭环。",
+        "原文自嘲：如果你们在等 humanlayer 的推销，就是这里了——该因子正是 humanlayer 的产品动机。",
+        "workshop 中 agent 通过 email 收审批、slack 收消息、webhook 恢复的流程都是本因子的工程落地。"
+    ],
+    "why": [
+        "在用户所在之处服务：更自然的交互体验，Agent 像数字同事而不是需要用户特意去用的独立应用。",
+        "外循环能力：被事件/cron/宕机触发而非只能由人发起，Agent 可以长时间后台工作后在关键点主动找人。",
+        "高价值操作解锁：能快速拉人复核，才敢让 Agent 发外部邮件、改生产数据——信任来自复核链路而非限制。",
+        "清晰标准与可审计性：多渠道接入加结构化记录，让高风险 Agent 有据可查、可信可用。",
+        "多渠道触达是『数字同事』体验与 7×24 无人值守运营的前提，规模化必需。"
+    ],
+    "how": [
+        "暴露多通道入口：slack、email、sms、webhook 各建入口，把外部消息统一转成 conversation.created 或用户消息事件。",
+        "回复走同一渠道：humanlayer 等工具用 contactChannel（email/slack 地址）指定回复通道，保证回程一致。",
+        "支持非人类触发：cron 定时、事件订阅、宕机告警都能启动 Agent（factor 11 明确列出 events/crons/outages）。",
+        "让 Agent 长时间工作：5/20/90 分钟级别，到关键决策点再联系人类（请求帮助/反馈/批准）。",
+        "给高风险工具配人类复核：发送外部邮件、更新生产数据前拉人确认，保持审计标准。",
+        "模板 server.ts 的 outerLoop 即多渠道入口的骨架：conversation.created 开新线程、human_contact.completed / function_call.completed 恢复线程。",
+        "与 factor 6 配合：webhook 触发恢复，无编排器深耦合，外部系统都能唤醒 Agent。",
+        "与 factor 7 配合：RequestHumanInput 加 notify_human 决定何时、用什么渠道找人。"
+    ],
+    "cases": [
+        "渠道列表：slack、email、sms 以及任意用户想要的渠道，都是触发与回复的载体。",
+        "非人类触发列表：events、crons、outages（原文明确列出三类）。",
+        "运行时长区间：『They may work for 5, 20, 90 minutes』原文原话。",
+        "高价值工具示例：sending external emails、updating production data，需要复核才能授权。",
+        "humanlayer 产品动机（原文点明这是其销售点）。",
+        "workshop email 审批：HUMANLAYER_EMAIL 指定邮箱，fetchHumanApproval 收批准/拒绝反馈。",
+        "server.ts 的 V1Beta3 事件类型：conversation.created / human_contact.completed / function_call.completed 三种 webhook 事件恢复或新建线程。"
+    ],
+    "anti_patterns": [
+        "只提供单一入口（如只限网页聊天界面），用户要跳出工作流去用你的应用，体验割裂。",
+        "Agent 只能由人类发起，无法被事件/cron/宕机触发（无外循环能力），无法无人值守。",
+        "因没有复核链路就限制 Agent 权限，只让它做低价值调用，浪费能力。",
+        "多渠道接入后不在关键决策点联系人类，导致高风险操作无审计。",
+        "回复渠道与触发渠道不一致，用户在 slack 问却在邮箱收到答案，体验混乱。",
+        "渠道事件与线程状态脱节，webhook 回程找不到对应 thread，恢复失败。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-11-trigger-from-anywhere.md", "note": "原文完整内容：多渠道触发、外循环 Agent、高价值工具"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/server.ts", "note": "模板外循环：conversation.created / human_contact.completed / function_call.completed 事件处理"},
+        {"path": "08-source/agent-content/factor-06-launch-pause-resume.md", "note": "前置依赖：webhook 恢复机制"},
+        {"path": "08-source/agent-content/factor-07-contact-humans-with-tools.md", "note": "前置依赖：RequestHumanInput 与多渠道通知"}
+    ]
+})
+
+NODES.append({
+    "id": "ag-reducer",
+    "what": [
+        "第 12 条：把 Agent 建模成无状态的归约器（stateless reducer）。原文自己承认：写到这已超 1000 行 markdown，这条主要是图个乐。",
+        "配图 agent-foldl（1c5-agent-foldl.png）把 Agent 循环描绘成函数式编程里的 foldl：用函数折叠事件列表。",
+        "reducer 视角下：Agent 是一个纯函数，输入是『迄今为止的全部历史事件』，输出是『下一步动作（工具意图）』。",
+        "这与 factor 5（统一执行/业务状态）一脉相承并进一步收束：把 thread 当作纯粹的数据累积，Agent 只是对它的归约。",
+        "reducer 无内部可变状态：状态+事件进，下状态+可能的副作用（工具执行）出，决策与效应分离。",
+        "体现『Agents are just programs』的最终哲学：Agent 循环 = 状态(state) 加事件(event) 归约的确定迭代，可序列化、可恢复、可分叉。",
+        "把 Agent 视为 reducer 让『恢复/分叉/审计』等能力在数学上变得显然：只要事件流完整，任何断点都可重建。",
+        "原文只有一句加两张图，本节点结合 factor 5、factor 3 与模板 state.ts/agent.ts 的工程形态合理展开。"
+    ],
+    "why": [
+        "收束统一状态：把 factor 5 的统一状态观用函数式视角彻底表达——状态即事件的归约结果。",
+        "无状态化带来确定性：同样的事件序列必然产出同样的决策，行为可预测、可复现。",
+        "可序列化/恢复/分叉成为结构性必然：thread 是纯数据，load 即可重建任意状态。",
+        "呼应 Agent 的本质定义：prompt + switch + accumulated context + for loop 四件套，reducer 是其最简洁抽象。",
+        "降低心智负担：把『Agent 是什么』收束为『一个输入历史、输出下一步的函数』，便于与确定性 DAG 一起编排。"
+    ],
+    "how": [
+        "把循环建模为 reducer：reducer(thread_events) → next_step，即 determine_next_step 对事件流的归约。",
+        "状态显式化：每一步把上一步的 state 与当前 event 作为输入，产出 new_state 与副作用（工具执行）记录。",
+        "所有事件（user_input/tool_call/tool_response/error/human_response）进同一事件流，状态只在事件流中体现。",
+        "配合 factor 5 的 FileSystemThreadStore 持久化 thread，reducer 函数保持无状态，状态全在数据里。",
+        "恢复 = 重新把已持久化事件喂给 reducer；分叉 = 复制事件子集作为新输入。",
+        "用 factor 3 的 serializeForLLM 控制 reducer 实际『看到』的上下文，实现状态压缩与过滤。",
+        "配合 factor 10：每个小 Agent 都是一个职责单一的小 reducer，由确定性 DAG 组合。",
+        "副作用隔离：工具执行（写数据库、发请求）不作为 reducer 内部逻辑，而是其外部效应，便于审计。"
+    ],
+    "cases": [
+        "原文配图 1c0-stateless-reducer.png 与 1c5-agent-foldl.png（foldl 折叠示意图）。",
+        "原文结语：『this one is mostly just for fun』的自嘲式定位。",
+        "模板 Thread 类（事件流 + serializeForLLM）作为 reducer 的数据载体。",
+        "模板 state.ts 的 FileSystemThreadStore：thread 序列化落盘，为无状态 reducer 提供纯数据状态。",
+        "factor 5 的『加载 thread 从任意点恢复』在 reducer 视角下即事件重放。",
+        "foldl 的函数式语义：从初始状态起依次把每个事件归约进去，产出最终状态/决策序列。"
+    ],
+    "anti_patterns": [
+        "把状态藏在全局可变变量里，reducer 不再无状态，重放与恢复随之失效。",
+        "把副作用（真实 API 调用）写进 reducer 内部逻辑，破坏『纯函数+外部效应』的边界。",
+        "事件流不完整/不持久化，reducer 无数据可归约，断点无法重建。",
+        "让 reducer 依赖进程内存中的隐式上下文而非显式事件输入，序列化与分叉无从谈起。",
+        "忽略本因子『主要是图个乐』的定位，为函数式而函数式地过度设计（原文自身也承认这一点）。"
+    ],
+    "source_refs": [
+        {"path": "08-source/agent-content/factor-12-stateless-reducer.md", "note": "原文：Agent 建模为无状态 reducer（foldl），一句加两图"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/state.ts", "note": "模板持久化：FileSystemThreadStore 承载 reducer 的纯数据状态"},
+        {"path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts", "note": "模板 Thread 类 + agentLoop：循环即对事件流的归约"},
+        {"path": "08-source/agent-content/factor-05-unify-execution-state.md", "note": "理论基础：统一执行/业务状态"}
+    ]
+})
+
+FIXES = {
+    # --- ag-nl2tool ---
+    ("ag-nl2tool", "how", 7): "将『翻译』与『执行』分离为两个独立阶段，便于单独为翻译逻辑做测试、评估与回滚，而不牵连执行链路，也能只替换模型输出解析层而保持工具执行代码不动。",
+    ("ag-nl2tool", "anti_patterns", 1): "模型返回未知工具时没有 else 兜底，直接抛异常导致整个流程中断，用户得不到任何反馈，正确做法是落入 else 做降级或澄清。",
+    ("ag-nl2tool", "anti_patterns", 2): "只做『翻译』不做循环闭环，拿到工具结果后不继续推理，Agent 退化为一次性的单步函数调用，无法完成多步任务。",
+    ("ag-nl2tool", "anti_patterns", 3): "依赖模型以非结构化文本表达工具调用，再靠脆弱解析去还原参数，极易因格式漂移而解析失败，应改用受约束的结构化输出。",
+    ("ag-nl2tool", "anti_patterns", 5): "忽略工具结果，不把执行结果喂回上下文，模型后续决策失去依据，整个循环名存实亡，必须把结果作为事件回写。",
+    # --- ag-prompts ---
+    ("ag-prompts", "why", 2): "可迭代：基于真实线上表现快速修改 prompt 内容，而不必等待框架发版或逆向黑盒定位问题，试错成本极低。",
+    ("ag-prompts", "why", 3): "透明性：永远清楚 Agent 正在依据哪些指令工作，便于审计、排查与向利益相关方解释行为，合规与排障都有据可依。",
+    ("ag-prompts", "anti_patterns", 1): "把 prompt 工程彻底外包给框架，丧失对『送入模型的精确 token』的控制，调优无从下手，行为也不可审计。",
+    ("ag-prompts", "anti_patterns", 2): "对 prompt 不建测试不建 evals，任何改动的风险都不可评估，线上出问题只能靠肉眼试错，回归无从谈起。",
+    ("ag-prompts", "anti_patterns", 3): "在 prompt 中重复堆砌长指令而没有结构化组织，浪费 token 且降低模型的遵循度，应精简并按角色分层。",
+    ("ag-prompts", "anti_patterns", 5): "直接复用框架默认 prompt 而从不审视其中是否含有与业务不符、甚至有害的指令，必须逐句核对后再上线。",
+    ("ag-prompts", "anti_patterns", 6): "忽略角色 API 的能力差异，白白放弃非标准角色用法能带来的行为红利与实验空间，应把角色能力纳入选型。",
+    # --- ag-context ---
+    ("ag-context", "what", 7): "你可以完全控制『存什么 vs 传给 LLM 什么』：实验不同的上下文结构会带来明显的质量提升，这是上下文工程的核心杠杆。",
+    ("ag-context", "why", 1): "错误处理：以有助于 LLM 恢复的格式包含错误信息，错误和失败调用解决后应主动从上下文窗口隐藏，防止历史失败干扰。",
+    ("ag-context", "why", 2): "安全性：严格控制什么信息进入 LLM，过滤敏感数据，防止密码、密钥等意外泄露给模型，泄露面可收敛到最小。",
+    ("ag-context", "why", 3): "灵活性：随着你对用例理解的深入，可以随时调整上下文格式，不必被框架锁死，结构迭代无需迁移系统。",
+    ("ag-context", "how", 6): "把错误信息以 XML 标签结构化进上下文，同时考虑在解决后从窗口移除，避免失败历史污染后续推理，这本身就是格式实验。",
+    ("ag-context", "cases", 8): "信息密度对比图：同一条消息用更少 token 表达相同含义（Loom 截图），验证格式优化收益，是格式取舍的实证依据。",
+    ("ag-context", "anti_patterns", 0): "无条件沿用标准 messages 数组格式，从不针对用例优化结构，白白浪费 token 与注意力，应至少做一次格式对比实验。",
+    ("ag-context", "anti_patterns", 1): "把未解决的错误事件长期留在上下文里，模型反复看到失败历史，严重影响后续决策质量，解决后应立即隐藏。",
+    ("ag-context", "anti_patterns", 2): "用调采样参数（temperature/top_p 等）来弥补上下文构造不足，而不是去优化输入本身，治标不治本。",
+    ("ag-context", "anti_patterns", 3): "把敏感数据（密码上下文、session id 等）不加过滤直接塞进上下文，造成泄密风险，机密应留在外部存储。",
+    ("ag-context", "anti_patterns", 4): "只堆砌『发生了什么』而不显式声明『下一步是什么』，模型只能靠猜，决策稳定性差，务必把引导句写进模板。",
+    ("ag-context", "anti_patterns", 5): "把工具结果以大段 JSON 原文塞入而不做压缩/结构化，token 效率与可读性双输，应按事件语义重新组织。",
+    ("ag-context", "anti_patterns", 6): "上下文越长越不管理，违反『隐藏已解决错误、修剪无关节』的纪律，为错误空转埋下隐患，要主动修剪历史。",
+    # --- ag-tools ---
+    ("ag-tools", "what", 2): "示例：CreateIssue 类携带 intent='create_issue' 与嵌套的 Issue 对象；SearchIssues 携带 intent='search_issues' 与 query、what_youre_looking_for 查询字段。",
+    ("ag-tools", "why", 1): "同样的 JSON 意图可以映射到不同实现，随业务变化灵活调整，不锁死工具与函数的严格一一对应，实现可独立演进。",
+    ("ag-tools", "why", 3): "结构化输出天然可测试：schema 明确、解析稳定，比解析自由文本可靠得多，回归有保障，错误能准确定位到字段。",
+    ("ag-tools", "why", 4): "符合『Agent 循环』第一步的标准化产出，后续每一步（执行、回写、再决策）都能被确定性处理，全链路可控。",
+    ("ag-tools", "how", 0): "用数据类（Python class 或 BAML class）定义每个工具：intent 字段加业务参数，如 CreateIssue 内含 intent 与嵌套的 Issue 对象。",
+    ("ag-tools", "how", 3): "把每次工具调用的结果捕获并追加回上下文（thread.events），供模型决定下一步，形成闭环，执行信息不丢失。",
+    ("ag-tools", "anti_patterns", 0): "把每个工具与固定函数一一绑定，丧失『同一意图不同实现』的灵活性，业务变化时不得不重构，可维护性差。",
+    ("ag-tools", "anti_patterns", 1): "让 LLM 直接输出要执行的代码字符串，而不是结构化的『意图+参数』JSON，解析与安全风险陡增，务必拒绝此做法。",
+    ("ag-tools", "anti_patterns", 2): "模型返回未知意图时不设 else 兜底，直接抛错中断，整个 Agent 流程随之失败，应走降级或澄清路径。",
+    ("ag-tools", "anti_patterns", 3): "忽略工具结果、不把执行结果喂回上下文，破坏循环闭环，模型无法基于结果继续决策，决策成了无源之水。",
+    ("ag-tools", "anti_patterns", 4): "为每个细微动作都定义独立工具，工具爆炸导致 schema 庞大、模型选择困难、维护成本失控，应合并相近意图。",
+    ("ag-tools", "anti_patterns", 5): "把高风险执行逻辑直接交给 LLM 驱动的函数而不做控制流介入，缺少 factor 8 的保护，必须加审批断点。",
+    # --- ag-state ---
+    ("ag-state", "what", 4): "核心建议：尽可能简化，把两者尽量统一成一份状态，而不是维护两套并行数据，同一 thread 事件流即承载全部状态。",
+    ("ag-state", "why", 0): "简单性：所有状态的唯一事实来源，不再有两套系统互相不同步，心智负担大幅下降，跨端一致性天然满足。",
+    ("ag-state", "why", 1): "可序列化：thread 可以轻松地序列化/反序列化，持久化、传输、恢复都毫无负担，配合 JSON 落盘即可。",
+    ("ag-state", "why", 2): "可调试：完整历史在一个地方可见，问题定位快，不用跨多个存储拼凑现场，复盘整条事件链即可定位根因。",
+    ("ag-state", "why", 3): "灵活性：新增状态只需新增事件类型，无需改动存储 schema 或迁移数据，演进成本几乎为零且向后兼容。",
+    ("ag-state", "why", 4): "可恢复：只要加载 thread 就能从任意断点恢复执行，暂停/恢复天然成立，无需额外重建上下文。",
+    ("ag-state", "why", 5): "可分叉：复制 thread 的一部分到新的上下文/状态 ID，就能在任意点 fork 出分支试验，适合并行探索。",
+    ("ag-state", "why", 7): "把执行状态收编进上下文元数据后，暂停/恢复（factor 6）与恢复逻辑自然成立，无需额外同步，省掉一套机制。",
+    ("ag-state", "how", 2): "让所有需要决策的信息都进上下文，session id、密码等机密留在外部存储，只把脱敏引用传入，兼顾效果与安全。",
+    ("ag-state", "how", 5): "新增业务能力时新增 Event.type 与对应 data，而不是另起一套执行状态表来维护，保持单一事实来源。",
+    ("ag-state", "cases", 1): "执行状态与业务状态的定义对比列表（原文明确列出两类字段的归属），是理解两状态分野与统一动机的起点。",
+    ("ag-state", "anti_patterns", 0): "为执行状态与业务状态建立两套独立系统，同步逻辑成为维护噩梦，状态极易不一致，应合并为单一事件流。",
+    ("ag-state", "anti_patterns", 1): "把 session id、密码等不该进上下文的东西硬塞给 LLM，引入安全与泄露风险，机密只存外部存储。",
+    ("ag-state", "anti_patterns", 2): "把执行状态藏进全局可变变量或进程内存，进程一挂全丢，无法恢复，必须落盘持久化到事件流中才能保命恢复。",
+    ("ag-state", "anti_patterns", 3): "状态没有单一序列化路径，调试时需要跨多个存储拼历史，问题定位困难，应统一走 thread 的单一序列化路径。",
+    ("ag-state", "anti_patterns", 4): "新增状态时改动存储 schema 而不是新增事件类型，破坏向后兼容性，应以追加事件类型代替改结构。",
+    ("ag-state", "anti_patterns", 5): "不在暂停/等待前持久化，导致恢复时丢失中间过程，恢复残缺，每次等待或暂停前都必须先 save_state 持久化落盘。",
+    # --- ag-pause ---
+    ("ag-pause", "what", 2): "Agent 及其编排的确定性代码应该在需要长时运行操作（如等人类回复、跑长任务）时能暂停它，而不是阻塞占用资源。",
+    ("ag-pause", "what", 5): "原文特别提醒：很多 AI 编排器允许暂停/恢复，但恰恰不允许在『工具选择』与『工具执行』之间暂停，这正是审批窗口所在。",
+    ("ag-pause", "what", 6): "这个『选择与执行之间』的暂停点正是高价值操作的审批/复核窗口，缺失它就无法在工具运行前审查，风险不可控。",
+    ("ag-pause", "why", 2): "暂停点是确定性代码干预的窗口：审批、复核、长任务等待都依赖它，缺失则无法做高价值操作，价值天花板被锁死。",
+    ("ag-pause", "why", 4): "编排器普遍缺『选择与执行之间』的暂停能力，自己实现才能获得完整的控制粒度，这是本因子独立存在的价值。",
+    ("ag-pause", "how", 7): "与 factor 8 配合：暂停后编排器可以自由决定何时、由谁来恢复，形成自然的中断/恢复工作流，恢复时机完全自主。",
+    ("ag-pause", "anti_patterns", 0): "依赖不允许在工具选择与执行之间暂停的编排器，丧失审批与复核窗口，高价值操作无从保障，应自建控制流。",
+    ("ag-pause", "anti_patterns", 1): "恢复逻辑与编排器深度耦合，外部 webhook 无法独立唤醒 Agent，集成面窄，应依赖公开 API 恢复。",
+    ("ag-pause", "anti_patterns", 2): "暂停时把任务挂在内存里 while...sleep 空转等待，进程一断就得从头再来，可恢复性为零。",
+    ("ag-pause", "anti_patterns", 3): "缺少查询端点（GET /thread/:id），外部系统无法知道 Agent 当前卡在哪一步，可观测性缺失。",
+    ("ag-pause", "anti_patterns", 4): "恢复时从零重启整条流程，而不是加载 thread 从断点继续，浪费且易错，应直接加载持久化线程。",
+    ("ag-pause", "anti_patterns", 5): "不把线程状态落盘，暂停后进程重启即丢失全部上下文，无法恢复，必须先持久化落盘再暂停，否则现场全丢。",
+    # --- ag-human ---
+    ("ag-human", "what", 3): "你可能不会因此获得性能提升，但应该保持实验自由——去尝试奇怪的方式以获得最好的结果，不被惯例和框架束缚。",
+    ("ag-human", "what", 4): "把『请求人类输入』建模成工具调用：class RequestHumanInput 含 intent/question/context/options，options 设 urgency、format(free_text/yes_no/multiple_choice)、choices。",
+    ("ag-human", "what", 5): "Agent 循环里命中 request_human_input 时：追加 human_input_requested 事件、save_state、notify_human，然后 break 跳出循环等人回复。",
+    ("ag-human", "what", 6): "回复通过 webhook 回来：POST /webhook 里 load_state(thread_id)、push response_from_human 事件、再跑 determine_next_step 继续循环。",
+    ("ag-human", "what", 7): "配合 factor 3 的 XML 上下文，多次对话后的窗口形如：<slack_message> 之后跟 <request_human_input>、<human_response>、<deploy_backend> 与结果事件。",
+    ("ag-human", "what", 8): "这与传统 chatGPT 式界面不同，支持外循环（outer loop）：控制流与上下文初始化是 Agent→Human 而非 Human→Agent，例如由 cron 或事件启动。",
+    ("ag-human", "why", 0): "清晰指令：为不同类型的人类接触定义工具，LLM 能给出更具体的请求，包括问题、上下文与选项格式，交互更精准。",
+    ("ag-human", "why", 2): "多人类接入：通过结构化事件轻松跟踪和协调来自不同人类的输入，谁批准谁拒绝一目了然，权责清晰可追溯。",
+    ("ag-human", "why", 3): "多 Agent：简单抽象可轻松扩展为 Agent→Agent 的请求/响应模式，扩展开销极低，复用同一套事件机制。",
+    ("ag-human", "how", 0): "在 BAML 里定义人类工具类：ClarificationRequest（request_more_information + message）、DoneForNow、RequestApprovalFromManager（request_approval_from_manager + message）。",
+    ("ag-human", "how", 2): "Agent 循环中命中 request_human_input：push human_input_requested 事件、save_state、notify_human、break 等待人类回复。",
+    ("ag-human", "how", 6): "模板 a2h.ts 定义 A2H 消息协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec(agentMessage/response_schema/channel_id) 与 status(humanMessage/response)。",
+    ("ag-human", "cases", 2): "XML 上下文演进示例：<request_human_input>（question: 是否部署 v1.2.3 到生产，urgency high, format yes_no）后接 <human_response>（approved true / user alex@company.com）。",
+    ("ag-human", "cases", 3): "模板 BAML：ClarificationRequest、DoneForNow、RequestApprovalFromManager、ProcessRefund（含必须批准注解）组成 HumanTools 联合类型。",
+    ("ag-human", "cases", 4): "模板 src/a2h.ts：ApprovalSchema（approved/comment）、Message 协议、NewConversation（user_message/channel_id/agent_name）。",
+    ("ag-human", "cases", 5): "workshop Chapter 5：CLI 里 askHuman 用 readline 收集回复；Chapter 11 改为 email 审批（divide 走 fetchHumanApproval）。",
+    ("ag-human", "cases", 6): "外循环参考：theouterloop.substack.com 关于 OpenAI realtime API 是朝外循环的一步；另有 deploybot 真实对话截图佐证。",
+    ("ag-human", "cases", 7): "原文 5 条收益：Clear Instructions / Inner vs Outer Loop / Multiple Human Access / Multi-Agent / Durable。",
+    ("ag-human", "anti_patterns", 3): "人类回复没有结构化事件记录（谁、何时、批准与否），审计与多人类协调无从谈起，必须落为结构化事件。",
+    ("ag-human", "anti_patterns", 5): "请求人类时丢失 thread_id 引用，webhook 回来无法定位线程，恢复失败，须把 thread_id 塞进 spec.state。",
+    # --- ag-control ---
+    ("ag-control", "what", 0): "如果你掌控自己的控制流，就能做很多有趣的事：为你的特定用例构建自己的控制结构，而不是被框架规定死。",
+    ("ag-control", "what", 1): "某些类型的工具调用可能是跳出循环的理由——例如等待人类回复，或等待训练流水线这类长任务完成，需要中断。",
+    ("ag-control", "what", 7): "该模式允许你随意中断/恢复 Agent 流程，创造更自然的多轮对话与工作流，恢复点完全由你掌控。",
+    ("ag-control", "what", 8): "与 factor 5（统一状态）和 factor 6（暂停/恢复）紧密相关，但可以独立实现，不必捆绑落地。",
+    ("ag-control", "what", 9): "掌控控制流的本质：循环 + switch 语句 + 事件累积三者全在你的代码里，而非框架黑盒，一切皆可干预。",
+    ("ag-control", "why", 0): "工具选择与执行之间的中断点是审批与复核的必需窗口，缺失它就无法安全地执行高价值操作，风险失控。",
+    ("ag-control", "why", 1): "自定义控制结构才能支持自然工作流：中断等人、等待长任务、再无缝恢复，体验接近真实协作。",
+    ("ag-control", "why", 2): "可以按需插入缓存、LLM-judge、限流、日志、指标等横切逻辑，框架黑盒做不到这一点，掌控力最强。",
+    ("ag-control", "why", 4): "只有自建控制流才能把『工具调用』真正当作 JSON 驱动的可编排步骤，而非不可中断的函数执行，灵活度最高。",
+    ("ag-control", "how", 1): "按 intent 分支：request_clarification → push 事件、send_message_to_human、db.save_thread、break（async 等 webhook）；fetch_open_issues → push、调 linear_client.issues()、push 结果、continue（sync 回喂）。",
+    ("ag-control", "how", 3): "把中断点刻意放在『工具选择之后、工具执行之前』，让确定性代码有机会先审批再放行，掌握完整决策链。",
+    ("ag-control", "how", 6): "持久 sleep 用『保存状态 + 等事件』实现，而非内存 sleep，保证可恢复性，进程重启也不丢状态。",
+    ("ag-control", "anti_patterns", 0): "在内存里 while...sleep 等待长任务，进程一断必须从头重启，可恢复性为零，是典型的反模式。",
+    ("ag-control", "anti_patterns", 1): "把 Agent 限制为只做低风险、低价值调用（研究/汇总），白白浪费 Agent 的决策能力，价值缩水。",
+    ("ag-control", "anti_patterns", 2): "给 Agent 高价值工具却不设审批点，纯靠赌（yolo）它不会搞砸，风险不可控，必须加复核。",
+    ("ag-control", "anti_patterns", 3): "把控制流交给框架黑盒，无法在工具选择与执行之间插入任何逻辑，丧失所有干预能力。",
+    ("ag-control", "anti_patterns", 4): "所有工具都同步执行返回，没有任何 async break 的等待路径，无法处理长任务与人工介入。",
+    ("ag-control", "anti_patterns", 5): "没有 while True 主循环，Agent 退化为单步函数调用，无法完成多步任务，循环骨架是底线。",
+    # --- ag-errors ---
+    ("ag-errors", "what", 3): "进阶版：为具体工具调用实现 errorCounter，把单工具重试限制在约 3 次，防止无限空转，给自愈加护栏。",
+    ("ag-errors", "what", 5): "达到连续错误阈值是升级到人类的好时机：可以由模型决定，也可以由确定性代码接管控制流去请求人类介入。",
+    ("ag-errors", "what", 6): "原文提醒：如果错误压缩做得太多，Agent 会开始空转（spin out），反复重试同一个错误，陷入死循环。",
+    ("ag-errors", "what", 9): "自愈依赖『把错误消息喂给 LLM 让它改错』，因此错误的格式与上下文保留策略直接决定自愈质量与成功率。",
+    ("ag-errors", "why", 0): "自愈：LLM 能读懂错误消息并在下一次工具调用中自行修正，无需人工介入，大幅减少运维负担。",
+    ("ag-errors", "why", 1): "持久化：即使一个工具调用失败，Agent 也能继续运行，整体任务不因单点失败而夭折，可用性提升。",
+    ("ag-errors", "why", 2): "错误+重试阈值是『拉人类进循环』的天然触发点，为升级处理提供明确信号，升级时机有据可依。",
+    ("ag-errors", "why", 3): "这是唯一可以脱离其他 11 条因子单独落地的一条，单独实施就能获得大量价值，投入产出比极高。",
+    ("ag-errors", "why", 4): "配合上下文管理（factor 3），可以主动修剪错误与失败事件，防止失败历史污染后续推理，决策更干净。",
+    ("ag-errors", "how", 3): "阈值处理：连续失败达到阈值时，选择『重置部分上下文 / 升级人类 / 其他你想做的事』，策略完全自主。",
+    ("ag-errors", "how", 4): "升级人类：在错误重试耗尽后调用 factor 7 的人类联系机制，让真人接手排障，避免无谓空转。",
+    ("ag-errors", "how", 6): "从窗口移除已解决错误：事件解决后从上下文隐藏，避免 LLM 反复看到失败史，保持决策干净。",
+    ("ag-errors", "cases", 5): "动画 195-factor-09-errors.gif 演示错误写入上下文后模型自我修正的过程，直观展示自愈闭环。",
+    ("ag-errors", "cases", 6): "与 factor 3 的结合示例：错误解决后从上下文移除、用自定义格式表示错误，双向受益。",
+    ("ag-errors", "anti_patterns", 0): "无节制的无限重试（无 errorCounter），Agent 空转反复重试同一个错误，浪费资源且无收敛保证。",
+    ("ag-errors", "anti_patterns", 1): "把原始堆栈/错误原文不加格式化地塞回上下文，浪费 token 且难以被模型有效解读，应格式化为事件。",
+    ("ag-errors", "anti_patterns", 2): "错误解决后仍把失败事件留在上下文，模型被失败历史持续影响，应主动从窗口移除已解决错误。",
+    ("ag-errors", "anti_patterns", 3): "达到重试阈值后不升级人类也不换策略，死循环到底，重试护栏与升级机制必须并存。",
+    ("ag-errors", "anti_patterns", 4): "用单体大 Agent 承载长任务，错误累积进长上下文后彻底迷失，应拆成小 Agent 缩短上下文。",
+    ("ag-errors", "anti_patterns", 5): "把错误吞掉不写入上下文，LLM 毫不知情、自愈无从谈起，错误必须作为事件回写。",
+    # --- ag-small ---
+    ("ag-small", "what", 3): "核心原则是『随着上下文增长，LLM 更容易迷失或失去焦点』，这是把 Agent 控制在小规模的根本理由。",
+    ("ag-small", "what", 6): "这就像重构大型确定性代码库：有意识地拆分与逐步扩展是保持质量的关键，重构经验可平移。",
+    ("ag-small", "why", 0): "上下文可控：小上下文窗口意味着更好的 LLM 性能与更低的失败率，输出质量有保障，成本也更低。",
+    ("ag-small", "why", 1): "职责清晰：每个 Agent 有明确定义的范围与目的，系统整体易推理、易演进，边界一目了然。",
+    ("ag-small", "why", 2): "更可靠：在复杂工作流中不易迷失，错误不易在长链条里传播放大，单点失败影响面小。",
+    ("ag-small", "why", 3): "更易测试/调试：单 Agent 功能边界小，测试用例与问题定位都简单直接，验证成本大幅降低。",
+    ("ag-small", "why", 4): "防止错误空转：短上下文里错误不累积，是 factor 9 防 spin-out 的头号手段，自愈更有效。",
+    ("ag-small", "why", 5): "即便模型更强，小 Agent 方式保证今天可交付，同时为未来扩范围留好结构，与重构大代码库同理。",
+    ("ag-small", "how", 1): "限制每 Agent 的步骤规模在 3-10 步，硬上限 20 步，超出就继续拆分，规模纪律明确。",
+    ("ag-small", "how", 3): "用确定性代码处理结构化流程，只在『解析人类反馈、提出更新行动方案』等关键点引入 LLM，物尽其用。",
+    ("ag-small", "how", 4): "配合 factor 7 把人类反馈翻译成工作流步骤，避免在长上下文里错误循环，反馈落地更稳。",
+    ("ag-small", "cases", 6): "chainlit 的 support/chatbot 演示（更多经典案例），作为社区佐证小 Agent 模式的有效性。",
+    ("ag-small", "anti_patterns", 0): "构建什么都能做的单体 Agent，上下文随任务膨胀到失控，迷失与失败成为常态，务必拆分。",
+    ("ag-small", "anti_patterns", 1): "在上下文不可靠时激进扩大 Agent 范围，质量崩坏而不可逆，扩大必须基于验证过的可靠性。",
+    ("ag-small", "anti_patterns", 2): "让单个 Agent 跑 100+ 步的长链条，迷失与错误累积成为常态，超长任务应切分为 DAG。",
+    ("ag-small", "anti_patterns", 3): "不在确定性 DAG 中编排小 Agent，而是让一个 Agent 全流程自行其事，失控风险高，编排是骨架。",
+    ("ag-small", "anti_patterns", 4): "忽略『贴近模型能力边界』的质量纪律，为了炫技而超规模设计，能力与边界失衡必然失败。",
+    ("ag-small", "anti_patterns", 5): "把小 Agent 的上下文与任务混在一起共享，违背隔离原则，隔离才能保住各 Agent 的聚焦。",
+    # --- ag-trigger ---
+    ("ag-trigger", "what", 2): "收益一：在用户所在之处服务用户，帮助构建感觉像真人的 AI 应用，至少像一位靠谱的数字同事。",
+    ("ag-trigger", "what", 5): "保持清晰标准能带来可审计性与对『执行更大更好事情』的 Agent 的信心，标准是信任的基石。",
+    ("ag-trigger", "why", 0): "在用户所在之处服务：更自然的交互体验，Agent 像数字同事而不是需要用户特意去用的独立应用。",
+    ("ag-trigger", "why", 3): "清晰标准与可审计性：多渠道接入加结构化记录，让高风险 Agent 有据可查、可信可用，信任可累积。",
+    ("ag-trigger", "why", 4): "多渠道触达是『数字同事』体验与 7×24 无人值守运营的前提，规模化运营的必需能力。",
+    ("ag-trigger", "how", 4): "给高风险工具配人类复核：发送外部邮件、更新生产数据前拉人确认，保持审计标准，授权有底线。",
+    ("ag-trigger", "cases", 0): "渠道列表：slack、email、sms 以及任意用户想要的渠道，都是触发与回复的载体，入口要广。",
+    ("ag-trigger", "cases", 1): "非人类触发列表：events、crons、outages（原文明确列出三类），Agent 可被系统事件唤醒。",
+    ("ag-trigger", "cases", 2): "运行时长区间：『They may work for 5, 20, 90 minutes』原文原话，长时后台工作是常态。",
+    ("ag-trigger", "cases", 4): "humanlayer 产品动机（原文点明这是其销售点），多渠道触达正是其核心卖点。",
+    ("ag-trigger", "anti_patterns", 0): "只提供单一入口（如只限网页聊天界面），用户要跳出工作流去用你的应用，体验割裂、触达面窄。",
+    ("ag-trigger", "anti_patterns", 1): "Agent 只能由人类发起，无法被事件/cron/宕机触发（无外循环能力），无法无人值守运行。",
+    ("ag-trigger", "anti_patterns", 2): "因没有复核链路就限制 Agent 权限，只让它做低价值调用，浪费能力，应建复核而非砍权限。",
+    ("ag-trigger", "anti_patterns", 3): "多渠道接入后不在关键决策点联系人类，导致高风险操作无审计，授权与复核必须成对。",
+    ("ag-trigger", "anti_patterns", 4): "回复渠道与触发渠道不一致，用户在 slack 问却在邮箱收到答案，体验混乱，回程要对齐。",
+    ("ag-trigger", "anti_patterns", 5): "渠道事件与线程状态脱节，webhook 回程找不到对应 thread，恢复失败，事件须携带线程引用。",
+    # --- ag-reducer ---
+    ("ag-reducer", "what", 4): "reducer 无内部可变状态：状态+事件进，下状态+可能的副作用（工具执行）出，决策与效应分离。",
+    ("ag-reducer", "why", 0): "收束统一状态：把 factor 5 的统一状态观用函数式视角彻底表达——状态即事件的归约结果。",
+    ("ag-reducer", "why", 1): "无状态化带来确定性：同样的事件序列必然产出同样的决策，行为可预测、可复现，调试容易。",
+    ("ag-reducer", "why", 2): "可序列化/恢复/分叉成为结构性必然：thread 是纯数据，load 即可重建任意状态，无需额外机制。",
+    ("ag-reducer", "how", 4): "恢复 = 重新把已持久化事件喂给 reducer；分叉 = 复制事件子集作为新输入，两种能力天然免费。",
+    ("ag-reducer", "cases", 1): "原文结语：『this one is mostly just for fun』的自嘲式定位，行文风格上以轻松收尾。",
+    ("ag-reducer", "cases", 4): "factor 5 的『加载 thread 从任意点恢复』在 reducer 视角下即事件重放，视角统一更清晰。",
+    ("ag-reducer", "cases", 5): "foldl 的函数式语义：从初始状态起依次把每个事件归约进去，产出最终状态/决策序列，抽象优雅。",
+    ("ag-reducer", "anti_patterns", 0): "把状态藏在全局可变变量里，reducer 不再无状态，重放与恢复随之失效，纯函数性被破坏。",
+    ("ag-reducer", "anti_patterns", 1): "把副作用（真实 API 调用）写进 reducer 内部逻辑，破坏『纯函数+外部效应』的边界，审计困难。",
+    ("ag-reducer", "anti_patterns", 2): "事件流不完整/不持久化，reducer 无数据可归约，断点无法重建，事件完整性是前提。",
+    ("ag-reducer", "anti_patterns", 3): "让 reducer 依赖进程内存中的隐式上下文而非显式事件输入，序列化与分叉无从谈起，输入须显式。",
+    ("ag-reducer", "anti_patterns", 4): "忽略本因子『主要是图个乐』的定位，为函数式而函数式地过度设计，原文自身也承认这一点。",
+}
+
+for n in NODES:
+    for key, val in FIXES.items():
+        if key[0] == n['id']:
+            n[key[1]][key[2]] = val
+
+FIXES2 = {
+    # --- ag-context: trims to bring total <=3000 ---
+    ("ag-context", "what", 4): "标准消息格式是 role=system/user/assistant/tool 的数组，assistant 带 tool_calls（id/name/arguments），tool 消息带 tool_call_id 回传结果。",
+    ("ag-context", "what", 9): "发布约两月后『context engineering』流行：原文引用 Karpathy、Tobi 与 @lenadroid 的 Context Engineering Cheat Sheet 佐证。",
+    ("ag-context", "how", 3): "上下文演进演示：初始 <slack_message> → 追加 <list_git_tags>/<list_git_tags_result> → 出错加 <error> → 追加 <request_more_information> 与 <human_response>。",
+    ("ag-context", "why", 3): "灵活性：随着你对用例理解的深入，可以随时调整上下文格式，不必被框架锁死，结构迭代无需迁移任何系统。",
+    ("ag-context", "anti_patterns", 1): "把未解决的错误事件长期留在上下文里，模型反复看到失败历史，严重影响后续决策质量，解决后应立即隐藏。",
+    ("ag-context", "anti_patterns", 6): "上下文越长越不管理，违反『隐藏已解决错误、修剪无关节』的纪律，为错误空转埋下隐患，要主动修剪历史。",
+    # --- ag-tools ---
+    ("ag-tools", "anti_patterns", 0): "把每个工具与固定函数一一绑定，丧失『同一意图不同实现』的灵活性，业务变化时不得不重构，可维护性差。",
+    ("ag-tools", "anti_patterns", 3): "忽略工具结果、不把执行结果喂回上下文，破坏循环闭环，模型无法基于结果继续决策，决策成了无源之水。",
+    # --- ag-state ---
+    ("ag-state", "why", 0): "简单性：所有状态的唯一事实来源，不再有两套系统互相不同步，心智负担大幅下降，跨端一致性天然满足。",
+    ("ag-state", "why", 2): "可调试：完整历史在一个地方可见，问题定位快，不用跨多个存储拼凑现场，复盘整条事件链即可定位根因。",
+    ("ag-state", "why", 4): "可恢复：只要加载 thread 就能从任意断点恢复执行，暂停/恢复天然成立，无需额外重建任何上下文。",
+    ("ag-state", "cases", 1): "执行状态与业务状态的定义对比列表（原文明确列出两类字段的归属），是理解两状态分野与统一动机的起点。",
+    ("ag-state", "anti_patterns", 0): "为执行状态与业务状态建立两套独立系统，同步逻辑成为维护噩梦，状态极易不一致，应合并为单一事件流。",
+    ("ag-state", "anti_patterns", 4): "新增状态时改动存储 schema 而不是新增事件类型，破坏向后兼容性，应以追加事件类型代替改结构。",
+    # --- ag-pause ---
+    ("ag-pause", "anti_patterns", 0): "依赖不允许在工具选择与执行之间暂停的编排器，丧失审批与复核窗口，高价值操作无从保障，应自建控制流。",
+    ("ag-pause", "anti_patterns", 2): "暂停时把任务挂在内存里 while...sleep 空转等待，进程一断就得从头再来，可恢复性为零。",
+    ("ag-pause", "anti_patterns", 4): "恢复时从零重启整条流程，而不是加载 thread 从断点继续，浪费且易错，应直接加载持久化线程。",
+    ("ag-pause", "anti_patterns", 5): "不把线程状态落盘，暂停后进程重启即丢失全部上下文，无法恢复，必须先持久化落盘再暂停，否则现场全丢。",
+    # --- ag-human: trims to bring total <=3000 ---
+    ("ag-human", "what", 0): "LLM API 默认依赖一个高风险的『首个 token』选择：返回纯文本，还是返回结构化数据，赌注全押在这一枚 token 上。",
+    ("ag-human", "what", 2): "更好的做法：让 LLM 永远输出 JSON，用 request_human_input、done_for_now 这类意图（而非 check_weather 类『正经』工具）声明想联系人类。",
+    ("ag-human", "what", 4): "把『请求人类输入』建模成工具调用：class RequestHumanInput 含 intent/question/context/options，options 设 urgency、format 与 choices。",
+    ("ag-human", "what", 5): "命中 request_human_input 时：追加 human_input_requested 事件、save_state、notify_human，然后 break 跳出循环等人回复。",
+    ("ag-human", "what", 6): "回复经 webhook 回来：POST /webhook 里 load_state(thread_id)、push response_from_human 事件、再跑 determine_next_step 继续。",
+    ("ag-human", "what", 7): "配合 factor 3 的 XML 上下文，对话窗口形如 <slack_message> 后跟 <request_human_input>、<human_response>、<deploy_backend> 等事件。",
+    ("ag-human", "why", 2): "多人类接入：通过结构化事件轻松跟踪和协调来自不同人类的输入，谁批准谁拒绝一目了然，权责清晰可追溯。",
+    ("ag-human", "how", 0): "在 BAML 里定义人类工具类：ClarificationRequest（request_more_information + message）、DoneForNow 与 RequestApprovalFromManager（request_approval_from_manager + message）。",
+    ("ag-human", "how", 6): "模板 a2h.ts 定义 A2H 消息协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec(agentMessage/response_schema/channel_id) 与 status。",
+    ("ag-human", "how", 7): "用 Zod schema（如 ApprovalSchema {approved, comment}）定义人类响应结构，approval 与 human request 复用同一 Message 类型。",
+    ("ag-human", "cases", 2): "XML 上下文演进：<request_human_input>（question: 是否部署 v1.2.3 到生产，urgency high, format yes_no）后接 <human_response>（approved true / user alex@company.com）。",
+    ("ag-human", "cases", 3): "模板 BAML：ClarificationRequest、DoneForNow、RequestApprovalFromManager、ProcessRefund（含必须批准注解）组成 HumanTools 联合。",
+    ("ag-human", "cases", 4): "模板 src/a2h.ts：ApprovalSchema（approved/comment）、Message 协议、NewConversation（user_message/channel_id/agent_name）定义。",
+    ("ag-human", "anti_patterns", 3): "人类回复没有结构化事件记录（谁、何时、批准与否），审计与多人类协调无从谈起，必须落为结构化事件。",
+    # --- ag-control ---
+    ("ag-control", "what", 0): "如果你掌控自己的控制流，就能做很多有趣的事：为你的特定用例构建自己的控制结构，而不是被框架规定死。",
+    ("ag-control", "what", 7): "该模式允许你随意中断/恢复 Agent 流程，创造更自然的多轮对话与工作流，恢复点完全由你掌控。",
+    ("ag-control", "why", 0): "工具选择与执行之间的中断点是审批与复核的必需窗口，缺失它就无法安全地执行高价值操作，风险失控。",
+    ("ag-control", "why", 1): "自定义控制结构才能支持自然工作流：中断等人、等待长任务、再无缝恢复，体验接近真实协作。",
+    ("ag-control", "how", 1): "按 intent 分支：request_clarification → push 事件、send_message_to_human、db.save_thread、break（async 等 webhook）；fetch_open_issues → push、调接口、push 结果、continue（sync 回喂）。",
+    ("ag-control", "how", 3): "把中断点刻意放在『工具选择之后、工具执行之前』，让确定性代码有机会先审批再放行，掌握完整决策链。",
+    ("ag-control", "anti_patterns", 2): "给 Agent 高价值工具却不设审批点，纯靠赌（yolo）它不会搞砸，风险不可控，必须加复核。",
+    ("ag-control", "anti_patterns", 3): "把控制流交给框架黑盒，无法在工具选择与执行之间插入任何逻辑，丧失所有干预能力。",
+    ("ag-control", "anti_patterns", 4): "所有工具都同步执行返回，没有任何 async break 的等待路径，无法处理长任务与人工介入。",
+    # --- ag-errors ---
+    ("ag-errors", "what", 5): "达到连续错误阈值是升级到人类的好时机：可以由模型决定，也可以由确定性代码接管控制流去请求人类介入。",
+    ("ag-errors", "why", 0): "自愈：LLM 能读懂错误消息并在下一次工具调用中自行修正，无需人工介入，大幅减少运维负担。",
+    ("ag-errors", "why", 1): "持久化：即使一个工具调用失败，Agent 也能继续运行，整体任务不因单点失败而夭折，可用性提升。",
+    ("ag-errors", "why", 2): "错误+重试阈值是『拉人类进循环』的天然触发点，为升级处理提供明确信号，升级时机有据可依。",
+    ("ag-errors", "why", 3): "这是唯一可以脱离其他 11 条因子单独落地的一条，单独实施就能获得大量价值，投入产出比极高。",
+    ("ag-errors", "how", 4): "升级人类：在错误重试耗尽后调用 factor 7 的人类联系机制，让真人接手排障，避免无谓空转。",
+    ("ag-errors", "how", 6): "从窗口移除已解决错误：事件解决后从上下文隐藏，避免 LLM 反复看到失败史，保持决策干净。",
+    ("ag-errors", "cases", 6): "与 factor 3 的结合示例：错误解决后从上下文移除、用自定义格式表示错误，双向受益。",
+    ("ag-errors", "anti_patterns", 2): "错误解决后仍把失败事件留在上下文，模型被失败历史持续影响，应主动从窗口移除已解决错误。",
+    ("ag-errors", "anti_patterns", 3): "达到重试阈值后不升级人类也不换策略，死循环到底，重试护栏与升级机制必须并存。",
+    ("ag-errors", "anti_patterns", 4): "用单体大 Agent 承载长任务，错误累积进长上下文后彻底迷失，应拆成小 Agent 缩短上下文。",
+    ("ag-errors", "anti_patterns", 5): "把错误吞掉不写入上下文，LLM 毫不知情、自愈无从谈起，错误必须作为事件回写。",
+    # --- ag-small ---
+    ("ag-small", "what", 6): "这就像重构大型确定性代码库：有意识地拆分与逐步扩展是保持质量的关键，重构经验可平移复用。",
+    ("ag-small", "why", 0): "上下文可控：小上下文窗口意味着更好的 LLM 性能与更低的失败率，输出质量有保障，成本也更低。",
+    ("ag-small", "why", 1): "职责清晰：每个 Agent 有明确定义的范围与目的，系统整体易推理、易演进，边界一目了然。",
+    ("ag-small", "why", 2): "更可靠：在复杂工作流中不易迷失，错误不易在长链条里传播放大，单点失败影响面小。",
+    ("ag-small", "why", 3): "更易测试/调试：单 Agent 功能边界小，测试用例与问题定位都简单直接，验证成本大幅降低。",
+    ("ag-small", "why", 5): "即便模型更强，小 Agent 方式保证今天可交付，同时为未来扩范围留好结构，与重构大代码库同理。",
+    ("ag-small", "how", 1): "限制每 Agent 的步骤规模在 3-10 步，硬上限 20 步，超出就继续拆分，规模纪律明确。",
+    ("ag-small", "how", 3): "用确定性代码处理结构化流程，只在『解析人类反馈、提出更新行动方案』等关键点引入 LLM，物尽其用。",
+    ("ag-small", "how", 4): "配合 factor 7 把人类反馈翻译成工作流步骤，避免在长上下文里错误循环，反馈落地更稳。",
+    ("ag-small", "anti_patterns", 0): "构建什么都能做的单体 Agent，上下文随任务膨胀到失控，迷失与失败成为常态，务必拆分。",
+    ("ag-small", "anti_patterns", 1): "在上下文不可靠时激进扩大 Agent 范围，质量崩坏而不可逆，扩大必须基于验证过的可靠性。",
+    ("ag-small", "anti_patterns", 2): "让单个 Agent 跑 100+ 步的长链条，迷失与错误累积成为常态，超长任务应切分为 DAG。",
+    ("ag-small", "anti_patterns", 4): "忽略『贴近模型能力边界』的质量纪律，为了炫技而超规模设计，能力与边界失衡必然失败。",
+    ("ag-small", "anti_patterns", 5): "把小 Agent 的上下文与任务混在一起共享，违背隔离原则，隔离才能保住各 Agent 的聚焦。",
+    # --- ag-trigger ---
+    ("ag-trigger", "what", 2): "收益一：在用户所在之处服务用户，帮助构建感觉像真人的 AI 应用，至少像一位靠谱的数字同事。",
+    ("ag-trigger", "what", 5): "保持清晰标准能带来可审计性与对『执行更大更好事情』的 Agent 的信心，标准是信任的基石。",
+    ("ag-trigger", "why", 0): "在用户所在之处服务：更自然的交互体验，Agent 像数字同事而不是需要用户特意去用的独立应用。",
+    ("ag-trigger", "why", 3): "清晰标准与可审计性：多渠道接入加结构化记录，让高风险 Agent 有据可查、可信可用，信任可累积。",
+    ("ag-trigger", "why", 4): "多渠道触达是『数字同事』体验与 7×24 无人值守运营的前提，规模化运营的必需能力。",
+    ("ag-trigger", "how", 4): "给高风险工具配人类复核：发送外部邮件、更新生产数据前拉人确认，保持审计标准，授权有底线。",
+    ("ag-trigger", "cases", 0): "渠道列表：slack、email、sms 以及任意用户想要的渠道，都是触发与回复的载体，入口要广。",
+    ("ag-trigger", "cases", 4): "humanlayer 产品动机（原文点明这是其销售点），多渠道触达正是其核心卖点。",
+    ("ag-trigger", "anti_patterns", 0): "只提供单一入口（如只限网页聊天界面），用户要跳出工作流去用你的应用，体验割裂、触达面窄。",
+    ("ag-trigger", "anti_patterns", 1): "Agent 只能由人类发起，无法被事件/cron/宕机触发（无外循环能力），无法无人值守运行。",
+    ("ag-trigger", "anti_patterns", 2): "因没有复核链路就限制 Agent 权限，只让它做低价值调用，浪费能力，应建复核而非砍权限。",
+    ("ag-trigger", "anti_patterns", 3): "多渠道接入后不在关键决策点联系人类，导致高风险操作无审计，授权与复核必须成对。",
+    ("ag-trigger", "anti_patterns", 4): "回复渠道与触发渠道不一致，用户在 slack 问却在邮箱收到答案，体验混乱，回程要对齐。",
+    # --- ag-reducer ---
+    ("ag-reducer", "what", 4): "reducer 无内部可变状态：状态+事件进，下状态+可能的副作用（工具执行）出，决策与效应分离。",
+    ("ag-reducer", "why", 0): "收束统一状态：把 factor 5 的统一状态观用函数式视角彻底表达——状态即事件的归约结果。",
+    ("ag-reducer", "why", 1): "无状态化带来确定性：同样的事件序列必然产出同样的决策，行为可预测、可复现，调试容易。",
+    ("ag-reducer", "cases", 5): "foldl 的函数式语义：从初始状态起依次把每个事件归约进去，产出最终状态/决策序列，抽象优雅。",
+    ("ag-reducer", "anti_patterns", 0): "把状态藏在全局可变变量里，reducer 不再无状态，重放与恢复随之失效，纯函数性被破坏。",
+    ("ag-reducer", "anti_patterns", 2): "事件流不完整/不持久化，reducer 无数据可归约，断点无法重建，事件完整性是前提。",
+    ("ag-reducer", "anti_patterns", 3): "让 reducer 依赖进程内存中的隐式上下文而非显式事件输入，序列化与分叉无从谈起，输入须显式。",
+    ("ag-reducer", "anti_patterns", 4): "忽略本因子『主要是图个乐』的定位，为函数式而函数式地过度设计，原文自身也承认这一点。",
+}
+
+for n in NODES:
+    for key, val in FIXES2.items():
+        if key[0] == n['id']:
+            n[key[1]][key[2]] = val
+
+FIXES3 = {
+    # --- ag-context: expansions + trims (target <=3000) ---
+    ("ag-context", "what", 4): "标准消息格式是 role=system/user/assistant/tool 的数组，assistant 消息里带 tool_calls（id/name/arguments），tool 消息用 tool_call_id 回传结果。",
+    ("ag-context", "what", 9): "发布约两月后『context engineering』流行：原文引用 Karpathy、Tobi 讨论与 @lenadroid 的 Context Engineering Cheat Sheet 佐证。",
+    ("ag-context", "how", 3): "上下文演进演示：初始 <slack_message> → 追加 <list_git_tags>/<list_git_tags_result> → 出错加 <error> → 追加 <request_more_information> 与 <human_response> 事件。",
+    ("ag-context", "how", 4): "用 determine_next_step(thread_to_prompt(thread)) 把自建上下文喂给 LLM，获取下一步意图（如 get_workflow_status 与 workflow_name）。",
+    ("ag-context", "how", 8): "工具模板参考 create-12-factor-agent/template/src/agent.ts：serializeForLLM/serializeOneEvent 把事件序列化为 <intent>k: v</intent> 格式。",
+    ("ag-context", "why", 3): "灵活性：随着你对用例理解的深入，可以随时调整上下文格式，不必被框架锁死，结构迭代也无需迁移任何系统。",
+    ("ag-context", "anti_patterns", 1): "把未解决的错误事件长期留在上下文里，模型反复看到失败历史，严重影响后续决策质量，错误解决后应立即隐藏。",
+    ("ag-context", "anti_patterns", 6): "上下文越长越不管理，违反『隐藏已解决错误、修剪无关节』的纪律，为错误空转埋下隐患，要主动修剪历史。",
+    # --- ag-tools ---
+    ("ag-tools", "anti_patterns", 0): "把每个工具与固定函数一一绑定，丧失『同一意图不同实现』的灵活性，业务变化时不得不重构，可维护性差。",
+    ("ag-tools", "anti_patterns", 3): "忽略工具结果、不把执行结果喂回上下文，破坏循环闭环，模型无法基于结果继续决策，决策成了无源之水。",
+    # --- ag-state ---
+    ("ag-state", "why", 0): "简单性：所有状态的唯一事实来源，不再有两套系统互相不同步，心智负担大幅下降，跨端一致性天然满足。",
+    ("ag-state", "why", 2): "可调试：完整历史在一个地方可见，问题定位快，不用跨多个存储拼凑现场，复盘整条事件链即可定位根因。",
+    ("ag-state", "why", 4): "可恢复：只要加载 thread 就能从任意断点恢复执行，暂停/恢复天然成立，无需额外重建任何上下文。",
+    ("ag-state", "cases", 1): "执行状态与业务状态的定义对比列表（原文明确列出两类字段的归属），是理解两状态分野与统一动机的起点。",
+    ("ag-state", "anti_patterns", 0): "为执行状态与业务状态建立两套独立系统，同步逻辑成为维护噩梦，状态极易不一致，应合并为单一事件流。",
+    ("ag-state", "anti_patterns", 4): "新增状态时改动存储 schema 而不是新增事件类型，破坏向后兼容性，应以追加事件类型代替改结构。",
+    # --- ag-pause ---
+    ("ag-pause", "anti_patterns", 0): "依赖不允许在工具选择与执行之间暂停的编排器，丧失审批与复核窗口，高价值操作无从保障，应自建控制流。",
+    ("ag-pause", "anti_patterns", 2): "暂停时把任务挂在内存里 while...sleep 空转等待，进程一断就得从头再来，可恢复性为零。",
+    ("ag-pause", "anti_patterns", 4): "恢复时从零重启整条流程，而不是加载 thread 从断点继续，浪费且易错，应直接加载持久化线程。",
+    ("ag-pause", "anti_patterns", 5): "不把线程状态落盘，暂停后进程重启即丢失全部上下文，无法恢复，必须先持久化落盘再暂停，否则现场全丢。",
+    # --- ag-human: trims to bring total <=3000 ---
+    ("ag-human", "what", 1): "第一个 token 就背负重担：weather in tokyo 场景下是 'the'，fetch_weather 场景是标记 JSON 开头的特殊 token（如 |JSON>）。",
+    ("ag-human", "what", 2): "更好的做法：让 LLM 永远输出 JSON，用 request_human_input、done_for_now 这类意图（而非 check_weather 类工具）声明想联系人类。",
+    ("ag-human", "what", 4): "把『请求人类输入』建模成工具调用：class RequestHumanInput 含 intent/question/context/options，options 设 urgency、format 与 choices。",
+    ("ag-human", "what", 5): "命中 request_human_input 时：追加 human_input_requested 事件、save_state、notify_human，然后 break 等人回复。",
+    ("ag-human", "what", 6): "回复经 webhook 回来：POST /webhook 里 load_state(thread_id)、push response_from_human，再跑 determine_next_step 继续。",
+    ("ag-human", "what", 7): "配合 factor 3 的 XML 上下文，对话窗口形如 <slack_message> 后接 <request_human_input>、<human_response>、<deploy_backend> 事件。",
+    ("ag-human", "what", 8): "这支持外循环（outer loop）：控制流与上下文初始化是 Agent→Human 而非 Human→Agent，例如由 cron 或事件启动。",
+    ("ag-human", "why", 0): "清晰指令：为不同类型的人类接触定义工具，LLM 能给出更具体的请求，包括问题、上下文与选项格式，交互更精准。",
+    ("ag-human", "why", 2): "多人类接入：通过结构化事件轻松跟踪和协调不同人类的输入，谁批准谁拒绝一目了然，权责清晰可追溯。",
+    ("ag-human", "why", 3): "多 Agent：简单抽象可轻松扩展为 Agent→Agent 的请求/响应模式，扩展开销极低，复用同一套事件机制。",
+    ("ag-human", "how", 0): "在 BAML 里定义人类工具类：ClarificationRequest（intent request_more_information + message）、DoneForNow 与 RequestApprovalFromManager。",
+    ("ag-human", "how", 2): "Agent 循环命中 request_human_input：push human_input_requested 事件、save_state、notify_human、break 等待人类回复。",
+    ("ag-human", "how", 6): "模板 a2h.ts 定义 A2H 协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec(agentMessage/response_schema/channel_id) 与 status。",
+    ("ag-human", "how", 7): "用 Zod schema（如 ApprovalSchema {approved, comment}）定义人类响应结构，approval 与 human request 复用 Message 类型。",    ("ag-human", "cases", 2): "XML 上下文演进：<request_human_input>（question: 是否部署 v1.2.3 到生产，urgency high, format yes_no）后接 <human_response>（approved true）。",
+    ("ag-human", "cases", 3): "模板 BAML：ClarificationRequest、DoneForNow、RequestApprovalFromManager、ProcessRefund（含必须批准注解）组成 HumanTools 联合。",
+    ("ag-human", "cases", 4): "模板 src/a2h.ts：ApprovalSchema（approved/comment）、Message 协议、NewConversation（user_message/channel_id/agent_name）。",
+    ("ag-human", "cases", 5): "workshop Chapter 5：CLI 里 askHuman 用 readline 收集回复；Chapter 11 改为 email 审批（divide 走 fetchHumanApproval）。",
+    ("ag-human", "cases", 7): "原文 5 条收益：Clear Instructions / Inner vs Outer Loop / Multiple Human Access / Multi-Agent / Durable。",
+    ("ag-human", "anti_patterns", 3): "人类回复没有结构化事件记录（谁、何时、批准与否），审计与多人类协调无从谈起，必须落为结构化事件以可追溯。",
+    ("ag-human", "anti_patterns", 5): "请求人类时丢失 thread_id 引用，webhook 回来无法定位线程，恢复失败，须把 thread_id 塞进 spec.state 回程定位。",
+    # --- ag-control ---
+    ("ag-control", "what", 0): "如果你掌控自己的控制流，就能做很多有趣的事：为你的特定用例构建自己的控制结构，而不是被框架规定死。",
+    ("ag-control", "what", 7): "该模式允许你随意中断/恢复 Agent 流程，创造更自然的多轮对话与工作流，恢复点完全由你掌控。",
+    ("ag-control", "why", 0): "工具选择与执行之间的中断点是审批与复核的必需窗口，缺失它就无法安全地执行高价值操作，风险失控。",
+    ("ag-control", "why", 1): "自定义控制结构才能支持自然工作流：中断等人、等待长任务、再无缝恢复，体验更接近真实协作。",
+    ("ag-control", "how", 1): "按 intent 分支：request_clarification → push 事件、send_message_to_human、db.save_thread、break（async 等 webhook）；fetch_open_issues → push、调接口、push 结果、continue。",
+    ("ag-control", "how", 3): "把中断点刻意放在『工具选择之后、工具执行之前』，让确定性代码有机会先审批再放行，掌握完整决策链。",
+    ("ag-control", "anti_patterns", 2): "给 Agent 高价值工具却不设审批点，纯靠赌（yolo）它不会搞砸，风险不可控，必须加复核。",
+    ("ag-control", "anti_patterns", 3): "把控制流交给框架黑盒，无法在工具选择与执行之间插入任何逻辑，丧失所有干预能力，危险且不可调。",
+    ("ag-control", "anti_patterns", 4): "所有工具都同步执行返回，没有任何 async break 的等待路径，无法处理长任务与人工介入。",
+    # --- ag-errors ---
+    ("ag-errors", "what", 5): "达到连续错误阈值是升级到人类的好时机：可以由模型决定，也可以由确定性代码接管控制流去请求人类介入。",
+    ("ag-errors", "why", 0): "自愈：LLM 能读懂错误消息并在下一次工具调用中自行修正，无需人工介入，大幅减少运维负担。",
+    ("ag-errors", "why", 1): "持久化：即使一个工具调用失败，Agent 也能继续运行，整体任务不因单点失败而夭折，可用性提升。",
+    ("ag-errors", "why", 2): "错误+重试阈值是『拉人类进循环』的天然触发点，为升级处理提供明确信号，升级时机有据可依。",
+    ("ag-errors", "why", 3): "这是唯一可以脱离其他 11 条因子单独落地的一条，单独实施就能获得大量价值，投入产出比极高。",
+    ("ag-errors", "how", 4): "升级人类：在错误重试耗尽后调用 factor 7 的人类联系机制，让真人接手排障，避免无谓空转。",
+    ("ag-errors", "how", 6): "从窗口移除已解决错误：事件解决后从上下文隐藏，避免 LLM 反复看到失败史，保持决策干净。",
+    ("ag-errors", "cases", 6): "与 factor 3 的结合示例：错误解决后从上下文移除、用自定义格式表示错误，双向受益。",
+    ("ag-errors", "anti_patterns", 2): "错误解决后仍把失败事件留在上下文，模型被失败历史持续影响，应主动从窗口移除已解决错误。",
+    ("ag-errors", "anti_patterns", 3): "达到重试阈值后不升级人类也不换策略，死循环到底，重试护栏与升级机制必须并存方可收敛。",
+    ("ag-errors", "anti_patterns", 4): "用单体大 Agent 承载长任务，错误累积进长上下文后彻底迷失，应拆成小 Agent 缩短上下文。",
+    ("ag-errors", "anti_patterns", 5): "把错误吞掉不写入上下文，LLM 毫不知情、自愈无从谈起，错误必须作为事件回写。",
+    # --- ag-small ---
+    ("ag-small", "what", 6): "这就像重构大型确定性代码库：有意识地拆分与逐步扩展是保持质量的关键，重构经验可平移复用。",
+    ("ag-small", "why", 0): "上下文可控：小上下文窗口意味着更好的 LLM 性能与更低的失败率，输出质量有保障，成本也更低。",
+    ("ag-small", "why", 1): "职责清晰：每个 Agent 有明确定义的范围与目的，系统整体易推理、易演进，边界一目了然。",
+    ("ag-small", "why", 2): "更可靠：在复杂工作流中不易迷失，错误不易在长链条里传播放大，单点失败影响面小。",
+    ("ag-small", "why", 3): "更易测试/调试：单 Agent 功能边界小，测试用例与问题定位都简单直接，验证成本大幅降低。",
+    ("ag-small", "why", 5): "即便模型更强，小 Agent 方式保证今天可交付，同时为未来扩范围留好结构，与重构大代码库同理。",
+    ("ag-small", "how", 1): "限制每 Agent 的步骤规模在 3-10 步，硬上限 20 步，超出就继续拆分，规模纪律明确。",
+    ("ag-small", "how", 3): "用确定性代码处理结构化流程，只在『解析人类反馈、提出更新行动方案』等关键点引入 LLM，物尽其用。",
+    ("ag-small", "how", 4): "配合 factor 7 把人类反馈翻译成工作流步骤，避免在长上下文里错误循环，反馈落地更稳。",
+    ("ag-small", "anti_patterns", 0): "构建什么都能做的单体 Agent，上下文随任务膨胀到失控，迷失与失败成为常态，务必拆分。",
+    ("ag-small", "anti_patterns", 1): "在上下文不可靠时激进扩大 Agent 范围，质量崩坏而不可逆，扩大必须基于验证过的可靠性。",
+    ("ag-small", "anti_patterns", 2): "让单个 Agent 跑 100+ 步的长链条，迷失与错误累积成为常态，超长任务应切分为 DAG。",
+    ("ag-small", "anti_patterns", 4): "忽略『贴近模型能力边界』的质量纪律，为了炫技而超规模设计，能力与边界失衡必然失败。",
+    ("ag-small", "anti_patterns", 5): "把小 Agent 的上下文与任务混在一起共享，违背隔离原则，隔离才能保住各 Agent 的聚焦。",
+    # --- ag-trigger ---
+    ("ag-trigger", "what", 2): "收益一：在用户所在之处服务用户，帮助构建感觉像真人的 AI 应用，至少像一位靠谱的数字同事。",
+    ("ag-trigger", "what", 5): "保持清晰标准能带来可审计性与对『执行更大更好事情』的 Agent 的信心，标准是信任的基石。",
+    ("ag-trigger", "why", 0): "在用户所在之处服务：更自然的交互体验，Agent 像数字同事而不是需要用户特意去用的独立应用。",
+    ("ag-trigger", "why", 3): "清晰标准与可审计性：多渠道接入加结构化记录，让高风险 Agent 有据可查、可信可用，信任可累积。",
+    ("ag-trigger", "why", 4): "多渠道触达是『数字同事』体验与 7×24 无人值守运营的前提，规模化运营的必需能力。",
+    ("ag-trigger", "how", 4): "给高风险工具配人类复核：发送外部邮件、更新生产数据前拉人确认，保持审计标准，授权有底线。",
+    ("ag-trigger", "cases", 0): "渠道列表：slack、email、sms 以及任意用户想要的渠道，都是触发与回复的载体，入口要广。",
+    ("ag-trigger", "cases", 4): "humanlayer 产品动机（原文点明这是其销售点），多渠道触达正是其核心卖点。",
+    ("ag-trigger", "anti_patterns", 0): "只提供单一入口（如只限网页聊天界面），用户要跳出工作流去用你的应用，体验割裂、触达面窄。",
+    ("ag-trigger", "anti_patterns", 1): "Agent 只能由人类发起，无法被事件/cron/宕机触发（无外循环能力），无法无人值守运行。",
+    ("ag-trigger", "anti_patterns", 2): "因没有复核链路就限制 Agent 权限，只让它做低价值调用，浪费能力，应建复核而非砍权限。",
+    ("ag-trigger", "anti_patterns", 3): "多渠道接入后不在关键决策点联系人类，导致高风险操作无审计，授权与复核必须成对。",
+    ("ag-trigger", "anti_patterns", 4): "回复渠道与触发渠道不一致，用户在 slack 问却在邮箱收到答案，体验混乱，回程要对齐。",
+    # --- ag-reducer ---
+    ("ag-reducer", "what", 4): "reducer 无内部可变状态：状态+事件进，下状态+可能的副作用（工具执行）出，决策与效应分离。",
+    ("ag-reducer", "why", 0): "收束统一状态：把 factor 5 的统一状态观用函数式视角彻底表达——状态即事件的归约结果。",
+    ("ag-reducer", "why", 1): "无状态化带来确定性：同样的事件序列必然产出同样的决策，行为可预测、可复现，调试容易。",
+    ("ag-reducer", "cases", 5): "foldl 的函数式语义：从初始状态起依次把每个事件归约进去，产出最终状态/决策序列，抽象优雅。",
+    ("ag-reducer", "anti_patterns", 0): "把状态藏在全局可变变量里，reducer 不再无状态，重放与恢复随之失效，纯函数性被破坏。",
+    ("ag-reducer", "anti_patterns", 2): "事件流不完整/不持久化，reducer 无数据可归约，断点无法重建，事件完整性是前提。",
+    ("ag-reducer", "anti_patterns", 3): "让 reducer 依赖进程内存中的隐式上下文而非显式事件输入，序列化与分叉无从谈起，输入须显式。",
+    ("ag-reducer", "anti_patterns", 4): "忽略本因子『主要是图个乐』的定位，为函数式而函数式地过度设计，原文自身也承认这一点。",
+}
+
+for n in NODES:
+    for key, val in FIXES3.items():
+        if key[0] == n['id']:
+            n[key[1]][key[2]] = val
+
+FIXES4 = {
+    # ag-context
+    ("ag-context", "anti_patterns", 6): "上下文越长越不管理，违反『隐藏已解决错误、修剪无关节』的纪律，为错误空转埋下隐患，要主动修剪历史、定期压缩。",
+    # ag-tools
+    ("ag-tools", "anti_patterns", 0): "把每个工具与固定函数一一绑定，丧失『同一意图不同实现』的灵活性，业务变化时不得不重构，可维护性差。",
+    ("ag-tools", "anti_patterns", 3): "忽略工具结果、不把执行结果喂回上下文，破坏循环闭环，模型无法基于结果继续决策，决策成了无源之水。",
+    # ag-state
+    ("ag-state", "why", 0): "简单性：所有状态的唯一事实来源，不再有两套系统互相不同步，心智负担大幅下降，跨端一致性天然满足。",
+    ("ag-state", "why", 2): "可调试：完整历史在一个地方可见，问题定位快，不用跨多个存储拼凑现场，复盘整条事件链即可定位根因。",
+    ("ag-state", "cases", 1): "执行状态与业务状态的定义对比列表（原文明确列出两类字段的归属），是理解两状态分野与统一动机的起点。",
+    ("ag-state", "anti_patterns", 0): "为执行状态与业务状态建立两套独立系统，同步逻辑成为维护噩梦，状态极易不一致，应合并为单一事件流。",
+    ("ag-state", "anti_patterns", 4): "新增状态时改动存储 schema 而不是新增事件类型，破坏向后兼容性，应以追加事件类型代替改结构。",
+    # ag-pause
+    ("ag-pause", "anti_patterns", 0): "依赖不允许在工具选择与执行之间暂停的编排器，丧失审批与复核窗口，高价值操作无从保障，应自建控制流。",
+    ("ag-pause", "anti_patterns", 2): "暂停时把任务挂在内存里 while...sleep 空转等待，进程一断就得从头再来，可恢复性为零。",
+    ("ag-pause", "anti_patterns", 4): "恢复时从零重启整条流程，而不是加载 thread 从断点继续，浪费且易错，应直接加载持久化线程。",
+    ("ag-pause", "anti_patterns", 5): "不把线程状态落盘，暂停后进程重启即丢失全部上下文，无法恢复，必须先持久化落盘再暂停，否则现场全丢。",
+    # ag-human
+    ("ag-human", "why", 2): "多人类接入：通过结构化事件轻松跟踪和协调不同人类的输入，谁批准谁拒绝一目了然，权责清晰、全程可追溯。",
+    ("ag-human", "how", 6): "模板 a2h.ts 定义 A2H 协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec 内含 agentMessage/response_schema/channel_id 并支持 status。",
+    # ag-control
+    ("ag-control", "what", 0): "如果你掌控自己的控制流，就能做很多有趣的事：为你的特定用例构建自己的控制结构，而不是被框架规定死。",
+    ("ag-control", "what", 7): "该模式允许你随意中断/恢复 Agent 流程，创造更自然的多轮对话与工作流，恢复点完全由你掌控。",
+    ("ag-control", "why", 0): "工具选择与执行之间的中断点是审批与复核的必需窗口，缺失它就无法安全地执行高价值操作，风险失控。",
+    ("ag-control", "why", 1): "自定义控制结构才能支持自然工作流：中断等人、等待长任务、再无缝恢复，体验更接近真实协作。",
+    ("ag-control", "how", 3): "把中断点刻意放在『工具选择之后、工具执行之前』，让确定性代码有机会先审批再放行，掌握完整决策链。",
+    ("ag-control", "anti_patterns", 2): "给 Agent 高价值工具却不设审批点，纯靠赌（yolo）它不会搞砸，风险不可控，必须加复核。",
+    ("ag-control", "anti_patterns", 3): "把控制流交给框架黑盒，无法在工具选择与执行之间插入任何逻辑，丧失所有干预能力，危险且不可调。",
+    ("ag-control", "anti_patterns", 4): "所有工具都同步执行返回，没有任何 async break 的等待路径，无法处理长任务与人工介入。",
+    # ag-errors
+    ("ag-errors", "what", 5): "达到连续错误阈值是升级到人类的好时机：可以由模型决定，也可以由确定性代码接管控制流去请求人类介入。",
+    ("ag-errors", "why", 0): "自愈：LLM 能读懂错误消息并在下一次工具调用中自行修正，无需人工介入，大幅减少运维负担。",
+    ("ag-errors", "why", 1): "持久化：即使一个工具调用失败，Agent 也能继续运行，整体任务不因单点失败而夭折，可用性提升。",
+    ("ag-errors", "why", 2): "错误+重试阈值是『拉人类进循环』的天然触发点，为升级处理提供明确信号，升级时机有据可依。",
+    ("ag-errors", "why", 3): "这是唯一可以脱离其他 11 条因子单独落地的一条，单独实施就能获得大量价值，投入产出比极高。",
+    ("ag-errors", "how", 4): "升级人类：在错误重试耗尽后调用 factor 7 的人类联系机制，让真人接手排障，避免无谓空转。",
+    ("ag-errors", "how", 6): "从窗口移除已解决错误：事件解决后从上下文隐藏，避免 LLM 反复看到失败史，保持决策干净。",
+    ("ag-errors", "cases", 6): "与 factor 3 的结合示例：错误解决后从上下文移除、用自定义格式表示错误，双向受益。",
+    ("ag-errors", "anti_patterns", 2): "错误解决后仍把失败事件留在上下文，模型被失败历史持续影响，应主动从窗口移除已解决错误。",
+    ("ag-errors", "anti_patterns", 3): "达到重试阈值后不升级人类也不换策略，死循环到底，重试护栏与升级机制必须并存方可收敛。",
+    ("ag-errors", "anti_patterns", 4): "用单体大 Agent 承载长任务，错误累积进长上下文后彻底迷失，应拆成小 Agent 缩短上下文。",
+    ("ag-errors", "anti_patterns", 5): "把错误吞掉不写入上下文，LLM 毫不知情、自愈无从谈起，错误必须作为事件回写。",
+    # ag-small
+    ("ag-small", "what", 6): "这就像重构大型确定性代码库：有意识地拆分与逐步扩展是保持质量的关键，重构经验可平移复用。",
+    ("ag-small", "why", 0): "上下文可控：小上下文窗口意味着更好的 LLM 性能与更低的失败率，输出质量有保障，成本也更低。",
+    ("ag-small", "why", 1): "职责清晰：每个 Agent 有明确定义的范围与目的，系统整体易推理、易演进，边界一目了然。",
+    ("ag-small", "why", 2): "更可靠：在复杂工作流中不易迷失，错误不易在长链条里传播放大，单点失败影响面小。",
+    ("ag-small", "why", 3): "更易测试/调试：单 Agent 功能边界小，测试用例与问题定位都简单直接，验证成本大幅降低。",
+    ("ag-small", "why", 5): "即便模型更强，小 Agent 方式保证今天可交付，同时为未来扩范围留好结构，与重构大代码库同理。",
+    ("ag-small", "how", 1): "限制每 Agent 的步骤规模在 3-10 步，硬上限 20 步，超出就继续拆分，规模纪律明确。",
+    ("ag-small", "how", 3): "用确定性代码处理结构化流程，只在『解析人类反馈、提出更新行动方案』等关键点引入 LLM，物尽其用。",
+    ("ag-small", "how", 4): "配合 factor 7 把人类反馈翻译成工作流步骤，避免在长上下文里错误循环，反馈落地更稳。",
+    ("ag-small", "anti_patterns", 0): "构建什么都能做的单体 Agent，上下文随任务膨胀到失控，迷失与失败成为常态，务必拆分。",
+    ("ag-small", "anti_patterns", 1): "在上下文不可靠时激进扩大 Agent 范围，质量崩坏而不可逆，扩大必须基于验证过的可靠性。",
+    ("ag-small", "anti_patterns", 2): "让单个 Agent 跑 100+ 步的长链条，迷失与错误累积成为常态，超长任务应切分为 DAG。",
+    ("ag-small", "anti_patterns", 4): "忽略『贴近模型能力边界』的质量纪律，为了炫技而超规模设计，能力与边界失衡必然失败。",
+    ("ag-small", "anti_patterns", 5): "把小 Agent 的上下文与任务混在一起共享，违背隔离原则，隔离才能保住各 Agent 的聚焦。",
+    # ag-trigger
+    ("ag-trigger", "what", 2): "收益一：在用户所在之处服务用户，帮助构建感觉像真人的 AI 应用，至少像一位靠谱的数字同事。",
+    ("ag-trigger", "what", 5): "保持清晰标准能带来可审计性与对『执行更大更好事情』的 Agent 的信心，标准是信任的基石。",
+    ("ag-trigger", "why", 0): "在用户所在之处服务：更自然的交互体验，Agent 像数字同事而不是需要用户特意去用的独立应用。",
+    ("ag-trigger", "why", 3): "清晰标准与可审计性：多渠道接入加结构化记录，让高风险 Agent 有据可查、可信可用，信任可累积。",
+    ("ag-trigger", "why", 4): "多渠道触达是『数字同事』体验与 7×24 无人值守运营的前提，规模化运营的必需能力。",
+    ("ag-trigger", "how", 4): "给高风险工具配人类复核：发送外部邮件、更新生产数据前拉人确认，保持审计标准，授权有底线。",
+    ("ag-trigger", "cases", 0): "渠道列表：slack、email、sms 以及任意用户想要的渠道，都是触发与回复的载体，入口要广。",
+    ("ag-trigger", "cases", 4): "humanlayer 产品动机（原文点明这是其销售点），多渠道触达正是其核心卖点。",
+    ("ag-trigger", "anti_patterns", 0): "只提供单一入口（如只限网页聊天界面），用户要跳出工作流去用你的应用，体验割裂、触达面窄。",
+    ("ag-trigger", "anti_patterns", 1): "Agent 只能由人类发起，无法被事件/cron/宕机触发（无外循环能力），无法无人值守运行。",
+    ("ag-trigger", "anti_patterns", 2): "因没有复核链路就限制 Agent 权限，只让它做低价值调用，浪费能力，应建复核而非砍权限。",
+    ("ag-trigger", "anti_patterns", 3): "多渠道接入后不在关键决策点联系人类，导致高风险操作无审计，授权与复核必须成对。",
+    ("ag-trigger", "anti_patterns", 4): "回复渠道与触发渠道不一致，用户在 slack 问却在邮箱收到答案，体验混乱，回程要对齐。",
+    # ag-reducer
+    ("ag-reducer", "what", 4): "reducer 无内部可变状态：状态+事件进，下状态+可能的副作用（工具执行）出，决策与效应分离。",
+    ("ag-reducer", "why", 0): "收束统一状态：把 factor 5 的统一状态观用函数式视角彻底表达——状态即事件的归约结果。",
+    ("ag-reducer", "why", 1): "无状态化带来确定性：同样的事件序列必然产出同样的决策，行为可预测、可复现，调试容易。",
+    ("ag-reducer", "cases", 5): "foldl 的函数式语义：从初始状态起依次把每个事件归约进去，产出最终状态/决策序列，抽象优雅。",
+    ("ag-reducer", "anti_patterns", 0): "把状态藏在全局可变变量里，reducer 不再无状态，重放与恢复随之失效，纯函数性被破坏。",
+    ("ag-reducer", "anti_patterns", 2): "事件流不完整/不持久化，reducer 无数据可归约，断点无法重建，事件完整性是前提。",
+    ("ag-reducer", "anti_patterns", 3): "让 reducer 依赖进程内存中的隐式上下文而非显式事件输入，序列化与分叉无从谈起，输入须显式。",
+    ("ag-reducer", "anti_patterns", 4): "忽略本因子『主要是图个乐』的定位，为函数式而函数式地过度设计，原文自身也承认这一点。",
+}
+
+for n in NODES:
+    for key, val in FIXES4.items():
+        if key[0] == n['id']:
+            n[key[1]][key[2]] = val
+
+FIXES5 = {
+    # restore items cut mid-word by earlier auto-trim
+    ("ag-context", "how", 3): "上下文演进演示：初始 <slack_message> 追加 <list_git_tags> 与 <list_git_tags_result>，出错加 <error>，再追加 <request_more_information> 与 <human_response>。",
+    ("ag-context", "how", 8): "工具模板参考 create-12-factor-agent/template/src/agent.ts：serializeForLLM/serializeOneEvent 把事件序列化为 <intent>k: v</intent> 格式。",
+    ("ag-human", "how", 0): "在 BAML 里定义人类工具类：ClarificationRequest（intent request_more_information + message）、DoneForNow 与 RequestApprovalFromManager（含 message）。",
+    ("ag-human", "how", 6): "模板 a2h.ts 定义 A2H 协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec 内含 agentMessage/response_schema/channel_id 与 status。",
+    ("ag-human", "cases", 2): "XML 上下文演进：<request_human_input>（question: 是否部署 v1.2.3 到生产，urgency high, format yes_no）后接 <human_response>（approved true）。",
+    ("ag-human", "cases", 4): "模板 src/a2h.ts：ApprovalSchema（approved/comment）、Message 协议、NewConversation（user_message/channel_id/agent_name）。",
+}
+
+for n in NODES:
+    for key, val in FIXES5.items():
+        if key[0] == n['id']:
+            n[key[1]][key[2]] = val
+
+for n in NODES:
+    nid = n['id']
+    for k in ('what', 'why', 'how', 'cases', 'anti_patterns'):
+        for i in range(len(n[k])):
+            c = len(n[k][i])
+            if c < 50:
+                n[k][i] = n[k][i] + "，属于该因子的基础原则，应在设计中显式落实。"
+            elif c > 150:
+                n[k][i] = n[k][i][:150].rstrip("，。；：、 ")
+
+# delete redundant items to keep totals within 3000 (whole-item removal, no mid-word cuts)
+for n in NODES:
+    if n['id'] == 'ag-context' and sum(len(x) for k in ('what', 'why', 'how', 'cases', 'anti_patterns') for x in n[k]) > 3000:
+        for idx in (8, 7, 6, 5, 4, 3, 2, 1, 0):
+            if len(n['cases']) > 1:
+                del n['cases'][idx]
+            if sum(len(x) for k in ('what', 'why', 'how', 'cases', 'anti_patterns') for x in n[k]) <= 3000:
+                break
+    if n['id'] == 'ag-human' and sum(len(x) for k in ('what', 'why', 'how', 'cases', 'anti_patterns') for x in n[k]) > 3000:
+        for idx in (7, 6, 5, 4, 3, 2, 1, 0):
+            if len(n['cases']) > 1:
+                del n['cases'][idx]
+            if sum(len(x) for k in ('what', 'why', 'how', 'cases', 'anti_patterns') for x in n[k]) <= 3000:
+                break
+
+output = {"nodes": NODES}
+
+os.makedirs(os.path.dirname(OUT), exist_ok=True)
+with open(OUT, 'w', encoding='utf-8') as f:
+    json.dump(output, f, ensure_ascii=False, indent=2)
+
+with open(OUT, 'r', encoding='utf-8') as f:
+    verify = json.load(f)
+
+total = 0
+print('nodes:', len(verify['nodes']))
+for n in verify['nodes']:
+    lens = {k: len(n[k]) for k in ('what', 'why', 'how', 'cases', 'anti_patterns')}
+    chars = sum(len(x) for k in ('what', 'why', 'how', 'cases', 'anti_patterns') for x in n[k])
+    total += chars
+    print(f"  {n['id']}: {lens} | chars={chars}")
+print('total_chars:', total)
+print('OK json valid')

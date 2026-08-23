@@ -61,6 +61,17 @@ for nid, node in nodes.items():
             dd = df[i] if i < len(df) else ''
             lines.append(f"| {esc(aa)} | {esc(bb)} | {esc(dd)} |")
         lines.append('')
+    # 源码索引（供 AI 按索引调用对应工具/原文）
+    refs = c.get('source_refs') or []
+    if refs:
+        lines.append("## 源码索引（实践参考）")
+        lines.append('')
+        for r in refs:
+            p = r.get('path', '').lstrip('/')
+            if p.startswith('08-source/'):
+                p = p[len('08-source/'):]
+            lines.append(f"- `08-source/{p}` — {esc(r.get('note', ''))}")
+        lines.append('')
     # 相关边
     rel = [e for e in edges if e['from'] == nid or e['to'] == nid]
     if rel:

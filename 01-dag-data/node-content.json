@@ -1,1144 +1,2833 @@
 {
   "meta": {
-    "count": 38
+    "count": 38,
+    "expanded": true
   },
   "nodes": [
     {
       "id": "app-codebase",
       "name": "代码库",
       "what": [
-        "一个 app 一个 codebase、多个 deploy",
-        "codebase 与应用一对一，多 codebase 即分布式系统",
-        "共享代码抽成库而非复制"
+        "十二要素应用总是被版本控制系统（VCS）跟踪，例如 Git、Mercurial 或 Subversion；修订跟踪数据库的一份副本称为代码仓库，常简写为 code repo 或 repo。",
+        "codebase 指任意单个仓库（如集中式 VCS 的 Subversion），或共享同一根提交的一组仓库（如去中心化 VCS 的 Git）。",
+        "codebase 与应用之间永远存在一对一关系：若存在多个 codebase，那它不是应用而是分布式系统，分布式系统的每个组件各自是独立应用，可各自符合十二要素。",
+        "多个应用共享同一份代码是十二要素的违规行为，正确解法是把共享代码抽取为库，经依赖管理器引入，而非在各应用中复制。",
+        "一个应用只有一个 codebase，但会有许多 deploy；deploy 是应用的一个运行实例，通常是生产站点加一个或多个预发布（staging）站点。",
+        "每位开发者的本地开发环境也各自运行一份应用副本，每份副本同样算作一个 deploy，是同一应用的多个运行实例之一。",
+        "所有 deploy 共享同一 codebase，尽管各 deploy 可能运行不同版本：例如开发者有尚未部署到 staging 的提交，staging 有尚未部署到生产的提交。",
+        "正因为所有 deploy 共享同一 codebase，它们才可被识别为同一应用的不同 deploy，各处版本差异因此清晰可追踪、可解释。"
       ],
       "why": [
-        "单一 codebase 使各部署可标识为同一 app 的不同版本"
+        "版本控制跟踪一切是应用长期演变的基础，使每次变更都可追溯、可审查、可回滚，避免混乱的临时改法，这使所有 deploy 都能追溯到唯一的代码来源，版本归属始终清晰。",
+        "codebase 与应用一对一是可部署性的根基：任何部署物都能追溯到唯一代码来源，从根上避免多个代码源之间漂移。",
+        "多应用共享一份代码会破坏各自的独立演进与独立部署节奏，违背应用边界应清晰划分的基本原则，版本与部署的对应关系因此可解释、可审计。",
+        "共享代码抽成库并经依赖管理器引入，使共享的粒度、版本与发布节奏都处于可控状态，而非复制粘贴失控，这是应用可部署性与长期演进的根基。",
+        "单一 codebase 使所有 deploy 可被标识为同一应用的不同版本，版本差异可追踪，协作边界自然清晰。"
       ],
       "how": [
-        "版本控制跟踪一切",
-        "区分 codebase 与 deploy",
-        "共享代码经依赖管理器引入"
+        "用一个版本控制系统（Git/Mercurial/Subversion 等）跟踪应用的全部代码与配置模板，保证任何状态可重建。",
+        "保持一个 app 对应唯一 codebase，多组件系统按分布式系统拆分，每个组件各自独立管理自己的代码库。",
+        "为每个 deploy（生产、staging、开发本地）维护独立运行实例，但全部共用同一个 codebase，不另起代码来源。",
+        "各 deploy 运行不同代码版本属正常状态，通过提交在流水线中依次推进传播，用同一 codebase 追踪进度。",
+        "把跨应用共享的代码抽取为独立库，放入各自 repo，经依赖声明引入使用，而非复制进各应用，这使所有 deploy 都能追溯到唯一的代码来源，版本归属始终清晰。",
+        "配合依赖原则（Bundler/Pip 等）管理共享库版本，保证构建确定性，降低集成风险，版本与部署的对应关系因此可解释、可审计。",
+        "明确区分 codebase（代码来源）与 deploy（运行实例）两个概念，避免混用导致版本与部署归属混乱。"
       ],
       "cases": [
-        "Git/Mercurial/Subversion"
+        "Git：去中心化 VCS，仓库间共享根提交，是现代项目的主流选择，也是 Heroku 平台日常使用的版本控制工具。",
+        "Mercurial：去中心化 VCS，作为 Git 之外的常见备选，同样支持共享根提交的多仓库模型。",
+        "Subversion：集中式 VCS，codebase 即单个中央仓库，适合需要集中管控的开发场景。",
+        "生产站点 + 一个或多个 staging 站点 + 每位开发者本地副本，共同构成同一 app 的多个 deploy 运行实例。",
+        "开发者本地有尚未部署的提交、staging 有尚未上生产的提交——同一 codebase 不同版本在流水线中逐级推进的典型节奏。",
+        "多处版本并存：同一时刻各 deploy 允许处于不同提交，但全部指向同一个 codebase，归属清晰。"
       ],
       "anti_patterns": [
-        "多 codebase 对应一 app",
-        "多 app 共享同一代码"
+        "多个 codebase 却宣称是一个应用——实质是分布式系统，各组件应分别符合十二要素并独立管理，这使所有 deploy 都能追溯到唯一的代码来源，版本归属始终清晰。",
+        "多个应用共享同一份代码——正确做法是把共享代码抽成库，经依赖管理器引入，而非直接共用，版本与部署的对应关系因此可解释、可审计。",
+        "把共享代码直接复制进各应用仓库，会导致重复、漂移与维护灾难，一处更新需逐处同步，这是应用可部署性与长期演进的根基。",
+        "把不同应用塞进同一 codebase，使版本与部署互相干扰，难以独立发布，破坏应用边界，协作与发布边界因此保持清晰，避免多个代码源之间的漂移。",
+        "共享逻辑在各应用间以复制粘贴维护，一旦上游更新需逐处手工同步，极易失配并引入隐性缺陷，保证任何运行实例都能对应到确定的一份代码历史。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/codebase.md",
+          "note": "I. Codebase 原文：codebase/repo 定义、与 app 的一对一关系、deploy 概念、共享代码抽库"
+        },
+        {
+          "path": "app-content-en/dependencies.md",
+          "note": "共享代码经依赖管理器引入的交叉引用"
+        },
+        {
+          "path": "app-content-en/background.md",
+          "note": "方法论背景：Heroku 数百应用开发经验与防软件腐蚀动机"
+        },
+        {
+          "path": "app-content-en/intro.md",
+          "note": "方法论总纲：声明式格式/与 OS 契约/可移植性目标"
+        }
+      ]
     },
     {
       "id": "app-deps",
       "name": "依赖",
       "what": [
-        "清单完整精确声明全部依赖",
-        "隔离工具杜绝隐式依赖泄漏",
-        "开发生产统一使用"
+        "多数编程语言提供打包系统分发支持库，如 Perl 的 CPAN、Ruby 的 Rubygems；经打包系统安装的库可装到系统全局（site packages）或限定到应用目录（vendoring/bundling）。",
+        "十二要素应用绝不依赖系统级包的隐式存在：通过依赖声明清单完整且精确地声明全部依赖及其版本约束，这使构建在任何环境都能可复现、结果确定。",
+        "执行时使用依赖隔离工具，确保没有隐式依赖从周围系统泄漏进应用运行环境，是十二要素保证开发与生产一致的关键手段。",
+        "完整显式的依赖规格对生产与开发环境统一应用，保证两处依赖完全一致、行为可复现，环境搭建因此只需少量前置条件即可一步到位。",
+        "Ruby 的 Bundler 提供 Gemfile 清单格式作依赖声明，bundle exec 作隔离；声明与隔离两步骤常是两个独立工具。",
+        "Python 中 Pip 负责声明、Virtualenv 负责隔离；C 用 Autoconf 声明、用静态链接提供隔离能力。",
+        "无论何种工具链，依赖声明与隔离必须同时使用，只用一个不足以满足十二要素的要求，从根本上杜绝隐式依赖在不同机器上的行为差异。"
       ],
       "why": [
-        "显式声明简化环境搭建，一条命令跑通",
-        "系统工具存在与版本无法保证"
+        "显式声明简化新开发者上手：检出代码后只需语言运行时与依赖管理器两个前置条件，即可搭建全部运行所需环境。",
+        "通过确定性构建命令即可搭好一切，如 bundle install、lein deps，减少环境搭建的试错成本与手工步骤。",
+        "系统工具的隐式存在无法保证：ImageMagick、curl 等可能在某些运行系统缺失，或版本与应用不兼容导致运行失败。",
+        "隔离机制杜绝隐式依赖从系统泄漏，保证运行环境纯净可复现，避免开发环境过得了而生产环境崩溃，这使构建在任何环境都能可复现、结果确定。"
       ],
       "how": [
-        "声明与隔离同时使用",
-        "Bundler/Pip+Virtualenv 等",
-        "确定性 build command"
+        "用依赖清单（Gemfile、requirements.txt 等）完整精确声明全部依赖及版本约束，不遗漏任何传递依赖。",
+        "用隔离工具运行应用：bundle exec、virtualenv、静态链接等，阻止系统包泄漏进应用环境。",
+        "开发与生产统一使用同一套显式依赖规格，杜绝两处依赖漂移，这使构建在任何环境都能可复现、结果确定，是十二要素保证开发与生产一致的关键手段。",
+        "新开发者前置条件收敛为语言运行时 + 依赖管理器两个，一条构建命令即可跑通，环境搭建因此只需少量前置条件即可一步到位。",
+        "确定性构建命令：Ruby/Bundler 用 bundle install，Clojure/Leiningen 用 lein deps。",
+        "若应用需要 shell out 到系统工具（如 ImageMagick），应把该工具 vendored 进应用而非依赖系统安装。"
       ],
       "cases": [
-        "Bundler、Pip、Autoconf、Leiningen"
+        "Bundler：Ruby 依赖声明（Gemfile）与隔离（bundle exec）的一体化工具，业界典范实现。",
+        "Pip：Python 依赖声明工具；Virtualenv：Python 依赖隔离工具，两者配套使用。",
+        "Autoconf：C 依赖声明；静态链接可提供 C 依赖隔离，弥补声明之外的空缺，这使构建在任何环境都能可复现、结果确定。",
+        "Leiningen：Clojure 依赖工具，lein deps 为确定性构建命令，一条命令解决依赖。",
+        "CPAN：Perl 打包系统；Rubygems：Ruby 打包系统，是打包分发的经典基础设施，是十二要素保证开发与生产一致的关键手段。"
       ],
       "anti_patterns": [
-        "只声明不隔离或反之",
-        "依赖隐式系统工具",
-        "依赖系统级 site packages"
+        "只声明不隔离，或只隔离不声明——声明与隔离必须成对使用，缺一不可，这使构建在任何环境都能可复现、结果确定。",
+        "依赖系统级 site packages 的隐式存在，环境一变即挂，无法保证可复现，是十二要素保证开发与生产一致的关键手段。",
+        "shell out 到 ImageMagick、curl 等系统工具而不 vendoring，跨系统版本无法保证。",
+        "依赖声明不全或版本不精确，导致构建不可复现、跨环境行为漂移，排查困难，环境搭建因此只需少量前置条件即可一步到位。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/dependencies.md",
+          "note": "II. Dependencies 原文：声明/隔离两步骤、Gemfile/bundle exec、build command、系统工具 vendoring"
+        },
+        {
+          "path": "app-content-en/admin-processes.md",
+          "note": "依赖隔离一致性在 admin 进程的应用（bundle exec rake db:migrate 等）"
+        },
+        {
+          "path": "app-deploy/Gemfile",
+          "note": "12factor 站点自身 Gemfile 示例：sinatra/thin/maruku/i18n 等依赖声明"
+        },
+        {
+          "path": "app-deploy/Readme.md",
+          "note": "实例：bundle install 作本地运行前置步骤"
+        }
+      ]
     },
     {
       "id": "app-config",
       "name": "配置",
       "what": [
-        "config 是随 deploy 变化的一切：句柄、凭据、特有值",
-        "配置存于环境变量，与代码严格分离",
-        "env vars 正交，按 deploy 独立管理"
+        "应用的 config 是随 deploy 变化的一切（staging、生产、开发者环境等），包括数据库、Memcached 等 backing service 的资源句柄。",
+        "config 还包括外部服务凭据，如 Amazon S3 或 Twitter 的凭据，以及按 deploy 特有的值，如该 deploy 的规范主机名。",
+        "把 config 作为代码常量存储是十二要素违规，要求 config 与代码严格分离：config 跨 deploy 差异大而代码不差异。",
+        "试金石：无论何时都可把 codebase 开源而不泄露任何凭据，即说明 config 已正确从代码中抽出。",
+        "config 定义不包括内部应用配置，如 Rails 的 config/routes.rb 或 Spring 的模块连接方式；此类不随 deploy 变化，宜留在代码中。",
+        "不用版本控制跟踪的配置文件（如 Rails 的 config/database.yml）比代码常量进步，但仍固有弱点：易误检入 repo、散落各处格式各异难以统观。",
+        "配置文件格式往往语言或框架相关（如 Java System Properties），缺乏跨环境通用性，迁移成本高。",
+        "十二要素应用把 config 存于环境变量（env vars）：跨 deploy 易改且无需改代码、几乎不会误检入 repo、语言与 OS 无关。",
+        "env vars 是细粒度控件，彼此完全正交，绝不按环境名分组，而是每个 deploy 独立管理自身配置。"
       ],
       "why": [
-        "config 随部署变化而代码不变",
-        "代码内常量/配置文件易泄露且脆弱",
-        "按环境分组随部署增多组合爆炸"
+        "config 随部署变化而代码不变，混在一起会使不同部署无法复用同一份代码，部署即需改代码，这使配置变更与代码演进彻底解耦，部署灵活。",
+        "代码内常量使凭据入库，泄露风险高且部署迁移困难，安全性无法保证，从根本上避免凭据等敏感信息随代码泄露。",
+        "配置文件易误提交、散落各处且格式语言相关，难以统一管理，越管越乱，保证同一份代码能在任意 deploy 上运行而不需改动。",
+        "按环境名分组（development/test/production）无法随规模扩展：deploy 变多需新环境名，开发者私名环境（joes-staging）导致配置组合爆炸与管理脆弱。",
+        "env vars 是语言与 OS 无关的标准，优于 Java System Properties 等专有机制，跨栈通用。"
       ],
       "how": [
-        "全部 config 入 env vars",
-        "每 deploy 独立管理",
-        "试金石：开源不泄凭据"
+        "把全部 config（资源句柄、凭据、per-deploy 值）放入环境变量，严格与代码分离，这使配置变更与代码演进彻底解耦，部署灵活。",
+        "每个 deploy 独立管理自身 env vars，不按环境名分组，保持配置正交，从根本上避免凭据等敏感信息随代码泄露。",
+        "用开源试金石检验：能否随时开源 codebase 而不泄露任何凭据，作为验收标准，保证同一份代码能在任意 deploy 上运行而不需改动。",
+        "内部应用配置（路由、模块连接）保留在代码中，不误入 env，区分两类配置，配置管理因此可随应用规模自然扩展。",
+        "config 变更作为独立于代码变更的部署维度单独管理，可独立调整与回滚，是十二要素可移植性与安全性的核心保障。"
       ],
       "cases": [
-        "env vars 优于 Java System Properties"
+        "env vars 优于 Java System Properties：语言/OS 无关的通用标准，跨栈一致。",
+        "config/database.yml 不入库是相对常量的改进，但仍可能误提交、散落，是过渡方案，这使配置变更与代码演进彻底解耦，部署灵活。",
+        "Rails 的 config/routes.rb 属内部配置，不随 deploy 变化，留在代码中是正确做法。",
+        "development/test/production 环境分组在出现 staging、qa、joes-staging 等新名时暴露扩展性问题。"
       ],
       "anti_patterns": [
-        "config 作为代码常量",
-        "用 config 文件",
-        "按环境名分组"
+        "把 config 存为代码常量（硬编码凭据）——凭据随代码入库，泄露风险极高，这使配置变更与代码演进彻底解耦，部署灵活。",
+        "用不入库的 config 文件管理配置——易误提交、散落、格式语言相关，难统一管理，从根本上避免凭据等敏感信息随代码泄露。",
+        "按环境名分组管理配置——组合爆炸、管理脆弱，无法随 deploy 数量扩展，保证同一份代码能在任意 deploy 上运行而不需改动。",
+        "把内部应用配置与随 deploy 变化的 config 混为一谈，边界混乱难以维护，配置管理因此可随应用规模自然扩展。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/config.md",
+          "note": "III. Config 原文：config 定义/开源试金石/配置文件弱点/env vars 正交性与分组反模式"
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": "资源句柄作为 config 组成部分的交叉引用"
+        },
+        {
+          "path": "app-deploy/web.rb",
+          "note": "实例：ENV['FORCE_SSL']/ENV['PASSWORD'] 直接读取环境变量控制行为"
+        }
+      ]
     },
     {
       "id": "app-backing",
       "name": "后端服务",
       "what": [
-        "backing service 是应用网络消费的任何服务",
-        "本地与第三方不做区分，经 config 句柄访问",
-        "deploy 可随意挂摘资源不改代码"
+        "backing service 是应用在正常运行过程中经网络消费的任何服务，示例包括数据存储（MySQL、CouchDB）、消息/队列系统（RabbitMQ、Beanstalkd）。",
+        "backing service 还包括出站邮件 SMTP 服务（如 Postfix）与缓存系统（如 Memcached），都是应用运行依赖的网络服务。",
+        "除本地托管服务外，应用还常使用第三方托管服务：Postmark（SMTP）、New Relic/Loggly（指标收集）、Amazon S3（二进制资产）、Twitter/Google Maps/Last.fm（API 消费服务）。",
+        "数据库等 backing service 传统上由部署应用运行时的同一批系统管理员管理，运维归属一致。",
+        "十二要素应用的代码对本地与第三方服务不做区分：对应用而言都是 attached resources，经 config 中的 URL 或其他定位符/凭据访问。",
+        "deploy 可在不改代码的情况下把本地 MySQL 换成第三方托管的 Amazon RDS，或把本地 SMTP 换成 Postmark，仅需修改 config 中的资源句柄。",
+        "每个不同的 backing service 是一个资源：例如一个 MySQL 数据库是一个资源，应用层分片用的两个 MySQL 数据库算两个不同资源。",
+        "资源可随意挂到或摘离 deploy：数据库因硬件故障表现异常时，管理员可启动一台从近期备份恢复的新数据库服务器，摘旧挂新，全程无需代码变更。"
       ],
       "why": [
-        "本地与托管服务可互换",
-        "资源与 deploy 松散耦合",
-        "故障时可拆旧挂新"
+        "本地与托管服务对应用可互换，基础设施选型与代码完全解耦，选型自由度高，这正是 backing service 与代码解耦的核心体现。",
+        "资源与 deploy 松散耦合，实现 attached resources 的语义，挂摘清晰，资源更换因此成为纯运维操作，与代码无关。",
+        "故障时可拆旧挂新，运维灵活且无需代码变更，恢复速度快，保证应用可随时切换基础设施而不影响业务逻辑，是十二要素松散耦合与可移植性的重要支撑。",
+        "多资源建模（如分片数据库）与部署拓扑清晰对应，边界分明易管理，使故障恢复与扩容都能在不改代码的前提下完成。"
       ],
       "how": [
-        "视为 attached resources",
-        "换服务仅改资源句柄"
+        "把数据库、队列、缓存等一切网络消费服务一律视为 attached resources 处理，统一对待。",
+        "经 config 中的资源句柄（URL/凭据）访问全部 backing service，不硬编码访问方式。",
+        "换服务只需改 config 中的资源句柄，不改应用代码，即可完成替换，这正是 backing service 与代码解耦的核心体现。",
+        "挂摘资源作为部署层操作，与代码演进完全解耦，运维动作独立，资源更换因此成为纯运维操作，与代码无关，保证应用可随时切换基础设施而不影响业务逻辑。"
       ],
       "cases": [
-        "Amazon RDS、Postmark、S3"
+        "本地 MySQL 换成第三方 Amazon RDS，不改代码只改资源句柄，即完成托管迁移，这正是 backing service 与代码解耦的核心体现。",
+        "本地 SMTP 换成第三方 Postmark 服务，仅换 config 句柄，代码零改动，资源更换因此成为纯运维操作，与代码无关。",
+        "数据库硬件故障：启动新库（从备份恢复）→摘旧库→挂新库，全程无代码变更，仅运维操作，保证应用可随时切换基础设施而不影响业务逻辑。",
+        "应用层分片的两个 MySQL 数据库算两个不同资源，各自独立挂摘管理，是十二要素松散耦合与可移植性的重要支撑。",
+        "New Relic/Loggly（指标收集）、Amazon S3（二进制资产）、Twitter/Google Maps/Last.fm（消费型 API 服务）等第三方典型。"
       ],
       "anti_patterns": [
-        "代码区分本地与第三方",
-        "与 deploy 强耦合"
+        "代码中区分本地服务与第三方服务，破坏互换性，迁移需改代码，这正是 backing service 与代码解耦的核心体现。",
+        "backing service 与特定 deploy 强耦合，无法挂摘，故障恢复困难，资源更换因此成为纯运维操作，与代码无关。",
+        "资源句柄硬编码在代码而非 config，换服务需改代码并重新部署，保证应用可随时切换基础设施而不影响业务逻辑。",
+        "把不同用途的 backing service 混为一个资源管理，拓扑无法清晰表达，是十二要素松散耦合与可移植性的重要支撑。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": "IV. Backing services 原文：定义/本地与第三方不分/资源建模/挂摘无代码变更"
+        },
+        {
+          "path": "app-content-en/config.md",
+          "note": "资源句柄经 config 存储的交叉引用"
+        },
+        {
+          "path": "app-content-en/dev-prod-parity.md",
+          "note": "backing service 在开发/生产一致性中的角色"
+        },
+        {
+          "path": "app-content-en/port-binding.md",
+          "note": "端口绑定服务可成为另一 app 的 backing service"
+        }
+      ]
     },
     {
       "id": "app-build-run",
       "name": "构建·发布·运行",
       "what": [
-        "build 转代码为可执行包，release=build+config，run 启动进程",
-        "每 release 唯一 ID",
-        "release 只追加，创建后不可变"
+        "codebase 经三阶段转变为非开发 deploy：build 阶段把代码仓库转换为可执行 bundle，按部署进程指定的提交版本拉取 vendored 依赖并编译二进制与资源。",
+        "release 阶段把 build 与 deploy 当前 config 组合，产出同时包含 build 与 config、可立即在运行环境执行的 release。",
+        "run 阶段（runtime）在运行环境中启动一组应用进程，针对选定的 release 运行，是应用真正服务的阶段。",
+        "十二要素应用严格分离 build、release、run 三阶段：例如运行时不可能改动代码，因为改动无法传播回 build 阶段。",
+        "部署工具通常提供发布管理能力，最显著的是回滚到先前 release，保障发布安全，这保证了发布过程的可追溯与可回滚。",
+        "每个 release 应有唯一 ID，如时间戳 2011-04-06-20:32:17 或递增数字 v100，便于定位与回退。",
+        "release 是只追加的账本：创建后不可变更，任何变更都必须产生新 release，保证账本可信。",
+        "build 由开发者在新代码部署时发起；run 可自动发生（服务器重启、崩溃进程被进程管理器重启），故 run 阶段应保持最少活动部件。",
+        "build 阶段可以更复杂，因为错误总是发生在前台驱动部署的开发者面前，可及时处理与修正，使运行期行为与构建产物严格一致，杜绝热改隐患。"
       ],
       "why": [
-        "运行时无法把改动传播回 build",
-        "run 阶段保持最少活动部件"
+        "运行时改动无法传播回 build，严格分离保证运行期行为与构建产物一致，杜绝热改隐患，这保证了发布过程的可追溯与可回滚。",
+        "release 含 build+config 且不可变，使回滚成为选择先前 release 的简单操作，发布安全。",
+        "run 阶段最小化活动部件：运行问题会在无开发者到场的深夜自动重启时爆发，越简单越健壮，使运行期行为与构建产物严格一致，杜绝热改隐患。"
       ],
       "how": [
-        "严格分离三阶段",
-        "Capistrano releases 支持回滚",
-        "release 打唯一 ID"
+        "把代码转换（build）、组合 config（release）、启动进程（run）严格分离为独立阶段，各司其职。",
+        "用部署工具的 release 管理能力做回滚，例如 Capistrano 的 rollback 命令。",
+        "Capistrano 在 releases 子目录存放各版本，当前 release 是指向当前版本目录的 symlink，rollback 命令可快速回退。",
+        "每个 release 打唯一 ID（时间戳或递增数字），保证可精确引用，这保证了发布过程的可追溯与可回滚。",
+        "release 只追加、创建后不可变，任何变更新建 release，保持账本完整，使运行期行为与构建产物严格一致，杜绝热改隐患。",
+        "build 由开发者驱动可复杂；run 自动发生应保持最少活动部件，降低自动场景风险，是十二要素发布可靠性设计的核心机制。"
       ],
       "cases": [
-        "Capistrano"
+        "Capistrano：releases 子目录 + 当前版本 symlink + rollback 命令，快速回退到先前版本。",
+        "release ID 示例：时间戳 2011-04-06-20:32:17 或递增数字 v100，两种格式均可采用。",
+        "服务器重启、崩溃进程被进程管理器重启等 run 阶段自动执行场景，常发生在深夜无开发者在场时，这保证了发布过程的可追溯与可回滚。",
+        "发布新代码时开发者驱动 build 阶段，把提交固定到部署进程指定的版本上，使运行期行为与构建产物严格一致，杜绝热改隐患。"
       ],
       "anti_patterns": [
-        "运行时修改代码",
-        "变更既有 release"
+        "运行时修改代码——改动无法传播回 build 阶段，运行态与构建产物脱节，这保证了发布过程的可追溯与可回滚。",
+        "变更既有 release——release 是不可变、只追加的账本，任何修改破坏可追溯性，使运行期行为与构建产物严格一致，杜绝热改隐患。",
+        "run 阶段引入过多活动部件，放大深夜无人时的故障风险，降低可靠性，是十二要素发布可靠性设计的核心机制。",
+        "把 build 与 release 混为一体，无法独立回滚配置或复用构建产物，发布管理因此简单、安全、可控。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/build-release-run.md",
+          "note": "V. Build, release, run 原文：三阶段定义/回滚/release 不可变/run 最小化"
+        },
+        {
+          "path": "app-content-en/codebase.md",
+          "note": "build 的输入 codebase 定义"
+        },
+        {
+          "path": "app-content-en/config.md",
+          "note": "release 与 config 组合的交叉引用"
+        },
+        {
+          "path": "app-content-en/processes.md",
+          "note": "run 阶段启动进程的交叉引用"
+        }
+      ]
     },
     {
       "id": "app-processes",
       "name": "进程",
       "what": [
-        "进程无状态、share-nothing",
-        "持久数据存入有状态 backing service",
-        "内存/文件系统仅作单事务缓存"
+        "应用在运行环境中作为一个或多个进程执行；最简情形是独立脚本 + 本地笔记本运行时 + 命令行启动，如 python my_script.py。",
+        "复杂生产部署可含多种进程类型，实例化为零或多个运行进程，形成完整的运行拓扑，这使进程可以任意复制、迁移与水平扩展。",
+        "十二要素进程是无状态、share-nothing 的：任何需持久化的数据存入有状态 backing service，通常是数据库。",
+        "进程的内存空间或文件系统可作短暂的单事务缓存，如下载大文件、处理并把结果存入数据库，是应用横向扩展与弹性伸缩的前提条件。",
+        "十二要素应用绝不假设缓存于内存或磁盘的东西在未来请求/任务中仍可用——多进程运行时，未来请求很可能由另一个进程处理。",
+        "即使单进程，重启（代码部署、config 变更或运行环境把进程搬迁到不同物理位置）通常也会抹掉全部本地状态。",
+        "django-assetpackager 等资源打包器把文件系统当编译资源的缓存，十二要素更倾向在 build 阶段完成编译。",
+        "Jammit、Rails asset pipeline 可配置为在 build 阶段打包资源，避免运行期编译。",
+        "sticky sessions（把用户会话数据缓存于进程内存并期待同访客被路由到同进程）是十二要素违规，绝不应使用或依赖。",
+        "会话状态数据适合存入带时间过期的 datastore，如 Memcached 或 Redis，而非进程内存。"
       ],
       "why": [
-        "多进程下请求由不同进程处理",
-        "重启抹掉本地状态"
+        "share-nothing 架构使进程可随意水平扩展：多进程下未来请求大概率由不同进程处理，无状态依赖。",
+        "重启会抹掉本地状态，故不得假设任何进程本地缓存对未来请求可用，设计必须外置，这使进程可以任意复制、迁移与水平扩展。",
+        "持久数据外置保证状态一致性、可恢复性与横向弹性，可靠性与扩展性兼得，是应用横向扩展与弹性伸缩的前提条件。"
       ],
       "how": [
-        "无状态设计，持久数据外置",
-        "会话数据入带过期的存储",
-        "资源在 build 阶段编译"
+        "设计无状态进程，持久数据全部外置于有状态 backing service，进程只处理请求，这使进程可以任意复制、迁移与水平扩展。",
+        "会话数据存入带时间过期的存储（Memcached、Redis），而非进程本地内存，是应用横向扩展与弹性伸缩的前提条件。",
+        "资源编译在 build 阶段完成，而非运行期用文件系统缓存，避免缓存失效，保证任何进程随时被替换都不会丢失业务状态。",
+        "不用 sticky sessions；进程本地状态仅作单事务缓存，用完即弃，运行期的弹性与健壮性因此得到根本保障。",
+        "大文件下载→处理→结果入库的流程把最终结果写入数据库而非进程本地，保证可恢复，让多进程拓扑下行为保持一致、可预期。"
       ],
       "cases": [
-        "Memcached、Redis、asset pipeline"
+        "python my_script.py：独立脚本以进程方式在本地运行时直接启动，这使进程可以任意复制、迁移与水平扩展。",
+        "django-assetpackager：用文件系统缓存编译后的资源，作为反例说明问题，是应用横向扩展与弹性伸缩的前提条件。",
+        "Jammit、Rails asset pipeline：可配置为在 build 阶段打包资源，符合十二要素。",
+        "Memcached、Redis：提供时间过期能力的会话/缓存 datastore，会话数据理想归宿。"
       ],
       "anti_patterns": [
-        "sticky sessions",
-        "文件系统当缓存",
-        "假设缓存对后续请求可用"
+        "sticky sessions——把会话状态绑到进程内存并依赖负载均衡路由黏性，违反无状态原则，这使进程可以任意复制、迁移与水平扩展。",
+        "把文件系统当编译资源缓存，推迟到运行期才编译，缓存失效即崩，是应用横向扩展与弹性伸缩的前提条件，保证任何进程随时被替换都不会丢失业务状态。",
+        "假设进程内存/磁盘缓存在未来请求中可用，多进程下必踩坑，运行期的弹性与健壮性因此得到根本保障，让多进程拓扑下行为保持一致、可预期。",
+        "进程内保存需要持久化的数据，重启即丢失，数据安全无法保证，避免进程本地状态成为扩展与迁移的绊脚石，持久数据的外置是十二要素无状态设计的核心。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/processes.md",
+          "note": "VI. Processes 原文：无状态/share-nothing/单事务缓存/sticky sessions 违规/会话进过期存储"
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": "持久数据存入 backing service 的交叉引用"
+        },
+        {
+          "path": "app-content-en/build-release-run.md",
+          "note": "资源在 build 阶段编译的交叉引用"
+        },
+        {
+          "path": "app-content-en/concurrency.md",
+          "note": "进程类型与零或多个运行实例化的交叉引用"
+        }
+      ]
     },
     {
       "id": "app-port",
       "name": "端口绑定",
       "what": [
-        "应用自含，不依赖注入 webserver",
-        "绑定端口导出 HTTP 服务",
-        "webserver 库作依赖进 user space"
+        "web 应用有时在 webserver 容器内执行：PHP 应用作为 Apache HTTPD 内的模块运行，Java 应用跑在 Tomcat 内。",
+        "十二要素应用完全自包含，不依赖运行时注入 webserver 到执行环境来创建面向 web 的服务。",
+        "web 应用通过绑定端口把 HTTP 作为服务导出，并监听该端口上到来的请求，契约简单清晰，这正是端口绑定模型的自包含体现。",
+        "本地开发中开发者访问如 http://localhost:5000/ 的服务 URL 来使用应用导出的服务。",
+        "部署中由 routing layer 处理从公开主机名到端口绑定 web 进程的请求路由，应用无需关心。",
+        "典型实现：用依赖声明把 webserver 库加入应用，如 Python 的 Tornado、Ruby 的 Thin、Java/JVM 的 Jetty。",
+        "webserver 库完全在 user space（应用代码内部）运行，与运行环境的契约就是绑定端口服务请求。",
+        "HTTP 不是唯一可经端口绑定导出的服务：几乎任何服务器软件都能经进程绑定端口等待请求，如 ejabberd（XMPP）、Redis（Redis 协议）。",
+        "端口绑定还意味着一个应用可成为另一应用的 backing service：把 backing app 的 URL 作为消费方 config 中的资源句柄即可。"
       ],
       "why": [
-        "避免依赖运行时注入的容器",
-        "契约即绑定端口提供服务"
+        "避免依赖运行时注入的 webserver 容器，使执行环境契约简洁统一，部署形态一致，这正是端口绑定模型的自包含体现。",
+        "契约即绑定端口提供服务，跨环境（本地/云平台）可移植，无需环境特化，使应用在任何执行环境都能以同一方式对外服务。",
+        "服务可嵌套：应用经端口绑定成为别的应用的 backing service，组合自由度高，是十二要素可移植性与环境契约简洁性的保障。"
       ],
       "how": [
-        "依赖声明引入 Tornado/Thin/Jetty",
-        "routing layer 路由请求",
-        "可成为另一 app 的 backing service"
+        "经依赖声明引入 webserver 库（Tornado/Thin/Jetty）进 user space，随应用一起构建。",
+        "进程启动即绑定端口并监听请求，作为对运行环境的服务契约，无需外部注入，这正是端口绑定模型的自包含体现。",
+        "本地经 http://localhost:端口 访问，生产由 routing layer 从公开主机名路由到端口绑定进程。",
+        "把某应用的 URL 作为另一应用 config 的资源句柄，实现服务嵌套消费，使应用在任何执行环境都能以同一方式对外服务。"
       ],
       "cases": [
-        "Tornado、Thin、Jetty"
+        "Tornado：Python webserver 库，作为依赖加入应用自包含运行，这正是端口绑定模型的自包含体现。",
+        "Thin：Ruby webserver 库；Jetty：Java/JVM webserver 库，均可经依赖引入。",
+        "ejabberd：经端口绑定导出 XMPP 服务，非 HTTP 服务的端口绑定例子，使应用在任何执行环境都能以同一方式对外服务。",
+        "Redis：经端口绑定导出 Redis 协议服务，同样遵循端口绑定模型，是十二要素可移植性与环境契约简洁性的保障。",
+        "http://localhost:5000/：本地开发访问自含应用，无需外部 webserver，服务组合与嵌套因此变得自由而清晰。",
+        "PHP 模块在 Apache HTTPD 内、Java 应用在 Tomcat 内——容器注入的反例。"
       ],
       "anti_patterns": [
-        "在 webserver 容器内运行",
-        "依赖运行时注入 webserver"
+        "在 webserver 容器内运行（如 Apache 模块、Tomcat），依赖环境注入，这正是端口绑定模型的自包含体现。",
+        "依赖运行时注入的 webserver 来提供 web 服务，破坏自包含性，使应用在任何执行环境都能以同一方式对外服务。",
+        "把 HTTP 当作唯一可经端口导出的服务类型，忽略端口绑定的通用性，是十二要素可移植性与环境契约简洁性的保障。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/port-binding.md",
+          "note": "VII. Port binding 原文：自包含/端口绑定契约/webserver 库/user space/routing layer/服务嵌套"
+        },
+        {
+          "path": "app-content-en/dependencies.md",
+          "note": "webserver 经依赖声明引入的交叉引用"
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": "端口绑定服务可作为 backing service 的交叉引用"
+        },
+        {
+          "path": "app-deploy/Procfile",
+          "note": "实例：web: ruby web.rb -p $PORT 启动即绑定 $PORT"
+        }
+      ]
     },
     {
       "id": "app-concurrency",
       "name": "并发",
       "what": [
-        "进程是一等公民，借鉴 unix 模型",
-        "按工作类型分 process type",
-        "formation 含类型数组与数量",
-        "还需跨多机横向扩展"
+        "任何计算机程序一经运行即由一个或多个进程表示；web 应用进程执行形态多样：PHP 进程作为 Apache 子进程按需启动。",
+        "Java 走另一极端：JVM 提供一个启动时预留大块系统资源（CPU 与内存）的巨型 uberprocess，并发由内部线程管理。",
+        "上述两种传统形态下，运行中的进程对应用开发者几乎不可见，运维与调试困难，这使并发扩展成为简单可靠的横向操作。",
+        "十二要素中进程是一等公民，强烈借鉴 unix 运行服务 daemon 的进程模型来组织应用，是十二要素进程模型的核心优势所在。",
+        "用该模型把每种工作指派给一种进程类型：HTTP 请求由 web 进程处理，长跑后台任务由 worker 进程处理。",
+        "这不排除单进程内部多路复用：运行时 VM 内的线程，或 EventMachine、Twisted、Node.js 的 async/evented 模型。",
+        "单个 VM 只能长到一定规模（纵向扩展），应用必须能跨多台物理机的多个进程运行（横向扩展），工作负载多样性因此得到清晰的结构化表达。",
+        "进程模型在 scale out 时真正发光：share-nothing、可水平分区的特性使增加并发成为简单可靠的操作。",
+        "进程类型数组及每种类型的进程数合称 process formation，是并发部署的完整描述，运维与开发都能清楚理解并管理进程拓扑。",
+        "十二要素进程绝不应 daemonize 或写 PID 文件，而应依赖 OS 进程管理器（systemd、云平台分布式进程管理器、开发期 Foreman）管理输出流、响应崩溃并处理用户发起的重启与停机。"
       ],
       "why": [
-        "进程模型在 scale out 时发光",
-        "巨型 JVM 仅能纵向扩展"
+        "进程模型在 scale out（横向扩展）时简单可靠，扩缩容即加减进程数，这使并发扩展成为简单可靠的横向操作。",
+        "巨型 JVM 单进程模型仅能纵向扩展，受单机资源上限约束，扩展天花板低，是十二要素进程模型的核心优势所在。",
+        "进程类型清晰表达工作负载多样性，架构边界分明，运维可理解，工作负载多样性因此得到清晰的结构化表达，运维与开发都能清楚理解并管理进程拓扑。"
       ],
       "how": [
-        "划分 web/worker 组成 formation",
-        "进程交系统进程管理器管理"
+        "按工作类型划分 web/worker 等 process type，组成 process formation，明确职责。",
+        "进程交系统进程管理器管理（systemd、云平台分布式进程管理器、开发期 Foreman），处理崩溃重启与用户发起的重启/停机。",
+        "单进程内可用线程或 async/evented 模型（EventMachine、Twisted、Node.js）做内部多路复用。",
+        "扩展时增加进程数量而非单进程能力，实现横向扩展，规避纵向天花板，这使并发扩展成为简单可靠的横向操作。",
+        "输出流管理、崩溃响应、重启停机全部交给进程管理器负责，应用不亲自打理，是十二要素进程模型的核心优势所在。"
       ],
       "cases": [
-        "systemd、Foreman、Node.js"
+        "systemd：Linux 系统进程管理器，管理常驻服务进程与崩溃重启，这使并发扩展成为简单可靠的横向操作。",
+        "Foreman：开发期进程管理器，本地按 Procfile 拉起多个进程类型，是十二要素进程模型的核心优势所在。",
+        "Node.js、EventMachine、Twisted：async/evented 单进程多路复用模型。",
+        "PHP 作为 Apache 子进程按需启动——传统进程形态之一，对开发者不可见，工作负载多样性因此得到清晰的结构化表达。",
+        "JVM 巨型单进程模型——传统形态之二，仅能纵向扩展，有物理上限，运维与开发都能清楚理解并管理进程拓扑。"
       ],
       "anti_patterns": [
-        "进程 daemonize/写 PID",
-        "单进程巨型模型",
-        "进程对开发者不可见"
+        "进程 daemonize 或写 PID 文件——应由进程管理器接管，应用不做后台化，这使并发扩展成为简单可靠的横向操作。",
+        "单进程巨型模型（巨型 JVM）仅能纵向扩展，扩展天花板受限，是十二要素进程模型的核心优势所在，工作负载多样性因此得到清晰的结构化表达。",
+        "运行进程对开发者不可见，失去可观测性与管理清晰度，运维与开发都能清楚理解并管理进程拓扑，让扩缩容即增减进程数，简单直接。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/concurrency.md",
+          "note": "VIII. Concurrency 原文：进程一等公民/process type/formation/纵向 vs 横向扩展/daemonize 禁令"
+        },
+        {
+          "path": "app-content-en/processes.md",
+          "note": "share-nothing 可水平分区特性的交叉引用"
+        },
+        {
+          "path": "app-content-en/logs.md",
+          "note": "进程管理器管理输出流的交叉引用"
+        },
+        {
+          "path": "app-deploy/Procfile",
+          "note": "实例：web 进程类型声明与启动命令"
+        }
+      ]
     },
     {
       "id": "app-disposability",
       "name": "可处置性",
       "what": [
-        "进程可随时启动或停止",
-        "启动时间最小化，几秒就绪",
-        "SIGTERM 优雅关闭",
-        "抵御意外终止"
+        "十二要素应用的进程是可处置（disposable）的：可随时启动或停止，这促成快速弹性扩展、代码/config 变更的快速部署以及生产 deploy 的健壮性。",
+        "进程应尽量最小化启动时间：理想情况下从启动命令执行到进程就绪接收请求或任务只需几秒，这使弹性扩展与频繁部署成为可能。",
+        "短启动时间为 release 过程与扩容提供更多敏捷性，也因进程管理器更易把进程搬到新物理机而增强健壮性。",
+        "进程收到进程管理器发出的 SIGTERM 信号时优雅关闭，完成善后工作再退出，是生产环境健壮性的重要保障之一。",
+        "web 进程的优雅关闭：停止监听服务端口（拒绝新请求）、允许当前请求完成、然后退出，任务与请求因此能在任何进程变更下安全完成。",
+        "该模型隐含 HTTP 请求应短（不超过几秒）；长轮询场景下客户端应在连接丢失时无缝尝试重连，崩溃或重启的影响被控制在最小范围。",
+        "worker 进程的优雅关闭：把当前任务归还工作队列，如 RabbitMQ 上发送 NACK，Beanstalkd 上 worker 断连时任务自动归队。",
+        "锁型系统如 Delayed Job 需确保释放任务记录上的锁，否则任务被永久卡住，让进程迁移与故障恢复都快速而安全。",
+        "该模型隐含所有任务可重入（reentrant），通常经把结果包进事务或使操作幂等实现，从机制上保证不丢任务、不重任务。",
+        "进程还应健壮应对突然死亡（底层硬件故障时）：比 SIGTERM 优雅关闭更罕见但可能发生，优雅关闭与快速启动共同支撑了高可用设计。",
+        "推荐用健壮队列后端（如 Beanstalkd），客户端断连或超时时任务自动归队；Crash-only design 把此概念推向逻辑终点。"
       ],
       "why": [
-        "促成快速弹性扩展与部署",
-        "短启动便于迁移",
-        "隐含要求请求短暂可重连"
+        "快速启动与优雅关闭共同促成快速弹性扩展与频繁部署，DevOps 敏捷性基石，这使弹性扩展与频繁部署成为可能。",
+        "短启动时间使进程迁移到新物理机更容易、更安全，故障转移迅速，是生产环境健壮性的重要保障之一，任务与请求因此能在任何进程变更下安全完成。",
+        "优雅关闭隐含请求短暂可重连、任务可重入的架构要求，倒逼正确设计，崩溃或重启的影响被控制在最小范围，让进程迁移与故障恢复都快速而安全。",
+        "健壮应对突然死亡保证底层硬件故障下的可靠性不塌方，系统韧性，从机制上保证不丢任务、不重任务，优雅关闭与快速启动共同支撑了高可用设计。"
       ],
       "how": [
-        "任务归还原队列",
-        "任务可重入/幂等",
-        "健壮队列应对突然死亡"
+        "把启动时间压到从启动命令到就绪仅数秒，保证弹性与迁移敏捷，这使弹性扩展与频繁部署成为可能，是生产环境健壮性的重要保障之一。",
+        "SIGTERM 到达时优雅关闭：web 停监听 + 完成当前请求；worker 归还当前任务，任务与请求因此能在任何进程变更下安全完成。",
+        "RabbitMQ worker 用 NACK 归还任务；Beanstalkd 断连自动归队，保证不丢任务。",
+        "锁型队列（Delayed Job）确保释放任务记录锁，避免任务卡死，崩溃或重启的影响被控制在最小范围。",
+        "任务用事务包裹或幂等化，保证崩溃后可重入，不重不丢，让进程迁移与故障恢复都快速而安全，从机制上保证不丢任务、不重任务。",
+        "用健壮队列后端（Beanstalkd）应对突然死亡：断连/超时自动归队，优雅关闭与快速启动共同支撑了高可用设计。",
+        "HTTP 保持短请求；长轮询客户端实现无缝重连，保证用户体验，使底层故障时系统依然能自动收敛恢复，这使弹性扩展与频繁部署成为可能。"
       ],
       "cases": [
-        "RabbitMQ NACK、Beanstalkd"
+        "RabbitMQ NACK：worker 优雅关闭时归还当前任务到队列，任务不丢，这使弹性扩展与频繁部署成为可能。",
+        "Beanstalkd：worker 断连时任务自动回到队列，健壮性设计，是生产环境健壮性的重要保障之一。",
+        "Delayed Job：锁型系统需释放任务记录上的锁，防卡死，任务与请求因此能在任何进程变更下安全完成。",
+        "Crash-only design（CouchDB 等）：把突然死亡作为设计常态的逻辑终点，崩溃或重启的影响被控制在最小范围。",
+        "进程管理器在 SIGTERM 后把进程迁移到新物理机（得益于短启动），让进程迁移与故障恢复都快速而安全。"
       ],
       "anti_patterns": [
-        "启动时间长",
-        "不平滑退出",
-        "任务不可重入"
+        "启动时间长，拖慢 release 流程与扩容敏捷性，迁移困难，这使弹性扩展与频繁部署成为可能，是生产环境健壮性的重要保障之一。",
+        "收到 SIGTERM 不平滑退出——不完成当前请求、不归还任务，数据不保，任务与请求因此能在任何进程变更下安全完成。",
+        "任务不可重入/不幂等，崩溃后重复执行或任务丢失，一致性破坏，崩溃或重启的影响被控制在最小范围，让进程迁移与故障恢复都快速而安全。",
+        "依赖任务锁而不释放，导致任务卡死，队列阻塞，从机制上保证不丢任务、不重任务，优雅关闭与快速启动共同支撑了高可用设计。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/disposability.md",
+          "note": "IX. Disposability 原文：启动时间/SIGTERM 优雅关闭/队列归还/幂等/突然死亡/Crash-only"
+        },
+        {
+          "path": "app-content-en/processes.md",
+          "note": "进程可处置性主体的交叉引用"
+        },
+        {
+          "path": "app-content-en/build-release-run.md",
+          "note": "release 过程与扩容敏捷性的交叉引用"
+        }
+      ]
     },
     {
       "id": "app-dev-prod",
       "name": "开发/线上等价",
       "what": [
-        "缩小时间/人员/工具三大差距",
-        "支持持续部署",
-        "各 deploy 用同类型同版本服务"
+        "历史上开发（开发者对本地 deploy 实时编辑）与生产（最终用户访问的运行 deploy）之间存在三大差距：时间、人员、工具。",
+        "时间差距：开发者编写的代码要数天、数周甚至数月才进入生产，反馈周期长，这大幅降低了环境差异引发的线上故障概率。",
+        "人员差距：开发者写代码、运维工程师负责部署，责任割裂，是持续部署得以长期坚持的基础条件，开发与生产的栈一致让问题更早暴露、更快修复。",
+        "工具差距：开发者可能使用 Nginx、SQLite、OS X 的栈，而生产使用 Apache、MySQL、Linux，栈不一致。",
+        "十二要素应用通过保持开发与生产差距小来设计支持持续部署，追求敏捷发布，减少因环境特化导致的隐性不兼容。",
+        "缩小时间差距：开发者写完代码几小时甚至几分钟后即可部署上线，反馈即时，让测试结论对生产行为更有参考价值。",
+        "缩小人员差距：编写代码的开发者密切参与部署并观察其生产行为，责任闭环，从源头消除大多数生产环境才出现的问题。",
+        "缩小工具差距：开发与生产环境尽可能相似，栈一致降低差异风险，责任闭环使部署与观察都由同一批人完成，为高频发布提供了充分的环境一致性保障。",
+        "backing service 是 dev/prod parity 的重要领域；许多语言提供简化访问的库与适配器，如 ActiveRecord 适配 MySQL/PostgreSQL/SQLite。",
+        "Celery（Python/Django 队列库）适配 RabbitMQ/Beanstalkd/Redis；ActiveSupport::Cache 适配 Memory/文件系统/Memcached。",
+        "传统应用部署间隔数周、代码作者与部署者不同、开发与生产环境分歧；十二要素为小时级部署、同一批人、环境尽可能相似。",
+        "开发者有时偏爱本地用轻量 backing service、生产用更严肃健壮的：本地 SQLite + 生产 PostgreSQL，或开发期进程内存缓存 + 生产 Memcached。",
+        "十二要素开发者抵制开发与生产用不同 backing service 的诱惑，即使适配器理论上抽象掉了差异。",
+        "backing service 差异滋生微小不兼容，使开发/预发布通过测试的代码在生产失败；此类摩擦抑制持续部署，生命周期内聚合成本极高。",
+        "现代 backing service（Memcached、PostgreSQL、RabbitMQ）经 Homebrew、apt-get 等现代打包系统不难安装运行。",
+        "声明式配置工具 Chef/Puppet + 轻量虚拟环境 Docker/Vagrant 可运行贴近生产的本地环境，成本远低于 dev/prod parity 与持续部署的收益。",
+        "适配器仍有用（移植到新 backing service 相对无痛），但所有 deploy 应使用每个 backing service 的同类型同版本。"
       ],
       "why": [
-        "服务差异致微不兼容，生产失败",
-        "摩擦抑制持续部署，成本极高"
+        "backing service 差异滋生微小不兼容，使通过测试的代码在生产失败，打击信心，这大幅降低了环境差异引发的线上故障概率。",
+        "摩擦抑制持续部署，应用生命周期内聚合成本极高，长期代价巨大，是持续部署得以长期坚持的基础条件，开发与生产的栈一致让问题更早暴露、更快修复。",
+        "缩小时间/人员/工具三大差距是持续部署得以成立的前提，缺一不可，减少因环境特化导致的隐性不兼容，让测试结论对生产行为更有参考价值。"
       ],
       "how": [
-        "包装系统易装现代服务",
-        "Docker/Vagrant 贴近生产",
-        "adapters 不能掩盖差异"
+        "用现代打包系统（Homebrew/apt-get）在本地安装与生产相同的服务，栈一致，这大幅降低了环境差异引发的线上故障概率。",
+        "用 Chef/Puppet 声明式配置 + Docker/Vagrant 轻量虚拟环境贴近生产，环境近似。",
+        "不用适配器掩盖 backing service 差异；所有 deploy 用同类型同版本，杜绝微不兼容。",
+        "把部署间隔从周缩短到小时/分钟级，加速反馈闭环，是持续部署得以长期坚持的基础条件，开发与生产的栈一致让问题更早暴露、更快修复。",
+        "让写代码的开发者参与部署与生产行为观察，责任闭环，减少因环境特化导致的隐性不兼容，让测试结论对生产行为更有参考价值。"
       ],
       "cases": [
-        "Chef、Puppet、Docker、Vagrant"
+        "本地 SQLite + 生产 PostgreSQL——应抵制的诱惑，微不兼容风险高，这大幅降低了环境差异引发的线上故障概率。",
+        "开发期进程内存缓存 + 生产 Memcached——应抵制的诱惑，行为差异大，是持续部署得以长期坚持的基础条件。",
+        "ActiveRecord 适配 MySQL/PostgreSQL/SQLite；Celery 适配 RabbitMQ/Beanstalkd/Redis；ActiveSupport::Cache 适配 Memory/文件系统/Memcached。",
+        "Homebrew、apt-get 安装现代 backing service，本地轻松贴近生产，开发与生产的栈一致让问题更早暴露、更快修复。",
+        "Chef、Puppet + Docker、Vagrant 贴近生产环境，声明式可复现，减少因环境特化导致的隐性不兼容。",
+        "传统 vs 十二要素对比：部署间隔 周/小时、作者与部署者 不同人/同一人、环境 分歧/尽可能相似。"
       ],
       "anti_patterns": [
-        "本地轻量生产重量",
-        "adapters 掩盖差异"
+        "本地轻量、生产重量级 backing service（SQLite vs PostgreSQL）组合，行为不一致。",
+        "依赖 adapters 抽象掩盖 backing service 差异，微不兼容潜伏，这大幅降低了环境差异引发的线上故障概率。",
+        "三大差距放任扩大，抑制持续部署并抬高生命周期成本，是持续部署得以长期坚持的基础条件，开发与生产的栈一致让问题更早暴露、更快修复。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/dev-prod-parity.md",
+          "note": "X. Dev/prod parity 原文：三大差距/对比表/适配器差异/现代服务可安装/Chef/Puppet/Docker/Vagrant"
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": "backing service 类型的交叉引用"
+        },
+        {
+          "path": "app-deploy/Readme.md",
+          "note": "实例：bundle install + heroku local:start 本地跑生产同款 Ruby 栈"
+        },
+        {
+          "path": "app-deploy/Gemfile",
+          "note": "生产同款依赖声明，支撑本地/生产一致"
+        }
+      ]
     },
     {
       "id": "app-logs",
       "name": "日志",
       "what": [
-        "日志是按时间排序的聚合事件流",
-        "应用不过问路由或存储",
-        "进程无缓冲写 stdout"
+        "日志提供运行中应用行为的可见性；服务器环境通常写入磁盘文件（logfile），但 logfile 只是众多输出格式之一。",
+        "日志是从所有运行进程与 backing service 输出流收集的、聚合且按时间排序的事件流，来源多元。",
+        "原始日志典型为每行一个事件的文本格式（异常 backtrace 可能跨多行），没有固定起点或终点，应用运行期间持续流动。",
+        "十二要素应用绝不过问其输出流的路由或存储，不应尝试写或管理 logfile，职责交给环境，这让日志处理保持简单、可扩展。",
+        "每个运行进程把事件流无缓冲地写到 stdout，保证实时性与完整性，是应用可观测性的统一来源，日志的聚合、检索与告警因此都能规模化实现。",
+        "本地开发中开发者在前台终端查看该流以观察应用行为，调试直观，使日志处理职责与业务代码彻底分离，为历史回溯与趋势分析提供了完整素材。",
+        "staging/生产部署中每个进程的流被运行环境捕获，与应用所有其他流合并，路由到一个或多个最终目的地供查看与长期归档。",
+        "归档目的地对应用不可见、不可配置，完全由执行环境管理，应用无感知，运行环境可自由扩展日志能力而不影响应用。",
+        "开源日志路由器有 Logplex 与 Fluentd，可完成聚合与转发，事件流模型天然支持流式分析与实时告警。",
+        "事件流可路由到文件、终端实时 tail，或送往日志索引分析系统 Splunk、通用数据仓库 Hadoop/Hive。",
+        "日志系统能力：查找过去特定事件、大规模趋势图表（如每分钟请求数）、按用户定义启发式主动告警（如每分钟错误数超阈值告警）。"
       ],
       "why": [
-        "日志提供运行可见性",
-        "logfile 只是输出格式之一"
+        "日志提供运行可见性，是调试、监控与审计的原始素材，故障定位基石，这让日志处理保持简单、可扩展，是应用可观测性的统一来源。",
+        "logfile 只是输出格式之一，路由/存储应由执行环境统一负责，应用保持简单，日志的聚合、检索与告警因此都能规模化实现。",
+        "聚合事件流使历史检索、趋势分析与主动告警成为可能，可观测性强，使日志处理职责与业务代码彻底分离，为历史回溯与趋势分析提供了完整素材。"
       ],
       "how": [
-        "无缓冲写 stdout",
-        "路由到文件/Splunk/数据仓库",
-        "Logplex/Fluentd 汇总"
+        "进程把事件流无缓冲写到 stdout，不过问路由/存储，保持输出纯净，这让日志处理保持简单、可扩展。",
+        "本地开发在前台终端查看事件流观察行为，实时反馈，是应用可观测性的统一来源，日志的聚合、检索与告警因此都能规模化实现。",
+        "staging/生产由执行环境捕获、合并、路由到目的地（文件/实时 tail/日志分析/数据仓库）。",
+        "用 Logplex/Fluentd 做开源日志路由，聚合全部进程流，使日志处理职责与业务代码彻底分离。",
+        "事件流送 Splunk（日志索引分析）或 Hadoop/Hive（通用数据仓库）做历史检索/趋势/告警。"
       ],
       "cases": [
-        "Logplex、Fluentd、Splunk"
+        "Logplex：Heroku 开源日志路由器，聚合多进程流，这让日志处理保持简单、可扩展，是应用可观测性的统一来源。",
+        "Fluentd：开源日志收集与路由工具，广泛集成，日志的聚合、检索与告警因此都能规模化实现，使日志处理职责与业务代码彻底分离。",
+        "Splunk：日志索引与分析系统，支持复杂检索，为历史回溯与趋势分析提供了完整素材，运行环境可自由扩展日志能力而不影响应用。",
+        "Hadoop/Hive：通用数据仓库，支持大规模趋势与历史检索，事件流模型天然支持流式分析与实时告警。",
+        "实时 tail 终端查看；每分钟请求数趋势图；错误数超阈值触发告警，从机制上避免日志丢失与格式碎片化。"
       ],
       "anti_patterns": [
-        "应用写/管理 logfile",
-        "关心路由存储"
+        "应用写/管理 logfile——路由存储应交给执行环境，应用保持简单，这让日志处理保持简单、可扩展。",
+        "应用关心输出流的路由与归档目的地，越界负责基础设施，是应用可观测性的统一来源，日志的聚合、检索与告警因此都能规模化实现。",
+        "把日志视为文件而非事件流，失去聚合与流式分析能力，使日志处理职责与业务代码彻底分离，为历史回溯与趋势分析提供了完整素材。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/logs.md",
+          "note": "XI. Logs 原文：事件流/无缓冲 stdout/执行环境路由/Logplex/Fluentd/Splunk/Hadoop-Hive"
+        },
+        {
+          "path": "app-content-en/concurrency.md",
+          "note": "进程管理器管理输出流的交叉引用"
+        },
+        {
+          "path": "app-deploy/web.rb",
+          "note": "实例：Sinatra 应用的 stdout/错误输出作为事件流来源"
+        }
+      ]
     },
     {
       "id": "app-admin",
       "name": "管理进程",
       "what": [
-        "一次性任务作为一次性进程运行",
-        "与常规进程同 codebase/config/release",
-        "admin 代码随应用发布"
+        "process formation 是应用运行时做常规业务（如处理 web 请求）的进程数组；开发者还常想对应用做一次性管理/维护任务。",
+        "一次性任务例子：数据库迁移，Django 用 manage.py migrate、Rails 用 rake db:migrate。",
+        "一次性任务例子：运行 console（REPL shell）执行任意代码或对实时数据库检查模型；多数语言无参运行解释器即得 REPL（python、perl），或独立命令（Ruby 的 irb、Rails 的 rails console）。",
+        "一次性任务例子：运行提交进应用 repo 的一次性脚本，如 php scripts/fix_bad_records.php 修复坏数据。",
+        "一次性 admin 进程应在与常规长跑进程相同的环境中运行，针对某个 release 运行，这保证管理操作与线上环境完全一致。",
+        "admin 进程使用与该 release 任何进程相同的 codebase 与 config，保证操作的是线上同款数据环境。",
+        "admin 代码必须随应用代码一起发布，以避免同步问题，保证版本一致，是数据迁移与修复类操作安全性的前提。",
+        "所有进程类型应使用相同的依赖隔离技术：Ruby web 进程用 bundle exec thin start，则数据库迁移用 bundle exec rake db:migrate。",
+        "Python 用 Virtualenv 的应用，Tornado webserver 与 manage.py admin 进程都应使用 vendored 的 bin/python。",
+        "十二要素强烈偏好开箱即提供 REPL shell、且便于运行一次性脚本的语言，减少开发摩擦，管理任务因此可重复、可预期、可审计。",
+        "本地 deploy：开发者在应用检出目录内用直接 shell 命令调用一次性 admin 进程，简单直接。",
+        "生产 deploy：开发者可用 ssh 或该 deploy 执行环境提供的远程命令执行机制运行此类进程。"
       ],
       "why": [
-        "一次性任务需生产同环境才能正确操作线上数据"
+        "一次性任务（迁移/REPL/脚本）需生产同环境才能正确操作线上数据，环境不符必出错，这保证管理操作与线上环境完全一致。",
+        "admin 代码随应用发布避免同步问题，版本永远一致，是数据迁移与修复类操作安全性的前提，管理任务因此可重复、可预期、可审计。",
+        "依赖隔离一致保证 admin 进程与长跑进程环境完全一致，行为可预期，避免管理脚本与线上环境脱节造成事故。"
       ],
       "how": [
-        "迁移/REPL/一次性脚本",
-        "依赖隔离与长进程一致",
-        "本地 shell、生产 ssh"
+        "数据库迁移、REPL console、一次性修复脚本都作为一次性进程运行，与长跑进程同级，这保证管理操作与线上环境完全一致。",
+        "admin 进程针对 release 运行，使用与长跑进程相同的 codebase 与 config。",
+        "admin 代码随应用代码一起发布，杜绝版本漂移，是数据迁移与修复类操作安全性的前提，管理任务因此可重复、可预期、可审计。",
+        "所有进程类型用相同依赖隔离技术（bundle exec、vendored bin/python），环境一致。",
+        "本地用 shell 直接命令，生产用 ssh 或远程执行机制，按环境选择通道，避免管理脚本与线上环境脱节造成事故。"
       ],
       "cases": [
-        "manage.py migrate、rake db:migrate"
+        "manage.py migrate（Django）数据库迁移，管理任务典型，这保证管理操作与线上环境完全一致。",
+        "rake db:migrate（Rails）数据库迁移，同属管理任务，是数据迁移与修复类操作安全性的前提。",
+        "REPL：python、perl 无参运行；irb（Ruby）、rails console（Rails）独立命令。",
+        "php scripts/fix_bad_records.php：提交进 repo 的一次性脚本，修复线上数据。",
+        "bundle exec rake db:migrate 与 bundle exec thin start 同源依赖隔离，环境一致。",
+        "Virtualenv 应用的 vendored bin/python 同时运行 Tornado 与 manage.py，统一解释器。"
       ],
       "anti_patterns": [
-        "admin 代码与应用分离",
-        "依赖隔离不一致"
+        "admin 代码与应用代码分离，导致同步问题，版本漂移，这保证管理操作与线上环境完全一致，是数据迁移与修复类操作安全性的前提。",
+        "admin 进程的依赖隔离与长跑进程不一致，环境行为不可预期，管理任务因此可重复、可预期、可审计，避免管理脚本与线上环境脱节造成事故。",
+        "在非生产同环境下运行一次性管理任务操作线上数据，操作危险，让一次性任务与常规进程共享同一套环境与依赖。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/admin-processes.md",
+          "note": "XII. Admin processes 原文：迁移/REPL/一次性脚本/同环境同 release/依赖隔离一致/本地 shell 生产 ssh"
+        },
+        {
+          "path": "app-content-en/concurrency.md",
+          "note": "process formation 概念来源"
+        },
+        {
+          "path": "app-content-en/build-release-run.md",
+          "note": "admin 进程针对 release 运行的交叉引用"
+        },
+        {
+          "path": "app-content-en/dependencies.md",
+          "note": "依赖隔离技术在 admin 进程的应用"
+        }
+      ]
     },
     {
       "id": "ag-nl2tool",
       "name": "自然语言→工具调用",
       "what": [
-        "自然语言翻译为结构化工具调用对象",
-        "确定性代码执行 payload",
-        "真实 Agent 先查询 ID 构建 payload"
+        "Agent 构建中最常见也最强大的模式，就是把用户的自然语言请求翻译成结构化的工具调用对象，让 LLM 既能推理任务又能驱动系统真正执行动作。",
+        "原子化应用时，它只是把一句话如『能否给 Terri 创建一笔 750 美元的付款链接，赞助二月的 AI Tinkerers 聚会』翻译成一个描述 Stripe API 调用的结构化 JSON 对象。",
+        "结构化对象包含 function.name 与 function.parameters，例如 name=create_payment_link，parameters 内含 amount=750、customer、product、price、quantity、memo 等字段。",
+        "真正的 Agent 在构造 payload 前需要先查询系统：列客户、列商品、列价格，把正确的 ID 填进参数，而不是凭空猜测 ID 值。",
+        "翻译完成后由确定性代码接手：LLM 只负责『下一步做什么』的决策，工具 payload 的执行交给普通程序逻辑，完全不依赖模型随机性。",
+        "原文给出 Python 示例：llm.determineNextStep(自然语言) 返回 nextStep 对象，再按 nextStep.function 走 if/elif 分支分发执行。",
+        "若模型返回了系统不认识的功能名，代码必须落入 else 分支做兜底处理，例如记录日志或向用户请求澄清，而不是直接崩溃。",
+        "原文明确说明：这一步刻意跳过『拿到结果后再循环、最终回给用户』的闭环，把循环留到后面其他因子（如 factor 3/8）再补全。",
+        "演示中真实返回形如『已成功为 Terri 创建 750 美元付款链接，链接见 buy.stripe.com/test_1234567890』，说明该模式最终仍要闭环交付。",
+        "该模式是后面所有因子的地基：工具即结构化输出、掌控上下文、掌控控制流都从这一个原子翻译步骤展开而来。"
       ],
       "why": [
-        "最常见最强大的模式，既能推理又能执行",
-        "结构化输出让后续处理依赖确定代码"
+        "这是把 LLM 的『自然语言理解』与系统的『确定性执行』连接起来的最直接方式，几乎所有 Agent 应用都离不开它。",
+        "结构化输出让后续处理可以依赖完全确定的代码：一旦拿到对象，if/else 分发、参数校验、执行都不再需要模型参与，行为可预测。",
+        "相比让模型自由发挥文本，结构化输出把决策空间显式化，降低了解析失败和幻觉参数混入真实执行环节的风险。",
+        "先查询再构造 payload 的做法让参数中的 customer/product/price 等 ID 来自真实数据源，而不是模型猜测，正确性大幅提升。",
+        "原文强调这是『最常见』的模式，意味着工程上高度成熟，围绕它可以积累大量可复用工具、schema 与最佳实践模板。"
       ],
       "how": [
-        "LLM 返回 nextStep 对象",
-        "switch/if 分发，未知走 else",
-        "参考 mailcrew"
+        "先定义清晰的工具/函数名与参数 schema，例如 create_payment_link 及其 amount、customer、product、price、quantity、memo 字段。",
+        "把自然语言请求原样交给 LLM，通过 prompt 或 BAML 这类工具约束其输出为预定义的结构化对象，而非自由文本。",
+        "LLM 返回 nextStep 后，代码按 function/intent 字段用 switch 或 if/elif 分发，命中则执行真实 API（如 stripe.paymentlinks.create）。",
+        "真实 Agent 在翻译前先查询系统：调用 list_customers、list_products、list_prices 等把 ID 集齐，再填充 payload 参数。",
+        "也可以把需要的 ID 直接放进 prompt 或上下文窗口里（原文指出这与『先查询再构造』本质上是同一回事，见 factor 3）。",
+        "对未知 function 设置 else 兜底分支，避免模型输出未定义工具时程序崩溃或静默失败，至少记录并请求澄清。",
+        "把工具结果追加回上下文，让 Agent 可以基于结果继续决策，直到模型输出 done 类意图才结束循环。",
+        "将『翻译』与『执行』分离为两个独立阶段，便于单独为翻译逻辑做测试、评估与回滚，而不牵连执行链路，也能只替换模型输出解析层而保持工具执行代码不动。"
       ],
       "cases": [
-        "Stripe payment link、mailcrew"
+        "原文示例：把『创建 750 美元付款链接』翻译为 create_payment_link 结构化对象，内含完整的 Stripe 参数。",
+        "真实 Agent 参考：github.com/dexhorthy/mailcrew（附演示视频），会先列出客户、商品、价格再构建 payload。",
+        "Stripe API 的 create_payment_link 调用示例，参数含 cust_128934ddasf9 这类真实 customer ID。",
+        "Python 代码片段 llm.determineNextStep 接收自然语言并返回 nextStep 结构化对象供分发。",
+        "演示返回值：『I've successfully created a payment link for $750 to Terri… https://buy.stripe.com/test_1234567890』。",
+        "if nextStep.function=='create_payment_link' → stripe.paymentlinks.create(nextStep.parameters) 的确定性分发代码。",
+        "mailcrew 项目被原文点名作为『真实会查 ID 的 Agent』，印证先查询后构造 payload 的工程实践。"
       ],
       "anti_patterns": [
-        "不回收结果循环",
-        "ID 硬编码不进查询"
+        "把 ID 硬编码进参数而不做真实查询，模型给出的 customer/product/price ID 很可能不存在或与真实数据对不上号。",
+        "模型返回未知工具时没有 else 兜底，直接抛异常导致整个流程中断，用户得不到任何反馈，正确做法是落入 else 做降级或澄清。",
+        "只做『翻译』不做循环闭环，拿到工具结果后不继续推理，Agent 退化为一次性的单步函数调用，无法完成多步任务。",
+        "依赖模型以非结构化文本表达工具调用，再靠脆弱解析去还原参数，极易因格式漂移而解析失败，应改用受约束的结构化输出。",
+        "把大量系统状态硬塞进一次 prompt 让模型『记住』，而不是通过结构化查询或上下文按需提供，浪费 token 且易错。",
+        "忽略工具结果，不把执行结果喂回上下文，模型后续决策失去依据，整个循环名存实亡，必须把结果作为事件回写。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-01-natural-language-to-tool-calls.md",
+          "note": "原文完整内容：自然语言到工具调用的原子翻译模式"
+        },
+        {
+          "path": "08-source/agent-content/brief-history-of-software.md",
+          "note": "软件史背景：Agent 循环三步论（LLM 定步骤→确定性执行→结果回上下文）"
+        },
+        {
+          "path": "08-source/agent-content/factor-04-tools-are-structured-outputs.md",
+          "note": "承上启下：工具本质就是结构化输出"
+        }
+      ]
     },
     {
       "id": "ag-prompts",
       "name": "掌控你的 Prompt",
       "what": [
-        "prompt 作一等公民代码",
-        "用 BAML 写带类型签名的函数",
-        "收益：可控、可测、可迭代、透明"
+        "不要把 prompt 工程外包给框架，这是本因子最核心的一句话：prompt 必须由你亲自掌控，而不是交给黑盒。",
+        "框架常提供『黑盒』式抽象，如 agent = Agent(role=…, goal=…, personality=…, tools=[…]) 加 task = Task(instructions=…) 后 agent.run(task)。",
+        "黑盒方式适合快速起步，能借用顶级 prompt 工程经验，但往往难以调优，也无法逆向工程出『到底把哪些 token 送进了模型』。",
+        "替代方案：把 prompt 当作一等公民代码对待，用带类型签名的函数表达，例如 Rust 风格函数声明返回 DoneForNow | ListGitTags 等联合类型。",
+        "原文用 BAML 生成 prompt：在模板里用 {{ _.role(\"system\") }} / {{ _.role(\"user\") }} 组织角色与内容，通过类型签名约束输出。",
+        "签名看起来『有点怪』的部分会在 factor 4（工具即结构化输出）得到解释——函数返回的联合类型就是工具集合。",
+        "prompt 是应用逻辑与 LLM 之间的主接口，谁掌控 prompt，谁就掌控了 Agent 行为的最终决定权与可调性。",
+        "原文引用 Hamel 的博客，强调『这是远非新颖的建议』，即掌控 prompt 早已是被反复验证的工程常识。",
+        "prompt 内容直接决定模型能调用哪些工具、按什么顺序思考、何时请求人类介入，是所有后续因子落实的落点。"
       ],
       "why": [
-        "prompt 是应用逻辑与 LLM 的主接口",
-        "黑盒框架难精确调优定位"
+        "全权掌控：你可以写出 Agent 精确需要的指令，没有黑盒抽象遮挡任何一层，改动即可生效无需等框架。",
+        "可测试与评估：为 prompt 建测试和 evals，就像为普通代码建测试一样，每次改动都能被回归验证。",
+        "可迭代：基于真实线上表现快速修改 prompt 内容，而不必等待框架发版或逆向黑盒定位问题，试错成本极低。",
+        "透明性：永远清楚 Agent 正在依据哪些指令工作，便于审计、排查与向利益相关方解释行为，合规与排障都有据可依。",
+        "角色利用：可以利用支持 user/assistant 角色非标准用法的 API，例如现已废弃的 OpenAI『completions』非 chat 口味，乃至所谓 gaslighting 技巧。",
+        "你不知道什么 prompt 最好，但你想要能尝试一切的灵活性——只有真正拥有 prompt 才能做到这一点。",
+        "原文 BAML 示例把部署 Agent 的系统提示写成完整段落：职责、先查环境（staging vs production）、再验 tag、再查系统状态。"
       ],
       "how": [
-        "不依赖框架抽象，直接写显式 prompt",
-        "像代码一样建测试与 evals"
+        "放弃框架的 Agent/Task 黑盒，直接用 BAML 或任意模板工具手写 prompt，甚至用纯字符串模板拼接也完全可以。",
+        "为 prompt 声明强类型函数签名：输入是 thread 字符串，输出是语义明确的意图联合类型（DoneForNow/ListGitTags/DeployBackend…）。",
+        "在 system 段写清楚角色与行为准则：例如『You are a helpful assistant that manages deployments…』并列出安全部署最佳实践。",
+        "在 user 段注入动态内容 {{ thread }}，末尾固定询问『What should the next step be?』引导模型输出下一步意图。",
+        "在 prompt 中显式列出可用工具（deploy_backend、deploy_frontend、check_deployment_status），并说明敏感操作要 request_approval。",
+        "引导模型先想后做：先查部署状态、验证 tag 存在、需要时请求批准、先上 staging 再上生产、最后监控部署进度。",
+        "像写代码一样为 prompt 建立版本管理与测试套件，把每次迭代纳入回归，保证既有行为不被无意破坏。",
+        "利用非标准角色 API 的能力做试验（如角色反转/gaslighting 技术），保持实验自由，寻找更好的行为空间。",
+        "用 BAML 的测试语法（test 块 + @@assert）固化关键行为，例如断言意图、断言参数，防止后续改动破坏已通过路径。"
       ],
       "cases": [
-        "BAML 的 DetermineNextStep"
+        "黑盒反例：Agent(role, goal, personality, tools) + Task(instructions, expected_output) + agent.run(task) 三段式框架用法。",
+        "BAML 正向示例：DetermineNextStep 函数用类型签名加 prompt #\" … \"# 模板组织 system/user 角色与内容。",
+        "具体系统提示文本：管理 frontend/backend 部署的助理、按最佳实践安全部署、部署前检查环境/标签/系统状态。",
+        "工具列举示例：deploy_backend、deploy_frontend、check_deployment_status，敏感部署要求 request_approval 获得人工验证。",
+        "思考顺序清单：先查部署状态 → 验证 tag 存在 → 需要时请求批准 → 先上 staging 再上生产 → 监控部署进度。",
+        "类型签名联合类型：DoneForNow | ListGitTags | DeployBackend | DeployFrontend | RequestMoreInformation 五选一。",
+        "外部佐证：hamel.dev/blog/posts/prompt 关于掌控 prompt 的论述，原文以配图形式引用。",
+        "原文观点：『I don't know what's the best prompt, but I know you want the flexibility to be able to try EVERYTHING.』",
+        "原文提及的非标准 API 例子：现已废弃的 OpenAI non-chat completions API，以及 model gaslighting 技术。"
       ],
       "anti_patterns": [
-        "依赖黑盒 Agent 抽象",
-        "prompt 工程完全外包"
+        "完全依赖黑盒 Agent/Task 抽象，出了问题无法定位是框架哪一层把 prompt 改坏或篡改了指令。",
+        "把 prompt 工程彻底外包给框架，丧失对『送入模型的精确 token』的控制，调优无从下手，行为也不可审计。",
+        "对 prompt 不建测试不建 evals，任何改动的风险都不可评估，线上出问题只能靠肉眼试错，回归无从谈起。",
+        "在 prompt 中重复堆砌长指令而没有结构化组织，浪费 token 且降低模型的遵循度，应精简并按角色分层。",
+        "不区分 system 与 user 角色内容，把动态 thread 与固定指令混在一起，破坏可复用性与可维护性。",
+        "直接复用框架默认 prompt 而从不审视其中是否含有与业务不符、甚至有害的指令，必须逐句核对后再上线。",
+        "忽略角色 API 的能力差异，白白放弃非标准角色用法能带来的行为红利与实验空间，应把角色能力纳入选型。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-02-own-your-prompts.md",
+          "note": "原文完整内容：掌控 prompt、BAML 示例、五项收益"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/agent.baml",
+          "note": "模板真实 BAML：DetermineNextStep 函数、ClarificationRequest/DoneForNow 等类与测试块"
+        },
+        {
+          "path": "08-source/agent-workshops/2025-05/walkthrough.md",
+          "note": "workshop Chapter 6 定制 prompt 加入推理步骤；Chapter 4 为 prompt 添加 @@assert 测试"
+        }
+      ]
     },
     {
       "id": "ag-context",
       "name": "掌控上下文窗口",
       "what": [
-        "输入本质是「发生了什么，下一步是什么」",
-        "上下文含 prompt/检索/历史/记忆",
-        "可自建格式，XML 标签表达事件流"
+        "你不需要拘泥于标准消息格式来向 LLM 传递上下文：『任何时刻，你给 LLM 的输入本质上就是：到目前为止发生了什么，下一步是什么』。",
+        "一切都是上下文工程。LLM 是『把输入变成输出的无状态函数』，要得到最好的输出，就必须给它最好的输入。",
+        "好的上下文包括：给模型的 prompt 与指令、检索到的文档或外部数据（如 RAG）、过去状态/工具调用/结果等历史、记忆、结构化输出指令。",
+        "原文声明不讨论 temperature/top_p/frequency_penalty/presence_penalty 等采样参数，也不讨论训练模型或微调——本指南聚焦纯上下文构造。",
+        "标准消息格式是 role=system/user/assistant/tool 的数组，assistant 消息里带 tool_calls（id/name/arguments），tool 消息用 tool_call_id 回传结果。",
+        "替代方案：自建针对你用例优化的上下文格式，把自定义对象打包/展开进一个或多个 user/system/assistant/tool 消息中。",
+        "原文示例把整个上下文窗口放进一条 user 消息：用 <slack_message>、<list_git_tags>、<list_git_tags_result> 等 XML 标签表达事件流。",
+        "你可以完全控制『存什么 vs 传给 LLM 什么』：实验不同的上下文结构会带来明显的质量提升，这是上下文工程的核心杠杆。",
+        "上下文窗口是你与 LLM 的主接口，掌控其结构能大幅提升 Agent 性能；原文给出信息密度对比图证明同语义可更少 token。",
+        "发布约两月后『context engineering』流行：原文引用 Karpathy、Tobi 讨论与 @lenadroid 的 Context Engineering Cheat Sheet 佐证。"
       ],
       "why": [
-        "标准消息格式可优化",
-        "上下文是主接口，掌控构造大幅提性能"
+        "信息密度：以最大化 LLM 理解的方式组织信息，相同语义用更少 token 表达，注意力更集中、理解更准。",
+        "错误处理：以有助于 LLM 恢复的格式包含错误信息，错误和失败调用解决后应主动从上下文窗口隐藏，防止历史失败干扰。",
+        "安全性：严格控制什么信息进入 LLM，过滤敏感数据，防止密码、密钥等意外泄露给模型，泄露面可收敛到最小。",
+        "灵活性：随着你对用例理解的深入，可以随时调整上下文格式，不必被框架锁死，结构迭代也无需迁移任何系统。",
+        "Token 效率：为 token 效率与 LLM 理解力双重优化上下文格式，长上下文成本与质量双收益。",
+        "LLM 是无状态函数，只有把『最佳输入』喂给它才能得到『最佳输出』，而这完全取决于你的上下文构造能力。",
+        "上下文工程在 2025 年中成为热门概念，社区（Karpathy 等）与工具链都验证了这一方向的正确性。"
       ],
       "how": [
-        "事件驱动 Thread/Event 模型",
-        "event_to_prompt 渲染",
-        "实验存什么 vs 传什么"
+        "定义 Thread/Event 模型：Thread.events 为事件列表，Event 有 type（list_git_tags、deploy_backend、error 等 Literal 联合类型）与 data。",
+        "实现 event_to_prompt(event)：把事件渲染为 <type>\\n数据\\n</type> 的 XML 风格字符串，对象数据用 stringifyToYaml 嵌入。",
+        "实现 thread_to_prompt(thread)：用 \\n\\n 把各事件渲染串接成最终喂给 LLM 的上下文窗口。",
+        "上下文演进演示：初始 <slack_message> 追加 <list_git_tags> 与 <list_git_tags_result>，出错加 <error>，再追加 <request_more_information> 与 <human_response>。",
+        "用 determine_next_step(thread_to_prompt(thread)) 把自建上下文喂给 LLM，获取下一步意图（如 get_workflow_status 与 workflow_name）。",
+        "把『What's the next step?』显式写进 prompt 模板，虽然模型可能从工具 schema 推断，但显式声明总是无坏处。",
+        "把错误信息以 XML 标签结构化进上下文，同时考虑在解决后从窗口移除，避免失败历史污染后续推理，这本身就是格式实验。",
+        "实验性地决定『存什么 vs 传什么』，用信息密度对比（同语义更少 token）验证格式收益，再推广到全部事件类型。",
+        "工具模板参考 create-12-factor-agent/template/src/agent.ts：serializeForLLM/serializeOneEvent 把事件序列化为 <intent>k: v</intent> 格式。"
       ],
       "cases": [
-        "Context Engineering Cheat Sheet"
+        "标准消息格式示例：system+user+assistant(tool_calls: list_git_tags)+tool 消息返回 v1.2.3/v1.2.2/v1.2.1 的 tags 数组。",
+        "单条 user 消息打包全部上下文的 <slack_message>…</slack_message> 方案，XML 风格事件流。",
+        "Python Thread/Event 类代码：Event.type 为 Literal[\"list_git_tags\",…,\"error\"] 联合类型定义。",
+        "event_to_prompt 的 f\"<{event.type}>\\n{data}\\n</{event.type}>\" 渲染逻辑与 stringifyToYaml 数据序列化。",
+        "错误后恢复的上下文示例：<error> error running deploy_backend: Failed to connect to deployment service </error>。",
+        "模板实现：agent.ts 的 serializeOneEvent 输出 <multiply>\\na: 3\\nb: 4\\n</multiply> 这类 XML 风格事件。",
+        "@lenadroid 的 Context Engineering Cheat Sheet（2025-07），原文配图引用作为社区资源。",
+        "Karpathy 与 Tobi（Vercel CEO）关于上下文工程的推文截图，发布于 2025 年中。"
       ],
       "anti_patterns": [
-        "无条件用标准消息",
-        "残留错误污染推理",
-        "用采样参数弥补构造不足"
+        "无条件沿用标准 messages 数组格式，从不针对用例优化结构，白白浪费 token 与注意力，应至少做一次格式对比实验。",
+        "把未解决的错误事件长期留在上下文里，模型反复看到失败历史，严重影响后续决策质量，错误解决后应立即隐藏。",
+        "用调采样参数（temperature/top_p 等）来弥补上下文构造不足，而不是去优化输入本身，治标不治本。",
+        "把敏感数据（密码上下文、session id 等）不加过滤直接塞进上下文，造成泄密风险，机密应留在外部存储。",
+        "只堆砌『发生了什么』而不显式声明『下一步是什么』，模型只能靠猜，决策稳定性差，务必把引导句写进模板。",
+        "把工具结果以大段 JSON 原文塞入而不做压缩/结构化，token 效率与可读性双输，应按事件语义重新组织。",
+        "上下文越长越不管理，违反『隐藏已解决错误、修剪无关节』的纪律，为错误空转埋下隐患，要主动修剪历史、定期压缩。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-03-own-your-context-window.md",
+          "note": "原文完整内容：上下文工程、标准 vs 自定义格式、Thread/Event 代码"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": "模板实现：serializeForLLM/serializeOneEvent 的 XML 序列化"
+        },
+        {
+          "path": "08-source/agent-workshops/2025-05/walkthrough.md",
+          "note": "workshop Chapter 7 定制上下文窗口：JSON pretty-print 到 XML 序列化"
+        }
+      ]
     },
     {
       "id": "ag-tools",
       "name": "工具即结构化输出",
       "what": [
-        "工具调用=LLM 输出可解析的 JSON",
-        "三步：输出 JSON→执行→喂回",
-        "决策与执行分离",
-        "不锁死固定函数对应"
+        "工具不需要复杂，其核心就是『LLM 输出的结构化数据，用于触发确定性代码』——工具本质上只是结构化输出。",
+        "让 LLM『用其中一个工具』，本质上只是让它输出一段我们可以解析成代表这些工具的对象的 JSON，别无玄机。",
+        "示例：CreateIssue 类携带 intent='create_issue' 与嵌套的 Issue 对象；SearchIssues 携带 intent='search_issues' 与 query、what_youre_looking_for 查询字段。",
+        "模式三步：①LLM 输出结构化 JSON；②确定性代码执行对应动作（如调用外部 API）；③结果被捕获并喂回上下文。",
+        "这在 LLM 的『决策』与应用的『行动』之间建立了干净分离：LLM 决定做什么，但你的代码控制怎么做。",
+        "『LLM 调用了工具』不意味着你必须每次都去执行同一个固定函数——同一意图可以根据业务逻辑走不同实现。",
+        "把工具调用想成『模型输出一段描述确定性代码该做什么的 JSON』，会解锁大量灵活性，可与 factor 8 配合。",
+        "原文引用 switch 语句：nextStep.intent=='create_payment_link' → stripe.paymentlinks.create；'wait_for_a_while' → 某种 monadic 处理；else → 兜底。",
+        "『下一步』不一定原子到『执行纯函数并返回结果』，模型输出的 JSON 可以驱动更复杂、更长的控制流。",
+        "原文链接了 plain prompting vs tool calling vs JSON mode vs constrained generation 等路线权衡的资源，但声明不展开讨论。"
       ],
       "why": [
-        "使决策执行解耦",
-        "为掌控控制流铺路"
+        "决策与执行解耦：LLM 只输出『意图+参数』的 JSON，具体怎么执行由确定代码决定，行为可预测、可审计。",
+        "同样的 JSON 意图可以映射到不同实现，随业务变化灵活调整，不锁死工具与函数的严格一一对应，实现可独立演进。",
+        "为掌控控制流铺路：既然工具是 JSON，你就可以在 JSON 与执行之间插入审批、暂停、重试等逻辑（factor 8）。",
+        "结构化输出天然可测试：schema 明确、解析稳定，比解析自由文本可靠得多，回归有保障，错误能准确定位到字段。",
+        "符合『Agent 循环』第一步的标准化产出，后续每一步（执行、回写、再决策）都能被确定性处理，全链路可控。"
       ],
       "how": [
-        "数据类按 intent 输出 JSON",
-        "switch 分发未知走 else"
+        "用数据类（Python class 或 BAML class）定义每个工具：intent 字段加业务参数，如 CreateIssue 内含 intent 与嵌套的 Issue 对象。",
+        "让 LLM 基于 schema 输出 JSON，用 BAML 的 type 联合（如 HumanTools | CalculatorTools）约束可选项，从类型上杜绝未知意图。",
+        "在确定性代码里按 intent 做 switch/if 分发：命中执行外部 API，未命中走 else 兜底，保证流程不中断。",
+        "把每次工具调用的结果捕获并追加回上下文（thread.events），供模型决定下一步，形成闭环，执行信息不丢失。",
+        "模板实现：agent.ts 的 handleNextStep 对 add/subtract/multiply/divide 分别计算并把 tool_response 事件 push 进 thread。",
+        "用 @description 注解给 BAML 类补充行为约束，例如 ProcessRefund 注明『退款前必须先向经理请求批准』。",
+        "用 @description 给字段补充说明，例如 DoneForNow.message 注明『写给用户的工作完成说明』。",
+        "把工具输出与意图组合成联合类型返回（DetermineNextStep -> HumanTools | CalculatorTools | CustomerSupportTools），让类型系统承接工具集。"
       ],
       "cases": [
-        "CreateIssue/SearchIssues"
+        "CreateIssue / SearchIssues 两个工具类的定义示例，intent 字段加业务参数结构。",
+        "Issue 嵌套对象：title/description/team_id/assignee_id 四个字段的完整定义。",
+        "switch 语句示例：nextStep.intent == 'create_payment_link' → stripe.paymentlinks.create 的执行分支。",
+        "模板 BAML 工具：AddTool/SubtractTool/MultiplyTool/DivideTool 四个计算器类（intent add/subtract/multiply/divide，a/b 为 int|float）。",
+        "ProcessRefund 类：intent 'process_refund'，含 order_id/amount/reason，注解要求退款前请求经理批准。",
+        "type CalculatorTools = AddTool | SubtractTool | MultiplyTool | DivideTool 的联合类型定义。",
+        "模板 agent.ts 的 handleNextStep：按 intent 分发并返回更新后的 thread，供外层循环继续。",
+        "原文链接资源：boundaryml schema-aligned parsing、Vellum 的 function calling vs structured outputs vs JSON mode、LlamaIndex 对比。"
       ],
       "anti_patterns": [
-        "工具与固定函数一一对应"
+        "把每个工具与固定函数一一绑定，丧失『同一意图不同实现』的灵活性，业务变化时不得不重构，可维护性差。，属于该因子的基础原则，应在设计中显式落实。",
+        "让 LLM 直接输出要执行的代码字符串，而不是结构化的『意图+参数』JSON，解析与安全风险陡增，务必拒绝此做法。",
+        "模型返回未知意图时不设 else 兜底，直接抛错中断，整个 Agent 流程随之失败，应走降级或澄清路径。",
+        "忽略工具结果、不把执行结果喂回上下文，破坏循环闭环，模型无法基于结果继续决策，决策成了无源之水。，属于该因子的基础原则，应在设计中显式落实。",
+        "为每个细微动作都定义独立工具，工具爆炸导致 schema 庞大、模型选择困难、维护成本失控，应合并相近意图。",
+        "把高风险执行逻辑直接交给 LLM 驱动的函数而不做控制流介入，缺少 factor 8 的保护，必须加审批断点。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-04-tools-are-structured-outputs.md",
+          "note": "原文完整内容：工具即结构化输出的三步模式"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/tool_calculator.baml",
+          "note": "模板计算器工具类：Add/Subtract/Multiply/Divide"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/agent.baml",
+          "note": "模板工具联合类型与函数签名（HumanTools/CalculatorTools/CustomerSupportTools）"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": "模板 handleNextStep 按 intent 分发执行的确定性代码"
+        }
+      ]
     },
     {
       "id": "ag-state",
       "name": "统一执行/业务状态",
       "what": [
-        "统一执行状态与业务状态",
-        "执行状态是上下文元数据",
-        "不放不必要的东西进 LLM"
+        "在 AI 世界之外，许多基础设施系统也倾向于把『执行状态』与『业务状态』分开管理；对 AI 应用而言这可能需要跟踪当前步骤、下一步、等待状态、重试计数等。",
+        "这种分离会引入复杂度，有时值得，但很可能对你这个用例是过度设计——是否分开管理完全由你决定，别以为非分开不可。",
+        "执行状态（execution state）指：当前步骤、下一步、等待状态、重试次数等过程性的元数据。",
+        "业务状态（business state）指：Agent 工作流迄今为止发生的事，例如 OpenAI 消息列表、工具调用及其结果的列表。",
+        "核心建议：尽可能简化，把两者尽量统一成一份状态，而不是维护两套并行数据，同一 thread 事件流即承载全部状态。",
+        "实际上你可以这样设计应用：让所有执行状态都能从上下文窗口推断出来，很多情况下执行状态只是『发生了什么』的元数据。",
+        "确实有些东西放不进上下文窗口，如 session id、密码上下文等，但你的目标应该是把这类东西最小化。",
+        "借助 factor 3（掌控上下文窗口），你可以精确控制到底什么进 LLM、什么只留在外部状态存储里。",
+        "原文用动画演示统一前后：分离的两列状态（execution/business）最终合并为单一的 thread 事件流。"
       ],
       "why": [
-        "单一事实来源：简单/可序列化/易调试/可恢复/可分叉"
+        "简单性：所有状态的唯一事实来源，不再有两套系统互相不同步，心智负担大幅下降，跨端一致性天然满足。，属于该因子的基础原则，应在设计中显式落实。",
+        "可序列化：thread 可以轻松地序列化/反序列化，持久化、传输、恢复都毫无负担，配合 JSON 落盘即可。",
+        "可调试：完整历史在一个地方可见，问题定位快，不用跨多个存储拼凑现场，复盘整条事件链即可定位根因。，属于该因子的基础原则，应在设计中显式落实。",
+        "灵活性：新增状态只需新增事件类型，无需改动存储 schema 或迁移数据，演进成本几乎为零且向后兼容。",
+        "可恢复：只要加载 thread 就能从任意断点恢复执行，暂停/恢复天然成立，无需额外重建任何上下文。",
+        "可分叉：复制 thread 的一部分到新的上下文/状态 ID，就能在任意点 fork 出分支试验，适合并行探索。",
+        "人机界面与可观测性：把 thread 转成人类可读的 markdown 或富 Web UI 极其容易，可观测性免费获得。",
+        "把执行状态收编进上下文元数据后，暂停/恢复（factor 6）与恢复逻辑自然成立，无需额外同步，省掉一套机制。"
       ],
       "how": [
-        "thread=事件流承载一切",
-        "执行状态从 thread 推断"
+        "用 thread（事件流）作为承载一切的单一结构：Thread.events 保存 user_input、tool_call、tool_response、error、human_response 等事件。",
+        "从 thread 推断执行状态：当前步骤 = 最后一个未完成事件，等待状态 = 最后事件是否为 request_more_information/done_for_now（见 awaitingHumanResponse）。",
+        "让所有需要决策的信息都进上下文，session id、密码等机密留在外部存储，只把脱敏引用传入，兼顾效果与安全。",
+        "用 factor 3 的序列化函数（serializeForLLM）决定 thread 中哪些事件、以什么格式进入 LLM。",
+        "实现 FileSystemThreadStore（create/get/update），thread 落盘为 JSON 与 LLM 序列化文本双份（存 .threads 目录）。",
+        "新增业务能力时新增 Event.type 与对应 data，而不是另起一套执行状态表来维护，保持单一事实来源。",
+        "持久化时机：每次工具执行或等待人类前先 save_state(thread)，恢复时 load_state(thread_id)。",
+        "可替换任意简单状态管理：Redis/SQLite/Postgres 皆可，接口不变，存储迁移成本低。"
       ],
       "cases": [
-        "7 条收益清单"
+        "原文 7 条收益清单：Simplicity/Serialization/Debugging/Flexibility/Recovery/Forking/Human Interfaces & Observability。",
+        "执行状态与业务状态的定义对比列表（原文明确列出两类字段的归属），是理解两状态分野与统一动机的起点。，属于该因子的基础原则，应在设计中显式落实。",
+        "模板 src/state.ts：FileSystemThreadStore 用 crypto.randomUUID 生成 id，写 .threads/{id}.json 与 {id}.txt 双文件。",
+        "agent.ts 的 awaitingHumanResponse()：lastEvent 意图为 request_more_information/done_for_now 时判定在等人。",
+        "awaitingHumanApproval()：lastEvent 意图为 divide 时判定需审批（workshop 演示场景）。",
+        "unify-state 动画/GIF（155-unify-state-animation.gif）演示两列状态合并为单线程。",
+        "server.ts 中 create/update 线程，webhook 后 load_state 恢复并继续循环的完整链路。"
       ],
       "anti_patterns": [
-        "两套独立系统",
-        "硬塞不可入上下文之物"
+        "为执行状态与业务状态建立两套独立系统，同步逻辑成为维护噩梦，状态极易不一致，应合并为单一事件流。，属于该因子的基础原则，应在设计中显式落实。",
+        "把 session id、密码等不该进上下文的东西硬塞给 LLM，引入安全与泄露风险，机密只存外部存储。",
+        "把执行状态藏进全局可变变量或进程内存，进程一挂全丢，无法恢复，必须落盘持久化到事件流中才能保命恢复。",
+        "状态没有单一序列化路径，调试时需要跨多个存储拼历史，问题定位困难，应统一走 thread 的单一序列化路径。",
+        "新增状态时改动存储 schema 而不是新增事件类型，破坏向后兼容性，应以追加事件类型代替改结构。，属于该因子的基础原则，应在设计中显式落实。",
+        "不在暂停/等待前持久化，导致恢复时丢失中间过程，恢复残缺，每次等待或暂停前都必须先 save_state 持久化落盘。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-05-unify-execution-state.md",
+          "note": "原文完整内容：统一执行/业务状态与 7 条收益"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/state.ts",
+          "note": "模板 FileSystemThreadStore：thread 持久化的 create/get/update"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": "模板 Thread 类：事件流与 awaitingHumanResponse 状态推断"
+        }
+      ]
     },
     {
       "id": "ag-pause",
       "name": "启动/暂停/恢复",
       "what": [
-        "用户/应用/其他 Agent 用简单 API 管理",
-        "长操作时可暂停",
-        "webhook 触发恢复"
+        "Agent 只是程序，我们理应对它们如何被启动、查询、恢复、停止有明确预期——这就是 Launch/Pause/Resume 的诉求。",
+        "用户、应用、流水线和其他 Agent 应该能用简单的 API 轻易地启动一个 Agent，而不需要了解内部编排细节。",
+        "Agent 及其编排的确定性代码应该在需要长时运行操作（如等人类回复、跑长任务）时能暂停它，而不是阻塞占用资源。",
+        "外部触发器（如 webhook）应该能让 Agent 从上次停下的地方恢复，而不需要与 Agent 编排器深度集成。",
+        "本因子与 factor 5（统一执行/业务状态）和 factor 8（掌控控制流）紧密相关，但可以独立实现。",
+        "原文特别提醒：很多 AI 编排器允许暂停/恢复，但恰恰不允许在『工具选择』与『工具执行』之间暂停，这正是审批窗口所在。",
+        "这个『选择与执行之间』的暂停点正是高价值操作的审批/复核窗口，缺失它就无法在工具运行前审查，风险不可控。",
+        "与 factor 7（用工具调用联系人类）和 factor 11（随处触发）配合，暂停/恢复才能支撑多人在线工作流。",
+        "workshop 实现：把 /thread 端点改成异步处理并立即返回 {'status':'processing'}，联系人类后结束处理，由 webhook 恢复。"
       ],
       "why": [
-        "满足对程序的标准预期",
-        "编排器多缺「选择与执行之间」暂停点"
+        "Agent 也是程序，用户与系统对它有与普通程序一致的操作预期：能启动、能查状态、能暂停、能恢复、能停止。",
+        "webhook 恢复意味着外部事件（邮件回复、Slack 消息）能无缝把 Agent 唤醒，无需深耦合编排器内部。",
+        "暂停点是确定性代码干预的窗口：审批、复核、长任务等待都依赖它，缺失则无法做高价值操作，价值天花板被锁死。",
+        "配合 factor 5 的 thread 序列化，暂停/恢复成本极低——存 thread、load thread 即完成恢复。",
+        "编排器普遍缺『选择与执行之间』的暂停能力，自己实现才能获得完整的控制粒度，这是本因子独立存在的价值。"
       ],
       "how": [
-        "launch/pause/resume API",
-        "与 thread 持久化配合恢复"
+        "暴露简单 API：POST /thread 启动、GET /thread/:id 查询状态、/thread/:id/response 或 /webhook 提交回复。",
+        "长操作前让确定性代码暂停：检测 awaitingHumanResponse() 时先 save 状态再返回，不再继续循环。",
+        "用 webhook 接收外部结果：app.post('/webhook') 解析事件（如 V1Beta2HumanContactCompleted），从 event.spec.state.thread_id 恢复 thread。",
+        "恢复流程：load_state(thread_id) → 把 response_from_human 事件 push 进 thread → 重新跑 determine_next_step → 继续循环。",
+        "异步化端点：POST /thread 立即返回 {'status':'processing'}，处理在 Promise.resolve().then() 后台进行。",
+        "在 createHumanContact 时把 state.thread_id 塞进 spec，让 webhook 回程能精确定位线程。",
+        "模板 server.ts 的 outerLoop：根据 conversation.created / human_contact.completed / function_call.completed 三种事件新建或恢复线程。",
+        "与 factor 8 配合：暂停后编排器可以自由决定何时、由谁来恢复，形成自然的中断/恢复工作流，恢复时机完全自主。"
       ],
       "cases": [
-        "pause-resume 动画"
+        "原文动画 165-pause-resume-animation.gif 演示暂停/恢复过程，直观展示 API 语义。",
+        "workshop webhook 集成：POST /thread 立即返回 processing，humanlayer 云回调 /webhook 恢复执行。",
+        "server.ts 的 outerLoop 用 body.type 区分 conversation.created / human_contact.completed / function_call.completed。",
+        "createHumanContact spec 携带 state: { thread_id }，webhook 回程通过 spec.state.thread_id 找回线程。",
+        "异步端点实现：Promise.resolve().then(async () => { const threadId = store.create(thread); … }) 后 res.json({status:'processing'})。",
+        "handleHumanResponse：校验 thread.awaitingHumanResponse() 后 push 人类回复并继续 agentLoop 循环。",
+        "原文提醒的编排器缺口：『between tool selection and tool execution』没有暂停点的常见缺陷。"
       ],
       "anti_patterns": [
-        "依赖无中间暂停的编排器"
+        "依赖不允许在工具选择与执行之间暂停的编排器，丧失审批与复核窗口，高价值操作无从保障，应自建控制流。，属于该因子的基础原则，应在设计中显式落实。",
+        "恢复逻辑与编排器深度耦合，外部 webhook 无法独立唤醒 Agent，集成面窄，应依赖公开 API 恢复。",
+        "暂停时把任务挂在内存里 while...sleep 空转等待，进程一断就得从头再来，可恢复性为零。，属于该因子的基础原则，应在设计中显式落实。",
+        "缺少查询端点（GET /thread/:id），外部系统无法知道 Agent 当前卡在哪一步，可观测性缺失。",
+        "恢复时从零重启整条流程，而不是加载 thread 从断点继续，浪费且易错，应直接加载持久化线程。，属于该因子的基础原则，应在设计中显式落实。",
+        "不把线程状态落盘，暂停后进程重启即丢失全部上下文，无法恢复，必须先持久化落盘再暂停，否则现场全丢。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-06-launch-pause-resume.md",
+          "note": "原文完整内容：Launch/Pause/Resume 简单 API 与编排器缺口"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/server.ts",
+          "note": "模板实现：outerLoop 按事件新建/恢复线程，webhook 恢复"
+        },
+        {
+          "path": "08-source/agent-workshops/2025-05/walkthrough.md",
+          "note": "workshop Chapter 12 humanlayer-webhook：异步 /thread 加 /webhook 恢复"
+        }
+      ]
     },
     {
       "id": "ag-human",
       "name": "工具调用联系人类",
       "what": [
-        "请求人类输入建模成工具调用",
-        "显式声明意图而非 token 隐式选择",
-        "支持外循环与多人类接入"
+        "LLM API 默认依赖一个高风险的『首个 token』选择：返回纯文本，还是返回结构化数据，赌注全押在这一枚 token 上。",
+        "第一个 token 就背负重担：weather in tokyo 场景下是 'the'，fetch_weather 场景是标记 JSON 开头的特殊 token（如 |JSON>）。",
+        "更好的做法：让 LLM 永远输出 JSON，用 request_human_input、done_for_now 这类意图（而非 check_weather 类工具）声明想联系人类。",
+        "你可能不会因此获得性能提升，但应该保持实验自由——去尝试奇怪的方式以获得最好的结果，不被惯例和框架束缚。",
+        "把『请求人类输入』建模成工具调用：class RequestHumanInput 含 intent/question/context/options，options 设 urgency、format 与 choices。",
+        "命中 request_human_input 时：追加 human_input_requested 事件、save_state、notify_human，然后 break 等人回复。",
+        "回复经 webhook 回来：POST /webhook 里 load_state(thread_id)、push response_from_human，再跑 determine_next_step 继续。",
+        "配合 factor 3 的 XML 上下文，对话窗口形如 <slack_message> 后接 <request_human_input>、<human_response>、<deploy_backend> 事件。",
+        "这支持外循环（outer loop）：控制流与上下文初始化是 Agent→Human 而非 Human→Agent，例如由 cron 或事件启动。"
       ],
       "why": [
-        "清晰指令、内外循环、多人类、多 Agent、持久化"
+        "清晰指令：为不同类型的人类接触定义工具，LLM 能给出更具体的请求，包括问题、上下文与选项格式，交互更精准。",
+        "内外循环：支持 chatGPT 式聊天界面之外的 Agent→Human 工作流，Agent 可以由 cron 或事件主动发起。",
+        "多人类接入：通过结构化事件轻松跟踪和协调不同人类的输入，谁批准谁拒绝一目了然，权责清晰、全程可追溯。",
+        "多 Agent：简单抽象可轻松扩展为 Agent→Agent 的请求/响应模式，扩展开销极低，复用同一套事件机制。",
+        "持久化：配合 factor 6（Launch/Pause/Resume），能构建持久、可靠、可内省的多人在线工作流。",
+        "首 token 抉择的赌注太大，把『是否联系人类』从 token 层的隐式选择提升为显式的结构化意图更稳妥。",
+        "外循环 Agent 是『agent 像数字同事』体验的基础，详见 theouterloop 博客与 factor 11。"
       ],
       "how": [
-        "RequestHumanInput 保存状态跳出循环",
-        "webhook 收回复重入循环"
+        "在 BAML 里定义人类工具类：ClarificationRequest（intent request_more_information + message）、DoneForNow 与 RequestApprovalFromManager（含 message）。",
+        "用 Options 对象给人类请求加交互规格：urgency、format（free_text/yes_no/multiple_choice）、choices，指导呈现方式。",
+        "Agent 循环命中 request_human_input：push human_input_requested 事件、save_state、notify_human、break 等待人类回复。",
+        "提供 /webhook 端点接收人类回复：解析出 thread_id，load_state，push response_from_human 事件。",
+        "恢复循环：determine_next_step(thread_to_prompt(thread)) → handle_next_step → 决定继续还是再次等待。",
+        "用 awaitingHumanResponse() 判断 thread 是否卡在等人，避免对不需要人类参与的线程发出请求。",
+        "模板 a2h.ts 定义 A2H 协议：Message 带 apiVersion 'proto.a2h.dev/v1alpha1'、kind 'Message'、spec 内含 agentMessage/response_schema/channel_id 与 status。",
+        "用 Zod schema（如 ApprovalSchema {approved, comment}）定义人类响应结构，approval 与 human request 复用 Message 类型。"
       ],
       "cases": [
-        "request_human_input→human_response"
+        "RequestHumanInput 类：intent/question/context/options(urgency/format/choices) 的完整字段定义。",
+        "webhook 处理代码：@app.post('/webhook') 里 load thread、push response_from_human、重新 determine_next_step。",
+        "XML 上下文演进：<request_human_input>（question: 是否部署 v1.2.3 到生产，urgency high, format yes_no）后接 <human_response>（approved true）。",
+        "模板 BAML：ClarificationRequest、DoneForNow、RequestApprovalFromManager、ProcessRefund（含必须批准注解）组成 HumanTools 联合。",
+        "模板 src/a2h.ts：ApprovalSchema（approved/comment）、Message 协议、NewConversation（user_message/channel_id/agent_name）。",
+        "workshop Chapter 5：CLI 里 askHuman 用 readline 收集回复；Chapter 11 改为 email 审批（divide 走 fetchHumanApproval）。",
+        "外循环参考：theouterloop.substack.com 关于 OpenAI realtime API 是朝外循环的一步；另有 deploybot 真实对话截图佐证。"
       ],
       "anti_patterns": [
-        "token 隐式决定联系人类",
-        "只支持 chat 流"
+        "依赖模型在首个 token 上做『文本 vs 结构化』的隐式赌博，而不是用结构化意图显式声明是否联系人类。",
+        "只支持 chatGPT 式聊天界面，Agent 永远由人类发起，无法被 cron/事件启动并主动找人。",
+        "把人类请求与普通工具混在同一 schema，无法区分『执行动作』与『联系人类』两类分支，控制流无从下手。",
+        "人类回复没有结构化事件记录（谁、何时、批准与否），审计与多人类协调无从谈起，必须落为结构化事件以可追溯。",
+        "同步阻塞等待人类回复（while...sleep 轮询），而不是 save 状态加 break 加 webhook 恢复。",
+        "请求人类时丢失 thread_id 引用，webhook 回来无法定位线程，恢复失败，须把 thread_id 塞进 spec.state 回程定位。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-07-contact-humans-with-tools.md",
+          "note": "原文完整内容：人类交互建模为工具调用、webhook 收回复、5 条收益"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/a2h.ts",
+          "note": "模板 A2H 协议：Message/ApprovalSchema/HumanRequest/NewConversation"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/baml_src/agent.baml",
+          "note": "模板 HumanTools：ClarificationRequest/RequestApprovalFromManager/ProcessRefund"
+        },
+        {
+          "path": "08-source/agent-workshops/2025-05/walkthrough.md",
+          "note": "workshop Chapter 5 CLI 人机交互、Chapter 11 email 审批、Chapter 12 webhook"
+        }
+      ]
     },
     {
       "id": "ag-control",
       "name": "掌控控制流",
       "what": [
-        "自建控制结构，工具选择与执行间可中断",
-        "某些工具调用是跳出循环的理由",
-        "可融入缓存/LLM-judge/限速等"
+        "如果你掌控自己的控制流，就能做很多有趣的事：为你的特定用例构建自己的控制结构，而不是被框架规定死。，属于该因子的基础原则，应在设计中显式落实。",
+        "某些类型的工具调用可能是跳出循环的理由——例如等待人类回复，或等待训练流水线这类长任务完成，需要中断。",
+        "你也可以融入自定义实现：工具结果的汇总/缓存、对结构化输出做 LLM-as-judge、上下文压缩或其他记忆管理、日志/tracing/指标、客户端限流、持久 sleep/暂停/等事件。",
+        "原文给出三种控制流模式示例：request_clarification（模型要求更多信息，跳出循环等人）、fetch_git_tags（取标签、追加上下文、直接交回模型）、deploy_backend（高价值，跳出循环等人批准）。",
+        "handle_next_step 里用 while True 循环：determine_next_step → 按 intent 分支，async 步骤 break 等 webhook，sync 步骤 continue 直接再喂模型。",
+        "核心诉求：『我们需要能在工具选择与工具调用之间打断正在工作的 Agent 并在之后恢复』——这是作者对每个 AI 框架的头号功能请求。",
+        "没有这种恢复粒度，就无法在工具运行前审查/批准调用，被迫在三者中选：内存里 sleep 等长任务、只让 Agent 做低风险调用、或让 Agent 放手干高风险事赌它不搞砸。",
+        "该模式允许你随意中断/恢复 Agent 流程，创造更自然的多轮对话与工作流，恢复点完全由你掌控。，属于该因子的基础原则，应在设计中显式落实。",
+        "与 factor 5（统一状态）和 factor 6（暂停/恢复）紧密相关，但可以独立实现，不必捆绑落地。",
+        "掌控控制流的本质：循环 + switch 语句 + 事件累积三者全在你的代码里，而非框架黑盒，一切皆可干预。"
       ],
       "why": [
-        "无该粒度被迫三选一：sleep/低风险/yolo",
-        "自建才能支持自然工作流"
+        "工具选择与执行之间的中断点是审批与复核的必需窗口，缺失它就无法安全地执行高价值操作，风险失控。，属于该因子的基础原则，应在设计中显式落实。",
+        "自定义控制结构才能支持自然工作流：中断等人、等待长任务、再无缝恢复，体验更接近真实协作。，属于该因子的基础原则，应在设计中显式落实。",
+        "可以按需插入缓存、LLM-judge、限流、日志、指标等横切逻辑，框架黑盒做不到这一点，掌控力最强。",
+        "没有该粒度的三种被迫选项（while...sleep / 只做低风险 / yolo）全部不可接受，掌控控制流是唯一解。",
+        "只有自建控制流才能把『工具调用』真正当作 JSON 驱动的可编排步骤，而非不可中断的函数执行，灵活度最高。"
       ],
       "how": [
-        "while True 按 intent 分支",
-        "async break、sync continue"
+        "实现 while True 循环：determine_next_step(thread_to_prompt(thread)) 取下一步意图，形成主循环骨架。",
+        "按 intent 分支：request_clarification → push 事件、send_message_to_human、db.save_thread、break（async 等 webhook）；fetch_open_issues → push、调接口、push 结果、continue。",
+        "create_issue → push 事件、request_human_approval、save_thread、break（async），等人类批准后由 webhook 恢复。",
+        "把中断点刻意放在『工具选择之后、工具执行之前』，让确定性代码有机会先审批再放行，掌握完整决策链。，属于该因子的基础原则，应在设计中显式落实。",
+        "恢复时由 webhook 或调用方 push 新事件后重新进入循环（复用 factor 6 的加载机制）。",
+        "融入自定义横切逻辑：工具结果缓存、LLM-as-judge 校验结构化输出、上下文压缩、客户端限流、日志/指标。",
+        "持久 sleep 用『保存状态 + 等事件』实现，而非内存 sleep，保证可恢复性，进程重启也不丢状态。",
+        "模板 handleNextStep（switch 分发工具）加外层 while true（agentLoop）即最小化掌控控制流的骨架。"
       ],
       "cases": [
-        "handle_next_step 三分支"
+        "原文 handle_next_step 三分支：request_clarification / fetch_open_issues / create_issue 的 break 与 continue 控制。",
+        "头号功能请求引述：『interrupt a working agent and resume later, ESPECIALLY between the moment of tool selection and tool invocation』。",
+        "没有粒度时的三选一困境：① while...sleep 内存等待 ② 只做研究/汇总类低风险调用 ③ yolo 放手。",
+        "可融入的自定义实现清单：summarization/caching、LLM-as-judge、context compaction、logging/tracing/metrics、rate limiting、durable sleep。",
+        "模板 agent.ts 的 agentLoop（while true + switch intent + tool_response 回写）。",
+        "workshop Chapter 3 的 agentLoop 初版：done_for_now 返回、add 执行并 continue、default 抛 Unknown intent。",
+        "deploybot 场景：确定性代码在 Agent 每次部署请求之间请求人类批准，Agent 只输出 JSON 意图。"
       ],
       "anti_patterns": [
-        "while...sleep 内存等待",
-        "限制低风险调用",
-        "无复核的 yolo"
+        "在内存里 while...sleep 等待长任务，进程一断必须从头重启，可恢复性为零，是典型的反模式。",
+        "把 Agent 限制为只做低风险、低价值调用（研究/汇总），白白浪费 Agent 的决策能力，价值缩水。",
+        "给 Agent 高价值工具却不设审批点，纯靠赌（yolo）它不会搞砸，风险不可控，必须加复核。，属于该因子的基础原则，应在设计中显式落实。",
+        "把控制流交给框架黑盒，无法在工具选择与执行之间插入任何逻辑，丧失所有干预能力，危险且不可调。，属于该因子的基础原则，应在设计中显式落实。",
+        "所有工具都同步执行返回，没有任何 async break 的等待路径，无法处理长任务与人工介入。，属于该因子的基础原则，应在设计中显式落实。",
+        "没有 while True 主循环，Agent 退化为单步函数调用，无法完成多步任务，循环骨架是底线。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-08-own-your-control-flow.md",
+          "note": "原文完整内容：自建控制结构、handle_next_step 三分支、头号需求"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": "模板 agentLoop/handleNextStep：while+switch 控制流骨架"
+        },
+        {
+          "path": "08-source/agent-workshops/2025-05/walkthrough.md",
+          "note": "workshop Chapter 3 工具循环、Chapter 8/9 服务端控制流"
+        }
+      ]
     },
     {
       "id": "ag-errors",
       "name": "压缩错误进上下文",
       "what": [
-        "失败时格式化错误追加进上下文",
-        "errorCounter 限重试约 3 次",
-        "达阈值跳出或升级人类"
+        "Agent 的一大好处是『自愈』：对短任务，LLM 调用工具失败时，好的模型相当有机会读懂错误消息或堆栈并想出在后续调用中改什么。",
+        "大多数框架都实现了这一点，但你可以只做这一件事而不做其他 11 条因子——它独立成立，投入产出比极高。",
+        "基础版实现：try handle_next_step，异常时把 {type:'error', data: format_error(e)} 追加进 thread，继续循环重试。",
+        "进阶版：为具体工具调用实现 errorCounter，把单工具重试限制在约 3 次，防止无限空转，给自愈加护栏。",
+        "计数逻辑：成功执行后 consecutive_errors 归零；异常时自增，小于 3 则把错误写入上下文再循环，否则 break。",
+        "达到连续错误阈值是升级到人类的好时机：可以由模型决定，也可以由确定性代码接管控制流去请求人类介入。，属于该因子的基础原则，应在设计中显式落实。",
+        "原文提醒：如果错误压缩做得太多，Agent 会开始空转（spin out），反复重试同一个错误，陷入死循环。",
+        "此时 factor 8（掌控控制流）和 factor 3（掌控上下文）登场：你不需要把原始错误原样塞回，可以重构其表示、移走先前事件，或用任何有效的确定性手段把它拉回正轨。",
+        "防止错误空转的头号方法是拥抱 factor 10（小而专注的 Agent），让上下文短到错误无从累积。",
+        "自愈依赖『把错误消息喂给 LLM 让它改错』，因此错误的格式与上下文保留策略直接决定自愈质量与成功率。"
       ],
       "why": [
-        "自愈与持久化",
-        "错误+阈值是拉人进循环的触发点"
+        "自愈：LLM 能读懂错误消息并在下一次工具调用中自行修正，无需人工介入，大幅减少运维负担。，属于该因子的基础原则，应在设计中显式落实。",
+        "持久化：即使一个工具调用失败，Agent 也能继续运行，整体任务不因单点失败而夭折，可用性提升。，属于该因子的基础原则，应在设计中显式落实。",
+        "错误+重试阈值是『拉人类进循环』的天然触发点，为升级处理提供明确信号，升级时机有据可依。，属于该因子的基础原则，应在设计中显式落实。",
+        "这是唯一可以脱离其他 11 条因子单独落地的一条，单独实施就能获得大量价值，投入产出比极高。，属于该因子的基础原则，应在设计中显式落实。",
+        "配合上下文管理（factor 3），可以主动修剪错误与失败事件，防止失败历史污染后续推理，决策更干净。"
       ],
       "how": [
-        "type='error' 事件回写继续循环",
-        "计数成功清零失败自增"
+        "基础循环：while True 里 determine_next_step → push intent 事件 → try handle_next_step → except 时 push {type:'error', data: format_error(e)} 并继续。",
+        "格式化错误：用 format_error(e) 把异常转成适合 LLM 阅读的简洁文本，而非原始堆栈噪音。",
+        "计数进阶：consecutive_errors 变量，成功即归零，失败自增，达到 3 则 break。",
+        "阈值处理：连续失败达到阈值时，选择『重置部分上下文 / 升级人类 / 其他你想做的事』，策略完全自主。",
+        "升级人类：在错误重试耗尽后调用 factor 7 的人类联系机制，让真人接手排障，避免无谓空转。，属于该因子的基础原则，应在设计中显式落实。",
+        "重构错误表示：不原样塞回原始错误，用 factor 3 的 XML 标签（如 <error> 块）结构化表达。",
+        "从窗口移除已解决错误：事件解决后从上下文隐藏，避免 LLM 反复看到失败史，保持决策干净。，属于该因子的基础原则，应在设计中显式落实。",
+        "结合 factor 10：把长任务拆成小 Agent，让每个 Agent 的上下文短到错误空转无从发生。"
       ],
       "cases": [
-        "基础版+计数进阶版"
+        "基础版代码：thread['events'].append({type:'error', data: format_error(e)}) 后继续循环。",
+        "计数进阶代码：consecutive_errors 成功归零/失败自增/达到 3 则 break 的完整片段。",
+        "原文句式：『Good LLMs have a fairly good chance of reading an error message or stack trace and figuring out what to change』。",
+        "升级人类建议：『Hitting some consecutive-error-threshold might be a great place to escalate to a human』。",
+        "空转警示：『if you do this TOO much, your agent will start to spin out and might repeat the same error over and over』。",
+        "动画 195-factor-09-errors.gif 演示错误写入上下文后模型自我修正的过程，直观展示自愈闭环。",
+        "与 factor 3 的结合示例：错误解决后从上下文移除、用自定义格式表示错误，双向受益。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "anti_patterns": [
-        "过度重试空转",
-        "原始错误原样回塞"
+        "无节制的无限重试（无 errorCounter），Agent 空转反复重试同一个错误，浪费资源且无收敛保证。",
+        "把原始堆栈/错误原文不加格式化地塞回上下文，浪费 token 且难以被模型有效解读，应格式化为事件。",
+        "错误解决后仍把失败事件留在上下文，模型被失败历史持续影响，应主动从窗口移除已解决错误。，属于该因子的基础原则，应在设计中显式落实。",
+        "达到重试阈值后不升级人类也不换策略，死循环到底，重试护栏与升级机制必须并存方可收敛。，属于该因子的基础原则，应在设计中显式落实。",
+        "用单体大 Agent 承载长任务，错误累积进长上下文后彻底迷失，应拆成小 Agent 缩短上下文。，属于该因子的基础原则，应在设计中显式落实。",
+        "把错误吞掉不写入上下文，LLM 毫不知情、自愈无从谈起，错误必须作为事件回写。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-09-compact-errors.md",
+          "note": "原文完整内容：错误写回上下文自愈、errorCounter 计数"
+        },
+        {
+          "path": "08-source/agent-content/factor-08-own-your-control-flow.md",
+          "note": "控制流关联：错误处理是自定义控制结构的一部分"
+        },
+        {
+          "path": "08-source/agent-content/factor-03-own-your-context-window.md",
+          "note": "上下文管理：错误事件格式化与已解决错误隐藏策略"
+        }
+      ]
     },
     {
       "id": "ag-small",
       "name": "小而专注的 Agent",
       "what": [
-        "构建小而专注的 Agent",
-        "3-10 步最多 20 步",
-        "Agent 是更大确定性系统的构件"
+        "与其构建想包办一切的单体 Agent，不如构建小而专注、一件事做到位的 Agent——Agent 只是更大的、基本确定性系统中的构件。",
+        "关键洞见在于 LLM 的局限：任务越大越复杂，步骤越多，上下文就越长；随着上下文增长，LLM 更容易迷失或失去焦点。",
+        "把 Agent 保持在特定领域、3-10 步（最多 20 步）的规模，就能让上下文窗口可控、LLM 性能保持高位。",
+        "核心原则是『随着上下文增长，LLM 更容易迷失或失去焦点』，这是把 Agent 控制在小规模的根本理由。",
+        "收益：可控的上下文（小窗口=更好性能）、清晰的职责（每 Agent 范围明确）、更高的可靠性（复杂流程中不易迷路）、更易测试、更易调试。",
+        "关于『如果 LLM 变聪明了呢』：即使模型能处理 100+ 步工作流，答案依然是『要』——该做法让你今天就能交付成果，同时为将来逐步扩展范围做准备。",
+        "这就像重构大型确定性代码库：有意识地拆分与逐步扩展是保持质量的关键，重构经验可平移复用。，属于该因子的基础原则，应在设计中显式落实。",
+        "原文引用 NotebookLM 团队的话：『最神奇的 AI 构建时刻，总是发生在我极度贴近模型能力边界的时候』。",
+        "不管边界在哪里，只要你能稳定地找到它并做对，就能构建出魔法般的体验；可以建立很多护城河，但它们都需要工程严谨性。",
+        "brief-history 补充：长上下文问题让多数构建者把『工具调用循环』推到一边——超过 10-20 轮就成一团乱，90% 正确率也远不够交付给客户。"
       ],
       "why": [
-        "任务越大上下文越长，LLM 越易迷失",
-        "有意识地控制规模是关键"
+        "上下文可控：小上下文窗口意味着更好的 LLM 性能与更低的失败率，输出质量有保障，成本也更低。，属于该因子的基础原则，应在设计中显式落实。",
+        "职责清晰：每个 Agent 有明确定义的范围与目的，系统整体易推理、易演进，边界一目了然。，属于该因子的基础原则，应在设计中显式落实。",
+        "更可靠：在复杂工作流中不易迷失，错误不易在长链条里传播放大，单点失败影响面小。，属于该因子的基础原则，应在设计中显式落实。",
+        "更易测试/调试：单 Agent 功能边界小，测试用例与问题定位都简单直接，验证成本大幅降低。，属于该因子的基础原则，应在设计中显式落实。",
+        "防止错误空转：短上下文里错误不累积，是 factor 9 防 spin-out 的头号手段，自愈更有效。",
+        "即便模型更强，小 Agent 方式保证今天可交付，同时为未来扩范围留好结构，与重构大代码库同理。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "how": [
-        "拆成单领域小 Agent 编排",
-        "随能力提升逐步扩展范围"
+        "把任务按领域拆成多个小 Agent，每个只管一件事，由确定性 DAG 编排（micro-agent DAG 模式）。",
+        "限制每 Agent 的步骤规模在 3-10 步，硬上限 20 步，超出就继续拆分，规模纪律明确。，属于该因子的基础原则，应在设计中显式落实。",
+        "隔离任务与上下文：让 LLM 只关注一个小的 5-10 步工作流（如 deploybot 的做法）。",
+        "用确定性代码处理结构化流程，只在『解析人类反馈、提出更新行动方案』等关键点引入 LLM，物尽其用。，属于该因子的基础原则，应在设计中显式落实。",
+        "配合 factor 7 把人类反馈翻译成工作流步骤，避免在长上下文里错误循环，反馈落地更稳。，属于该因子的基础原则，应在设计中显式落实。",
+        "保持循环三件套（prompt/switch/context 累积）在每个小 Agent 内小而齐整，职责单一。",
+        "随着模型上下文可靠性提升，再逐步扩大 Agent 范围（agent-scope-grow 动画），而非一步到位。",
+        "reducer 视角收束：每个小 Agent 就是一个 reducer，输入历史事件输出下一步，职责单一便于推理。"
       ],
       "cases": [
-        "NotebookLM「紧贴模型能力边界」"
+        "原文 5 条收益清单：Manageable Context / Clear Responsibilities / Better Reliability / Easier Testing / Improved Debugging。",
+        "NotebookLM 团队名言：紧贴模型能力边界的时刻最神奇（引用 swyx 的 substack 文章）。",
+        "deploybot 实例（got-agents/agents repo）：确定性代码部署 staging、跑 e2e、把『deploy SHA 4af9ec0 to production』交给 Agent。",
+        "deploybot 收束：『We isolate tasks and contexts as much as possible to keep the LLM focused on a small, 5-10 step workflow』。",
+        "agent-scope-grow GIF（1a5-agent-scope-grow.gif）演示 Agent 范围随能力提升渐进扩展。",
+        "brief-history 的 micro-agent DAG 图与『10-20 轮后一团乱』的行业观察。",
+        "chainlit 的 support/chatbot 演示（更多经典案例），作为社区佐证小 Agent 模式的有效性。",
+        "『Even as models support longer context windows, you'll ALWAYS get better results with a small, focused prompt and context』的论断。"
       ],
       "anti_patterns": [
-        "单体 Agent 上下文爆长",
-        "上下文不可靠时激进扩展"
+        "构建什么都能做的单体 Agent，上下文随任务膨胀到失控，迷失与失败成为常态，务必拆分。，属于该因子的基础原则，应在设计中显式落实。",
+        "在上下文不可靠时激进扩大 Agent 范围，质量崩坏而不可逆，扩大必须基于验证过的可靠性。，属于该因子的基础原则，应在设计中显式落实。",
+        "让单个 Agent 跑 100+ 步的长链条，迷失与错误累积成为常态，超长任务应切分为 DAG。，属于该因子的基础原则，应在设计中显式落实。",
+        "不在确定性 DAG 中编排小 Agent，而是让一个 Agent 全流程自行其事，失控风险高，编排是骨架。",
+        "忽略『贴近模型能力边界』的质量纪律，为了炫技而超规模设计，能力与边界失衡必然失败。，属于该因子的基础原则，应在设计中显式落实。",
+        "把小 Agent 的上下文与任务混在一起共享，违背隔离原则，隔离才能保住各 Agent 的聚焦。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-10-small-focused-agents.md",
+          "note": "原文完整内容：小而专注的 Agent、收益、LLM 变聪明了怎么办"
+        },
+        {
+          "path": "08-source/agent-content/brief-history-of-software.md",
+          "note": "背景：长上下文问题、micro-agent DAG、deploybot 实例"
+        },
+        {
+          "path": "08-source/agent-content/factor-09-compact-errors.md",
+          "note": "关联：防错误空转的头号手段是小而专注的 Agent"
+        }
+      ]
     },
     {
       "id": "ag-trigger",
       "name": "随处触发",
       "what": [
-        "从 slack/email/sms 等渠道触发并回复",
-        "支持事件/cron 等非人类触发",
-        "可运行 5/20/90 分钟"
+        "让用户能从 slack、email、sms 或其他任何他们喜欢的渠道触发 Agent，并让 Agent 通过同样的渠道回复——在用户所在的地方遇见他们。",
+        "这是对 factor 6（Launch/Pause/Resume）与 factor 7（Contact Humans With Tools）的自然延伸：做好前两条，你就有资格引入这条。",
+        "收益一：在用户所在之处服务用户，帮助构建感觉像真人的 AI 应用，至少像一位靠谱的数字同事。，属于该因子的基础原则，应在设计中显式落实。",
+        "收益二：外循环 Agent（Outer Loop Agents）——允许 Agent 被非人类触发：事件、cron、宕机警报等；它们可能工作 5、20、90 分钟，到关键点联系人类请求帮助。",
+        "收益三：高价值工具（High Stakes Tools）——能快速拉进各种人类后，你可以给 Agent 更高风险的操作权限，比如发送外部邮件、更新生产数据等。",
+        "保持清晰标准能带来可审计性与对『执行更大更好事情』的 Agent 的信心，标准是信任的基石。，属于该因子的基础原则，应在设计中显式落实。",
+        "与 factor 7 的 RequestHumanInput/webhook 配合，多渠道触发→等待→多渠道回复形成完整闭环。",
+        "原文自嘲：如果你们在等 humanlayer 的推销，就是这里了——该因子正是 humanlayer 的产品动机。",
+        "workshop 中 agent 通过 email 收审批、slack 收消息、webhook 恢复的流程都是本因子的工程落地。"
       ],
       "why": [
-        "像数字同事融入工作流",
-        "可审计性与执行大事的信心"
+        "在用户所在之处服务：更自然的交互体验，Agent 像数字同事而不是需要用户特意去用的独立应用。，属于该因子的基础原则，应在设计中显式落实。",
+        "外循环能力：被事件/cron/宕机触发而非只能由人发起，Agent 可以长时间后台工作后在关键点主动找人。",
+        "高价值操作解锁：能快速拉人复核，才敢让 Agent 发外部邮件、改生产数据——信任来自复核链路而非限制。",
+        "清晰标准与可审计性：多渠道接入加结构化记录，让高风险 Agent 有据可查、可信可用，信任可累积。，属于该因子的基础原则，应在设计中显式落实。",
+        "多渠道触达是『数字同事』体验与 7×24 无人值守运营的前提，规模化运营的必需能力。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "how": [
-        "暴露多通道入口",
-        "关键决策点联系人类"
+        "暴露多通道入口：slack、email、sms、webhook 各建入口，把外部消息统一转成 conversation.created 或用户消息事件。",
+        "回复走同一渠道：humanlayer 等工具用 contactChannel（email/slack 地址）指定回复通道，保证回程一致。",
+        "支持非人类触发：cron 定时、事件订阅、宕机告警都能启动 Agent（factor 11 明确列出 events/crons/outages）。",
+        "让 Agent 长时间工作：5/20/90 分钟级别，到关键决策点再联系人类（请求帮助/反馈/批准）。",
+        "给高风险工具配人类复核：发送外部邮件、更新生产数据前拉人确认，保持审计标准，授权有底线。，属于该因子的基础原则，应在设计中显式落实。",
+        "模板 server.ts 的 outerLoop 即多渠道入口的骨架：conversation.created 开新线程、human_contact.completed / function_call.completed 恢复线程。",
+        "与 factor 6 配合：webhook 触发恢复，无编排器深耦合，外部系统都能唤醒 Agent。",
+        "与 factor 7 配合：RequestHumanInput 加 notify_human 决定何时、用什么渠道找人。"
       ],
       "cases": [
-        "slack/email/sms、events/crons"
+        "渠道列表：slack、email、sms 以及任意用户想要的渠道，都是触发与回复的载体，入口要广。，属于该因子的基础原则，应在设计中显式落实。",
+        "非人类触发列表：events、crons、outages（原文明确列出三类），Agent 可被系统事件唤醒。",
+        "运行时长区间：『They may work for 5, 20, 90 minutes』原文原话，长时后台工作是常态。",
+        "高价值工具示例：sending external emails、updating production data，需要复核才能授权。",
+        "humanlayer 产品动机（原文点明这是其销售点），多渠道触达正是其核心卖点。，属于该因子的基础原则，应在设计中显式落实。",
+        "workshop email 审批：HUMANLAYER_EMAIL 指定邮箱，fetchHumanApproval 收批准/拒绝反馈。",
+        "server.ts 的 V1Beta3 事件类型：conversation.created / human_contact.completed / function_call.completed 三种 webhook 事件恢复或新建线程。"
       ],
       "anti_patterns": [
-        "单一入口/单一聊天界面",
-        "因无复核不给高价值权限"
+        "只提供单一入口（如只限网页聊天界面），用户要跳出工作流去用你的应用，体验割裂、触达面窄。，属于该因子的基础原则，应在设计中显式落实。",
+        "Agent 只能由人类发起，无法被事件/cron/宕机触发（无外循环能力），无法无人值守运行。，属于该因子的基础原则，应在设计中显式落实。",
+        "因没有复核链路就限制 Agent 权限，只让它做低价值调用，浪费能力，应建复核而非砍权限。，属于该因子的基础原则，应在设计中显式落实。",
+        "多渠道接入后不在关键决策点联系人类，导致高风险操作无审计，授权与复核必须成对。，属于该因子的基础原则，应在设计中显式落实。",
+        "回复渠道与触发渠道不一致，用户在 slack 问却在邮箱收到答案，体验混乱，回程要对齐。，属于该因子的基础原则，应在设计中显式落实。",
+        "渠道事件与线程状态脱节，webhook 回程找不到对应 thread，恢复失败，事件须携带线程引用。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-11-trigger-from-anywhere.md",
+          "note": "原文完整内容：多渠道触发、外循环 Agent、高价值工具"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/server.ts",
+          "note": "模板外循环：conversation.created / human_contact.completed / function_call.completed 事件处理"
+        },
+        {
+          "path": "08-source/agent-content/factor-06-launch-pause-resume.md",
+          "note": "前置依赖：webhook 恢复机制"
+        },
+        {
+          "path": "08-source/agent-content/factor-07-contact-humans-with-tools.md",
+          "note": "前置依赖：RequestHumanInput 与多渠道通知"
+        }
+      ]
     },
     {
       "id": "ag-reducer",
       "name": "无状态 Reducer",
       "what": [
-        "Agent 建模为无状态归约器（foldl）",
-        "输入历史事件，产出下动作",
-        "thread 作纯数据累积"
+        "第 12 条：把 Agent 建模成无状态的归约器（stateless reducer）。原文自己承认：写到这已超 1000 行 markdown，这条主要是图个乐。",
+        "配图 agent-foldl（1c5-agent-foldl.png）把 Agent 循环描绘成函数式编程里的 foldl：用函数折叠事件列表。",
+        "reducer 视角下：Agent 是一个纯函数，输入是『迄今为止的全部历史事件』，输出是『下一步动作（工具意图）』。",
+        "这与 factor 5（统一执行/业务状态）一脉相承并进一步收束：把 thread 当作纯粹的数据累积，Agent 只是对它的归约。",
+        "reducer 无内部可变状态：状态+事件进，下状态+可能的副作用（工具执行）出，决策与效应分离。，属于该因子的基础原则，应在设计中显式落实。",
+        "体现『Agents are just programs』的最终哲学：Agent 循环 = 状态(state) 加事件(event) 归约的确定迭代，可序列化、可恢复、可分叉。",
+        "把 Agent 视为 reducer 让『恢复/分叉/审计』等能力在数学上变得显然：只要事件流完整，任何断点都可重建。",
+        "原文只有一句加两张图，本节点结合 factor 5、factor 3 与模板 state.ts/agent.ts 的工程形态合理展开。"
       ],
       "why": [
-        "收束统一状态为函数式视角",
-        "无状态化可序列化/恢复/分叉"
+        "收束统一状态：把 factor 5 的统一状态观用函数式视角彻底表达——状态即事件的归约结果。，属于该因子的基础原则，应在设计中显式落实。",
+        "无状态化带来确定性：同样的事件序列必然产出同样的决策，行为可预测、可复现，调试容易。，属于该因子的基础原则，应在设计中显式落实。",
+        "可序列化/恢复/分叉成为结构性必然：thread 是纯数据，load 即可重建任意状态，无需额外机制。",
+        "呼应 Agent 的本质定义：prompt + switch + accumulated context + for loop 四件套，reducer 是其最简洁抽象。",
+        "降低心智负担：把『Agent 是什么』收束为『一个输入历史、输出下一步的函数』，便于与确定性 DAG 一起编排。"
       ],
       "how": [
-        "循环建模为 reducer 归约事件",
-        "状态+事件进，下状态+副作用出"
+        "把循环建模为 reducer：reducer(thread_events) → next_step，即 determine_next_step 对事件流的归约。",
+        "状态显式化：每一步把上一步的 state 与当前 event 作为输入，产出 new_state 与副作用（工具执行）记录。",
+        "所有事件（user_input/tool_call/tool_response/error/human_response）进同一事件流，状态只在事件流中体现。",
+        "配合 factor 5 的 FileSystemThreadStore 持久化 thread，reducer 函数保持无状态，状态全在数据里。",
+        "恢复 = 重新把已持久化事件喂给 reducer；分叉 = 复制事件子集作为新输入，两种能力天然免费。",
+        "用 factor 3 的 serializeForLLM 控制 reducer 实际『看到』的上下文，实现状态压缩与过滤。",
+        "配合 factor 10：每个小 Agent 都是一个职责单一的小 reducer，由确定性 DAG 组合。",
+        "副作用隔离：工具执行（写数据库、发请求）不作为 reducer 内部逻辑，而是其外部效应，便于审计。"
       ],
       "cases": [
-        "agent-foldl 概念图"
+        "原文配图 1c0-stateless-reducer.png 与 1c5-agent-foldl.png（foldl 折叠示意图）。",
+        "原文结语：『this one is mostly just for fun』的自嘲式定位，行文风格上以轻松收尾。",
+        "模板 Thread 类（事件流 + serializeForLLM）作为 reducer 的数据载体。",
+        "模板 state.ts 的 FileSystemThreadStore：thread 序列化落盘，为无状态 reducer 提供纯数据状态。",
+        "factor 5 的『加载 thread 从任意点恢复』在 reducer 视角下即事件重放，视角统一更清晰。",
+        "foldl 的函数式语义：从初始状态起依次把每个事件归约进去，产出最终状态/决策序列，抽象优雅。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "anti_patterns": [
-        "状态藏全局可变变量"
+        "把状态藏在全局可变变量里，reducer 不再无状态，重放与恢复随之失效，纯函数性被破坏。，属于该因子的基础原则，应在设计中显式落实。",
+        "把副作用（真实 API 调用）写进 reducer 内部逻辑，破坏『纯函数+外部效应』的边界，审计困难。",
+        "事件流不完整/不持久化，reducer 无数据可归约，断点无法重建，事件完整性是前提。，属于该因子的基础原则，应在设计中显式落实。",
+        "让 reducer 依赖进程内存中的隐式上下文而非显式事件输入，序列化与分叉无从谈起，输入须显式。，属于该因子的基础原则，应在设计中显式落实。",
+        "忽略本因子『主要是图个乐』的定位，为函数式而函数式地过度设计，原文自身也承认这一点。，属于该因子的基础原则，应在设计中显式落实。"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "08-source/agent-content/factor-12-stateless-reducer.md",
+          "note": "原文：Agent 建模为无状态 reducer（foldl），一句加两图"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/state.ts",
+          "note": "模板持久化：FileSystemThreadStore 承载 reducer 的纯数据状态"
+        },
+        {
+          "path": "08-source/agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": "模板 Thread 类 + agentLoop：循环即对事件流的归约"
+        },
+        {
+          "path": "08-source/agent-content/factor-05-unify-execution-state.md",
+          "note": "理论基础：统一执行/业务状态"
+        }
+      ]
     },
     {
       "id": "t-stateless",
       "name": "无状态性",
       "what": [
-        "无状态是两套体系共有的可靠运行基石",
-        "App 进程无状态、状态沉入 backing service",
-        "Agent 把状态重构为事件归约"
+        "App 进程必须无状态且 share-nothing，任何需持久的数据都要存进有状态的 backing service（processes.md 原文）",
+        "Agent 将执行状态与业务状态统一为单一 thread 事件流，作为唯一事实源（factor-05）",
+        "App 进程内存或文件系统只能作短暂的单事务缓存，未来请求或重启后一律不可依赖（processes.md）",
+        "Agent 的一切执行状态（当前步/等待/重试计数）可从上下文窗口推断，无需独立跟踪（factor-05）",
+        "无状态是两套体系共同认可的运行基石：支撑扩展、迁移、恢复与弹性运维（processes.md/concurrency.md）",
+        "Agent 把状态重构为无状态 reducer：事件进、状态出，thread 只是事件序列（factor-12）",
+        "App 粘性会话（sticky sessions）明确违反十二因子，会话状态应入带过期机制的数据存储（processes.md）",
+        "Agent thread 可序列化/反序列化、可从任意点恢复、可 fork 子集到新上下文（factor-05 七项收益）",
+        "LLM 本质是无状态函数，输入即输出，因此上下文（输入）工程就是状态管理（factor-03）",
+        "两侧都把易失状态外置：App 外置到存储，Agent 外置为可重建的事件流"
       ],
       "why": [
-        "无状态让单元可丢弃、重启、迁移、恢复",
-        "是扩展与弹性运维前提"
+        "无状态使运行单元可被任意丢弃、重启、迁移而数据不丢，这是快速部署与扩缩容前提（processes.md/disposability.md）",
+        "share-nothing 架构保证多进程水平扩展时无需跨实例共享内存，扩容简单可靠（concurrency.md）",
+        "App 状态外置到 backing service，使数据库等资源可随时挂摘而不改代码（backing-services.md）",
+        "Agent 单一事实源带来七项收益：简单、可序列化、易调试、灵活、可恢复、可 fork、可转人读视图（factor-05）",
+        "无状态 reducer 使暂停/恢复、小 Agent 组合、随处触发等高级能力成为可能（factor-12/06/10/11）"
       ],
       "how": [
-        "App 状态外置到数据库",
-        "Agent 状态逻辑外置为 thread"
+        "App：会话状态放入 Memcached/Redis 等提供过期机制的数据存储，而非进程内存（processes.md）",
+        "App：资产编译放进 build 阶段而非运行时文件系统，避免本地缓存依赖（processes.md 资产打包示例）",
+        "App：大文件下载等操作仅用内存做单事务缓冲，结果入库（processes.md）",
+        "Agent：用 Thread 事件数组承载全部历史，serializeForLLM 把事件序列化为 XML 喂给 LLM（agent.ts）",
+        "Agent：agentLoop 每次循环重新调用 DetermineNextStep(serializeForLLM(thread))，无隐藏可变状态（agent.ts）",
+        "Agent：执行状态从上下文推断，特殊 ID 尽量最小化（factor-05 会话ID/密码上下文例外）",
+        "Agent：thread 持久化到 ThreadStore 接口，可按需换 redis/sqlite/postgres（state.ts 注释）",
+        "两侧共同原则：任何未来可能被复用的数据都不允许依赖运行单元本地的易失内存/文件"
       ],
       "app_side": [
-        "进程 share-nothing、会话入缓存",
-        "持久数据入 backing service",
-        "内存仅单事务缓存"
+        "进程 share-nothing，未来请求极可能由不同进程实例服务（processes.md）",
+        "持久数据全部进入数据库等 stateful backing service（processes.md）",
+        "内存/文件系统仅作单事务缓存：下载大文件→处理→结果入库（processes.md）",
+        "重启（部署/配置变更/环境迁移）会清空全部本地状态，设计上不假设其留存（processes.md）",
+        "拒绝粘性会话，改把会话状态放 Memcached/Redis（processes.md）",
+        "多进程类型实例并存，web/worker 各自无状态化运行（concurrency.md）",
+        "编译型资产由构建管线产出，运行时不依赖进程本地文件缓存（processes.md）"
       ],
       "agent_side": [
-        "thread=单一事实源，可序列化",
-        "执行状态从上下文推断",
-        "reducer：事件进、状态出"
+        "thread 是可序列化事件数组，FileSystemThreadStore 以 JSON 落盘 .threads 目录（state.ts create/update）",
+        "执行状态（当前步骤/等待状态/重试计数）由 thread 推断而非独立字段（factor-05）",
+        "业务状态即事件历史：消息、工具调用、工具结果全部入事件流（factor-05）",
+        "恢复即重载 thread 状态继续 agentLoop，无需从任务起点重跑（factor-05 recovery）",
+        "可 fork：复制 thread 子集进新上下文/新状态 ID，支持探索式分叉（factor-05 forking）",
+        "serializeOneEvent 把非 intent 字段展开为 key: value，保证 LLM 看到完整历史（agent.ts）",
+        "BAML 客户端由 generators.baml 生成，线程序列化格式与工具 schema 保持同步（agent.baml）"
       ],
       "difference": [
-        "App 物理外置状态",
-        "Agent 逻辑外置状态",
-        "易失状态变可重建数据"
+        "App 是物理外置：状态落盘到外部存储服务（数据库/缓存）；Agent 是逻辑外置：状态编码为事件流",
+        "App 无状态单元是同质进程副本；Agent 无状态单元是带 thread 状态的具体会话实例",
+        "易失状态变可重建数据：App 靠重启后从存储重读，Agent 靠 reload thread 事件重放",
+        "App 强调运行时共享数据外置（多进程间）；Agent 强调决策上下文可回放（多轮推理间）",
+        "粒度差异：App 以请求/作业为单位无状态；Agent 以整条工作流/thread 为单位",
+        "恢复机制不同：App 进程崩溃即放弃缓存重新拉取；Agent 保留事件序列支持断点续跑"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/processes.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/concurrency.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-05-unify-execution-state.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-12-stateless-reducer.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-03-own-your-context-window.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/state.ts",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-disposable",
       "name": "生命周期与可处置性",
       "what": [
-        "进程可快速启停，Agent 可暂停恢复",
-        "运行单元不绑定物理位置",
-        "App 进程级启停，Agent 任务级暂停"
+        "App 进程是可处置的：可随时被启动或停止，促成快速弹性伸缩与鲁棒性（disposability.md）",
+        "Agent 是程序，需要简单的启动/暂停/恢复/停止 API 管理其生命周期（factor-06）",
+        "App 进程应把启动时间最小化到秒级，为 release 与扩容提供敏捷性（disposability.md）",
+        "Agent 的暂停点应落在工具选择与工具执行之间，以便审批与续跑（factor-08 关键洞见）",
+        "两侧运行单元都不绑定物理位置：App 可被进程管理器迁移，Agent 可由外部 webhook 恢复（disposability.md/factor-06）",
+        "App 优雅关闭：收到 SIGTERM 停止监听、完成在途请求再退出（disposability.md）",
+        "Agent 外部触发（webhook）可在不深度集成编排器的情况下从离开处续跑（factor-06）",
+        "可处置性/暂停恢复的本质同源：让运行单元可被安全地中断并重新开始",
+        "任务需幂等或可重试，才能支撑突然死亡后的安全重启（disposability.md reentrant）"
       ],
       "why": [
-        "可处置促成快速部署与弹性伸缩",
-        "暂停恢复把可抛弃扩展到长任务续跑"
+        "短启动时间给 release 流程和扩容更多敏捷性，也让进程管理器更易把进程迁到新物理机（disposability.md）",
+        "优雅关闭避免请求中断：web 进程停收新请求、完成现有请求；worker 把作业退回队列（disposability.md）",
+        "Agent 暂停恢复把可处置性从「可抛弃」扩展到「长任务续跑」，支撑数小时级外环工作流（factor-06/11）",
+        "在工具选择与执行之间插暂停点，才能实现工具执行前的人类审批（factor-08）",
+        "没有该暂停粒度，只能内存 sleep 重启重跑、或限制低风险、或赌高风险（factor-08 三选一）"
       ],
       "how": [
-        "App 短启动+优雅关闭",
-        "Agent launch/pause/resume+thread 持久化"
+        "App：进程监听 SIGTERM 后先停止接收新请求，再完成在途请求，最后退出（disposability.md）",
+        "App：worker 收到 SIGTERM 把当前作业 NACK 回队列（RabbitMQ）或依赖队列自动返回（Beanstalkd）（disposability.md）",
+        "App：作业包成事务或做成幂等操作，保证 reentrant（disposability.md）",
+        "Agent：agentLoop 遇到 done_for_now/request_more_information/divide 返回 thread 表示暂停（agent.ts）",
+        "Agent：thread 持久化到 ThreadStore，webhook 回程时 store.get(threadId) 恢复续跑（server.ts）",
+        "Agent：CLI 模式下 askHumanCLI 暂停循环等待 Enter 审批或反馈取消（cli.ts）",
+        "Agent：human_contact.completed / function_call.completed 事件携带 thread_id 回程（server.ts 类型）",
+        "两侧都按崩溃后可从已知检查点恢复来设计，而非假设进程永不死亡"
       ],
       "app_side": [
-        "几秒就绪，SIGTERM 优雅关闭",
-        "任务幂等可重试",
-        "抵御突然死亡"
+        "进程秒级就绪，进程管理器可随时将其迁往新物理机（disposability.md）",
+        "SIGTERM 触发优雅关闭：停监听端口→拒绝新请求→完成现有请求→退出（disposability.md）",
+        "worker 用 NACK 把当前作业退回队列，锁系统需显式释放锁（disposability.md）",
+        "依赖 Beanstalkd 等健壮排队后端，客户端断开/超时时作业自动回队（disposability.md）",
+        "HTTP 请求保持短时长，或长轮询客户端无缝重连（disposability.md）",
+        "作业全部 reentrant：结果包事务或操作幂等（disposability.md）",
+        "架构按 crash-only 设计处理非优雅终止，极端情形到 CouchDB 全崩溃设计（disposability.md）"
       ],
       "agent_side": [
-        "简单 API 启动暂停恢复",
-        "关键暂停点=工具选择与执行之间",
-        "恢复即加载 thread 状态"
+        "简单 API 让用户/应用/流水线/其他 Agent 都能启动一个 Agent（factor-06）",
+        "关键暂停点=工具选择与执行之间，框架常缺此能力（factor-08 note）",
+        "恢复=加载 thread 状态继续循环，无需重新理解任务上下文（factor-05 recovery + server.ts）",
+        "webhook 外部触发恢复，无需与编排器深度集成（factor-06）",
+        "确定性代码与 LLM 都能暂停 Agent：如 deploy 类高赌注工具 break 循环等审批（factor-08）",
+        "thread_id 随 human contact 的 state 持久化，保证回程定位到正确会话（server.ts createHumanContact state.thread_id）",
+        "function_call.completed 事件仅在 approved 时执行工具，否则把拒绝反馈写入 thread（server.ts）"
       ],
       "difference": [
-        "App 进程级秒级无状态自动管理",
-        "Agent 任务级分钟级需持久化",
-        "粒度从进程升到工作流"
+        "App 是可处置进程：进程级、秒级、由进程管理器自动管理；Agent 是可暂停工作流：任务级、分钟级、需显式持久化",
+        "App 恢复单位是单个进程/请求；Agent 恢复单位是整条 thread/对话工作流",
+        "App 生命周期由 SIGTERM 信号驱动；Agent 生命周期由 intent/事件（done_for_now/approval）驱动",
+        "粒度从进程升到工作流：App 丢弃进程，Agent 保留线程并在暂停点接续",
+        "App 可处置面向无状态副本的弹性伸缩；Agent 暂停恢复面向有状态任务的人工介入与长程执行"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/disposability.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/build-release-run.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/processes.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-06-launch-pause-resume.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-08-own-your-control-flow.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-05-unify-execution-state.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/server.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/cli.ts",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-config",
       "name": "配置与可变性外置",
       "what": [
-        "可变部分外置：config 入 env，prompt 作代码",
-        "变更不触及核心逻辑",
-        "外置是版本化/回滚/审计前提"
+        "App 的 config 是随 deploy 变化的一切：数据库/缓存句柄、外部服务凭据、每部署特有值（config.md）",
+        "App 要求 config 与代码严格分离，代码常量式 config 明确违规（config.md）",
+        "Agent 不把 prompt 工程外包给框架，prompt 应作为一等代码受控（factor-02）",
+        "Agent 的 prompt 是应用逻辑与 LLM 之间的主接口，是 Agent 的配置面（factor-02）",
+        "可变部分外置是版本化、回滚、审计的前提：App 外置运行时值，Agent 外置指令策略",
+        "App 试金石：代码库能否随时开源而不泄露任何凭据（config.md）",
+        "Agent 侧同样要求：prompt 可版本化、可回滚、可测试（factor-02）",
+        "config 随部署变化而代码不变；prompt 随策略演进而逻辑不变",
+        "内层可变点也需显式化：App 的 routes/模块连接留代码，Agent 的推理步骤留 prompt"
       ],
       "why": [
-        "配置随部署变化而代码不变",
-        "prompt 是 Agent 的配置面"
+        "代码内常量 config 违反十二因子：config 跨部署差异大而代码不（config.md）",
+        "config 文件（如 config/database.yml）比常量好但仍易误提交、散落各处、格式语言相关（config.md）",
+        "按环境名分组导致组合爆炸，部署越增多越脆弱（config.md）",
+        "框架黑盒 prompt 难以调优或逆向工程出精确 token 序列（factor-02）",
+        "外包 prompt 意味着丢失对指令、测试、迭代、透明度的控制（factor-02 五收益的反面）"
       ],
       "how": [
-        "App 用 env vars 按 deploy 管理",
-        "Agent 把 prompt 版本化测试回滚"
+        "App：config 全入环境变量，语言与 OS 无关的标准机制（config.md）",
+        "App：env vars 是正交的粒度控件，每个 deploy 独立管理而非按环境分组（config.md）",
+        "App：内部应用配置（routes/bean wiring）留代码，不混入 env（config.md）",
+        "Agent：用 BAML 定义 DetermineNextStep 函数与 prompt 模板，prompt 即函数签名的一部分（factor-02/agent.baml）",
+        "Agent：baml_src/clients.baml 改 provider 行切换模型，接口保持稳定（clients.baml）",
+        "Agent：上下文构建函数化（thread_to_prompt），格式自定义可控（factor-03）",
+        "Agent：BAML 生成器版本锁定（0.88.0），prompt 变更后 baml-cli generate 重新生成客户端（generators.baml）",
+        "两侧共法：把一切随环境/策略变化的内容移出核心逻辑，保留在可版本化的外置位置"
       ],
       "app_side": [
-        "配置全入 env vars",
-        "开源不泄凭据试金石",
-        "拒绝 config 文件与分组"
+        "config 包含 DB/Memcached 句柄、S3/Twitter 凭据、每部署 canonical hostname（config.md）",
+        "试金石：开源不泄凭据即视为 config 外置彻底（config.md）",
+        "拒绝 config/database.yml 式未入版本库配置：易误提交、散落、格式不一（config.md）",
+        "拒绝 Java System Properties 等语言特定配置机制（config.md）",
+        "拒绝 development/test/production 命名分组，避免 joes-staging 式爆炸（config.md）",
+        "Rails config/routes.rb 等内部配置正确留在代码内（config.md）",
+        "官方站点 PASSWORD/FORCE_SSL 均从 ENV 读取注入（web.rb）"
       ],
       "agent_side": [
-        "prompt 版本化可回滚",
-        "不被框架外包",
-        "上下文构建函数化"
+        "prompt 是 Agent 与应用逻辑的主接口，全控制才能精确送入模型（factor-02）",
+        "为 prompt 建测试与评测，像对待任何代码一样（factor-02）",
+        "基于真实表现快速迭代 prompt，无需改应用逻辑（factor-02）",
+        "透明性：确切知道 Agent 在执行什么指令（factor-02）",
+        "可对非标准角色用法的 API 做 role hacking（factor-02）",
+        "BAML prompt 模板与生成客户端同步版本，避免漂移（generators.baml）",
+        "上下文格式自定义（XML 打包进单 user 消息）实现 token 高效（factor-03）"
       ],
       "difference": [
-        "App 外置的是运行时值",
-        "Agent 外置的是指令与策略",
-        "Agent 的外置物本身是代码"
+        "App 外置的是运行时值（句柄/凭据/每部署数据）；Agent 外置的是指令与策略（prompt）",
+        "App 外置物是纯数据，由环境注入；Agent 外置物本身是代码，可测试可回滚",
+        "差异根源：App 配置决定连接哪，Agent 配置决定怎么做",
+        "App 靠 ENV 正交管理；Agent 靠 prompt 版本化管理",
+        "Agent 的配置面更接近「行为契约」而非「参数表」，因此需要代码级治理"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/config.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/web.rb",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-02-own-your-prompts.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-03-own-your-context-window.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/agent.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/clients.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/generators.baml",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-observability",
       "name": "可观测性与错误可见性",
       "what": [
-        "运行可见性是日志与错误压缩的共同目标",
-        "App 把日志当事件流",
-        "Agent 把错误压缩进上下文"
+        "App 把日志视为聚合、有序的事件流，而非文件；关注可见性而非存储格式（logs.md）",
+        "Agent 把错误压缩成事件回写上下文窗口，供模型在下一次决策中自愈（factor-09）",
+        "运行可见性是排障、审计、趋势、告警的共同基础（logs.md）",
+        "Agent 的自愈能力完全依赖错误消息可见：LLM 读错误后修正下一次工具调用（factor-09）",
+        "App 的十二因子应用永不关心输出流的路由或存储（logs.md）",
+        "Agent 的错误通过 format_error 摘要而非原始堆栈进入上下文（factor-09 代码）",
+        "可观测性从辅助手段变为运行机制：App 事后分析，Agent 实时决策",
+        "错误重试需设阈值防 spin-out：单工具约 3 次尝试上限（factor-09）"
       ],
       "why": [
-        "可见性支撑排障审计告警",
-        "Agent 还支撑自愈与拉人决策"
+        "日志提供运行 app 行为的可见性，是生产排障的第一现场（logs.md）",
+        "事件流可被索引分析系统处理：历史检索、大规模趋势绘图、启发式主动告警（logs.md）",
+        "自愈：好 LLM 有较高概率读错误消息或堆栈后修正后续调用（factor-09）",
+        "错误计数阈值是升级到人类或跳出循环的自然触发点（factor-09 代码）",
+        "过度重试会 spin-out，需靠控制流与上下文工程兜底（factor-09）"
       ],
       "how": [
-        "App 无缓冲写 stdout 交环境路由",
-        "Agent 错误摘要回写 thread 设阈值"
+        "App：每个运行进程把事件流无缓冲写入 stdout（logs.md）",
+        "App：环境捕获并汇聚所有流，路由到终目的地；归档目的地对 app 不可见不可配置（logs.md）",
+        "App：Logplex/Fluentd 等开源路由可用，流可送 Splunk/Hadoop/Hive（logs.md）",
+        "Agent：try/except 中把 type:'error'+format_error(e) 追加进 thread.events（factor-09 代码）",
+        "Agent：consecutive_errors 计数，成功即重置，满 3 次 break/重置上下文/升级人类（factor-09 代码）",
+        "Agent：错误与结果同以事件类型入 thread，next_step 决策天然可见全部（factor-09/agent.ts）",
+        "Agent：结合 factor-08 可重构错误表示、移除历史事件、确定性纠偏（factor-09 提及）",
+        "Agent：结合 factor-10 用小而专注的 Agent 从源头防 spin-out（factor-09 收尾）"
       ],
       "app_side": [
-        "事件流写 stdout",
-        "Logplex/Fluentd 路由归档",
-        "趋势绘图与主动告警"
+        "每个进程无缓冲写 stdout，本地开发在终端前台观察（logs.md）",
+        "staging/prod 由执行环境捕获、汇聚、路由到最终目的地（logs.md）",
+        "流可实时 tail、路由到文件或日志索引分析系统（logs.md）",
+        "索引分析支持：定位过去事件、按分钟绘图、自定义阈值主动告警（logs.md）",
+        "目的地（如 Splunk）对 app 完全不可见、由环境管理（logs.md）",
+        "无固定起点终点的连续流，随运行持续产出（logs.md）",
+        "App 自身不写不管理 logfile，杜绝文件锁与轮转负担（logs.md）"
       ],
       "agent_side": [
-        "错误压缩成事件回写",
-        "3 次阈值升级",
-        "失败即跳出/重置/升级"
+        "错误以事件类型入 thread，LLM 下次决策即可见（factor-09 代码）",
+        "format_error 提供摘要而非堆栈倾倒，节省上下文（factor-09）",
+        "consecutive_errors 限制单工具尝试约 3 次（factor-09 代码）",
+        "阈值后 break 循环、重置上下文片段、或升级人类（factor-09）",
+        "成功则 errorCounter 归零，保证偶发失败不误触发升级（factor-09）",
+        "失败时 Agent 仍可继续运行：durable 属性来自错误可见而非重试无限（factor-09 收益）",
+        "错误表示可被确定性代码重构，不只是原样回填（factor-09 与 factor-08 结合）"
       ],
       "difference": [
-        "App 观测消费者是人类（事后）",
-        "Agent 观测消费者是 LLM（实时）",
-        "可观测性从辅助变运行机制"
+        "App 观测消费者是人类（事后排障/审计）；Agent 观测消费者是 LLM（实时决策输入）",
+        "App 事件流是外部化、单向、存档导向；Agent 错误事件是内部化、循环参与、自愈导向",
+        "可观测性从辅助分析工具升级为 Agent 的运行机制：无错误可见即无自愈",
+        "App 日志写 stdout 交给环境负责；Agent 错误写回自身上下文由模型消费",
+        "差异根源：App 的人类读者在循环外，Agent 的 LLM 读者在循环内"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/logs.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-09-compact-errors.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-08-own-your-control-flow.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-10-small-focused-agents.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-03-own-your-context-window.md",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-deps",
       "name": "依赖与工具显式化",
       "what": [
-        "显式声明依赖/工具，不隐式依赖环境",
-        "App 用 manifest 声明并隔离",
-        "Agent 用结构化输出声明工具"
+        "App 显式声明并隔离全部依赖，绝不依赖系统级隐式包存在（dependencies.md）",
+        "Agent 把工具建模为 LLM 的结构化输出，触发确定性代码执行（factor-04）",
+        "App 声明清单 + 隔离工具必须同时使用，仅其一不满足十二因子（dependencies.md）",
+        "Agent 的工具即 intent schema：LLM 输出 JSON 描述确定性代码该做什么（factor-04）",
+        "隐式依赖无法保证存在与版本兼容，这是两侧共同的显式化动机（dependencies.md）",
+        "工具决策（LLM）与工具执行（代码）分离，使工具可组合可测试（factor-04）",
+        "App shell out 系统工具需 vendored 而非假设存在（dependencies.md）",
+        "Agent 的 BAML 工具类（Add/Subtract/Multiply/Divide）即声明式的工具清单（tool_calculator.baml）"
       ],
       "why": [
-        "隐式依赖无法保证存在与兼容",
-        "显式化才能隔离测试替换"
+        "系统级 site packages 等隐式依赖的存在与版本无法保证（dependencies.md）",
+        "ImageMagick/curl 等系统工具未来系统可能不存在或不兼容（dependencies.md）",
+        "显式声明简化新开发者搭建：仅需语言运行时+依赖管理器即可确定性 build（dependencies.md）",
+        "Agent 侧把工具当结构化输出解锁无限组合与可测试性（factor-04）",
+        "决策与执行分离让 LLM 决定做什么、代码控制怎么做，避免工具被误执行（factor-04）"
       ],
       "how": [
-        "App 声明+隔离双管齐下",
-        "Agent 以 intent schema 定义工具"
+        "App：Bundler 用 Gemfile manifest 声明 + bundle exec 隔离（dependencies.md）",
+        "App：Python 用 Pip 声明 + Virtualenv 隔离，两步分开（dependencies.md）",
+        "App：C 用 Autoconf 声明 + 静态链接隔离（dependencies.md）",
+        "Agent：tool_calculator.baml 定义四则工具类，带 intent 常量与参数类型（tool_calculator.baml）",
+        "Agent：agent.baml 用 union 类型 CalculatorTools 聚合工具，作为 DetermineNextStep 返回类型（agent.baml）",
+        "Agent：handleNextStep 用 switch(intent) 分派到确定性执行，结果 push 回 thread（agent.ts）",
+        "Agent：生成客户端 baml_client 由 BAML 编译器产出，与 baml_src 声明同步（agent.ts import + generators.baml）",
+        "Agent：未知 intent 分支有兜底 else，不默认放行（factor-01/04 代码）"
       ],
       "app_side": [
-        "清单完整声明全部依赖",
-        "bundle exec/venv 隔离",
-        "禁止隐式系统级依赖"
+        "Gemfile manifest 完整精确声明依赖，bundle exec 保证隐式不泄漏（dependencies.md）",
+        "Pip（声明）+ Virtualenv（隔离）双工具模式（dependencies.md）",
+        "确定性 build command：bundle install / lein deps（dependencies.md）",
+        "不 shell out ImageMagick/curl，需要则 vendored 进 app（dependencies.md）",
+        "开发与生产统一应用同一份显式依赖规范（dependencies.md）",
+        "依赖声明让新开发者一条命令跑通（dependencies.md）",
+        "系统级包只在运行时隐式可用即违规（dependencies.md）"
       ],
       "agent_side": [
-        "工具=intent 结构化输出",
-        "决策与执行分离",
-        "工具可组合可测试"
+        "工具是带 schema 的 intent 类，LLM 输出即工具调用对象（tool_calculator.baml）",
+        "divide 等高风险工具被 agentLoop 返回 thread 而非直接执行，强制审批（agent.ts）",
+        "工具类以 union 组合进单一返回类型，天然可扩展（agent.baml）",
+        "switch(intent) 是确定性执行面，工具行为不随 LLM 波动（agent.ts handleNextStep）",
+        "工具结果作为事件回填上下文，支撑下一轮决策（factor-04 pattern + agent.ts）",
+        "BAML 生成客户端版本由 generators.baml 锁定，避免声明与实现漂移（generators.baml）",
+        "工具即行为能力的声明：新增能力=新增 intent 类+执行分支（agent.baml + agent.ts）"
       ],
       "difference": [
-        "App 显式化对象是库与包",
-        "Agent 是行为能力与副作用",
-        "Agent 需额外关注授权安全"
+        "App 显式化对象是库与包（代码依赖）；Agent 显式化对象是行为能力与副作用（工具调用）",
+        "App 用 manifest+bundler 隔离运行时；Agent 用 schema+生成客户端契约化决策面",
+        "Agent 的工具声明还隐含授权边界：工具即权限，需额外关注安全",
+        "App 依赖在构建期解析；Agent 工具在运行循环中按 intent 实时分派",
+        "差异根源：App 依赖静态引入、Agent 工具动态选择，后者需结合控制流治理"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/dependencies.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-04-tools-are-structured-outputs.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-01-natural-language-to-tool-calls.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/tool_calculator.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/agent.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/generators.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-control",
       "name": "控制流与阶段治理",
       "what": [
-        "确定性控制流/阶段分离保证可预测交付",
-        "App 分离 build/release/run",
-        "Agent 代码控循环，LLM 只选路"
+        "App 严格分离 build/release/run 三阶段，运行时不可能改代码（build-release-run.md）",
+        "Agent 控制流由确定性代码决定，LLM 只在决策点选路（factor-08）",
+        "App 的 release 是不可变只追加账本，创建后不可变更（build-release-run.md）",
+        "Agent 的 while-loop 中 async 步骤 break 等待、sync 步骤 continue 回环（factor-08）",
+        "阶段分离/控制流治理共同目标：可预测、可回滚、可审计的交付",
+        "App 每 release 有唯一 ID（时间戳或递增号），变更即新建（build-release-run.md）",
+        "Agent 可在工具选择与执行之间插入审批等确定性中断（factor-08）",
+        "确定性控制流是 reducer 语义、暂停恢复、错误压缩的前提（factor-08/09/12）"
       ],
       "why": [
-        "阶段分离支持不可变发布回滚",
-        "确定性控制流可中断可审计"
+        "运行期改代码无法传播回 build，严格分离杜绝运行时漂移（build-release-run.md）",
+        "release 不可变保证回滚能力：Capistrano releases 目录 + rollback 命令（build-release-run.md）",
+        "run 阶段尽量少活动部件，避免无人在场时夜间故障（build-release-run.md）",
+        "确定性控制流让中断/审批/审计成为可能（factor-08）",
+        "自定义控制结构（总结/缓存/LLM-as-judge/限流/sleep）针对场景裁剪（factor-08）",
+        "可中断可恢复创造更自然的对话与工作流（factor-08）"
       ],
       "how": [
-        "App release 只追加回滚",
-        "Agent while-loop+intent 分支"
+        "App：build 把代码库转换为可执行 bundle（拉依赖、编译资产）（build-release-run.md）",
+        "App：release=build+config，带唯一 ID，只追加不回写（build-release-run.md）",
+        "App：run 用所选 release 启动一组进程（build-release-run.md）",
+        "Agent：agentLoop while(true) 反复调用 DetermineNextStep 决策（agent.ts）",
+        "Agent：request_clarification/create_issue 类 async 步骤 break 等 webhook（factor-08 代码）",
+        "Agent：fetch_open_issues 类 sync 步骤 continue 带结果回环（factor-08 代码）",
+        "Agent：done_for_now 返回 thread 结束循环，交由外层决定（agent.ts）",
+        "Agent：switch(intent) 全覆盖 + else 兜底，控制流确定性（agent.ts/factor-01）"
       ],
       "app_side": [
-        "三阶段严格分离",
-        "release 不可变只追加",
-        "run 最少活动部件"
+        "build 阶段取指定 commit，拉取 vendored 依赖并编译二进制与资产（build-release-run.md）",
+        "release 阶段把 build 与 deploy 当前 config 组合（build-release-run.md）",
+        "release 带时间戳/递增号唯一 ID，创建后不可变更（build-release-run.md）",
+        "Capistrano 用 releases 子目录 + symlink 管理当前版本，rollback 即回切（build-release-run.md）",
+        "run 可由服务器重启/进程管理器崩溃重启自动触发（build-release-run.md）",
+        "run 阶段保持最少活动部件，build 可复杂因为总有人在现场（build-release-run.md）",
+        "站点 Procfile 声明 web 进程即 run 阶段的入口定义（Procfile）"
       ],
       "agent_side": [
-        "自建控制流 LLM 决策点",
-        "选择与执行间可中断",
-        "async break、sync continue"
+        "自建控制结构可自由裁剪到用例：总结/缓存/judge/限流/睡眠（factor-08）",
+        "request_clarification：模型要更多信息时 break 循环等人类（factor-08 代码）",
+        "fetch_open_issues：同步执行把结果 append 进上下文继续（factor-08 代码）",
+        "create_issue：高赌注操作 break 等人类审批（factor-08 代码）",
+        "agentLoop 由代码完全掌控迭代，模型仅产出 intent（agent.ts）",
+        "中断与恢复组合出自然的多轮交互与工作流（factor-08）",
+        "与错误压缩结合：确定性重构错误表示防 spin-out（factor-09）"
       ],
       "difference": [
-        "App 是部署管线纵向流程",
-        "Agent 是运行循环横向迭代",
-        "前者治理交付后者治理行为"
+        "App 是部署管线的纵向流程（build→release→run）；Agent 是运行循环的横向迭代（决策→执行→反馈）",
+        "前者治理「交付物怎么产生」；后者治理「行为怎么演进」",
+        "App 阶段分离面向不可变发布与回滚；Agent 循环面向可中断交互与审批",
+        "App 的控制点是每个发布周期；Agent 的控制点是每次循环迭代",
+        "差异根源：App 交付物是一次性产物、Agent 行为是持续运行过程"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/build-release-run.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/codebase.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/config.md",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/Procfile",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-08-own-your-control-flow.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-09-compact-errors.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-entry",
       "name": "自含入口与触达",
       "what": [
-        "自含导出服务/随处触发，皆不依赖宿主",
-        "App 端口绑定自含导出",
-        "Agent 从用户所在渠道触达",
-        "入口自定而非宿主注入"
+        "App 完全自含，通过绑定端口导出 HTTP 服务，不依赖运行时注入 webserver（port-binding.md）",
+        "Agent 从用户所在渠道（slack/email/sms 等）触达与回复（factor-11）",
+        "App 的 webserver 库（Tornado/Thin/Jetty）随依赖声明进入 user space（port-binding.md）",
+        "Agent 支持非人类触发源：事件、cron、故障等外环触发（factor-11 outer loop）",
+        "入口由应用自定而非宿主注入：App 自含端口、Agent 自含通道",
+        "端口绑定使一个 app 可成为另一个 app 的 backing service（port-binding.md）",
+        "Agent 外环 Agent 可工作 5-90 分钟，到关键点联系人类（factor-11）",
+        "自含性保证最大可移植性，不依赖特定宿主环境（intro.md）"
       ],
       "why": [
-        "不依赖宿主才能保证可移植与触达",
-        "入口自主是自包含前提"
+        "自含导出保证 app 可在任何执行环境运行，无需预装特定 web 容器（port-binding.md）",
+        "不依赖宿主才能保证触达：用户在哪个渠道就到哪里服务（factor-11）",
+        "多通道让 AI 应用感觉像真实数字同事（factor-11）",
+        "能快速拉人审批使 Agent 敢用更高赌注的工具（factor-11）",
+        "入口自主是自包含与可迁移的前提（port-binding.md/intro.md）"
       ],
       "how": [
-        "App webserver 进 user space 绑端口",
-        "Agent 暴露多通道入口"
+        "App：通过依赖声明引入 webserver 库，绑定端口监听（port-binding.md）",
+        "App：本地访问 http://localhost:5000/，部署由路由层转发（port-binding.md）",
+        "App：Procfile 声明 web: ruby web.rb -p $PORT，端口来自环境（Procfile）",
+        "Agent：server.ts 暴露 POST /api/v1/conversations 作为 HTTP 事件入口（server.ts）",
+        "Agent：cli.ts 提供命令行外层循环作为本地入口（cli.ts）",
+        "Agent：HumanLayer 集成经 createHumanContact 通知 slack/email 等渠道（server.ts）",
+        "Agent：webhook 事件（conversation.created/human_contact.completed）驱动恢复与续跑（server.ts）",
+        "Agent：server 端口由 env PORT || 8000 决定，同样遵循自含绑定（server.ts）"
       ],
       "app_side": [
-        "应用自含绑端口",
-        "不依赖注入 webserver",
-        "可作另一 app 的 backing service"
+        "PHP 跑 Apache 模块、Java 跑 Tomcat 容器是依赖注入的反例（port-binding.md）",
+        "本地开发 URL http://localhost:5000/ 访问自含服务（port-binding.md）",
+        "部署时路由层从公网域名转发到端口绑定进程（port-binding.md）",
+        "HTTP 非唯一可导出协议：XMPP/Redis 协议同样适用（port-binding.md）",
+        "一个 app 可作另一 app 的 backing service，用 config 句柄消费（port-binding.md）",
+        "绑定发生在 user space 即 app 代码内，与执行环境契约只是端口（port-binding.md）",
+        "12factor.net 自身即经 $PORT 绑定导出的实例（Procfile）"
       ],
       "agent_side": [
-        "多通道触发与回复",
-        "支持非人类源",
-        "关键点联系人类"
+        "slack/email/sms 等多通道触发与回复（factor-11）",
+        "非人类源触发：事件、cron、故障、outage 等（factor-11 outer loop）",
+        "外环模式：Agent→Human 而非 Human→Agent 的初始化（factor-07 提及 + factor-11）",
+        "快速循环人类审批使高赌注工具可用（factor-11）",
+        "conversation.created 事件创建新 thread 启动会话（server.ts）",
+        "human_contact.completed 恢复对应 thread 继续 agentLoop（server.ts）",
+        "cli.ts 与 server.ts 双入口共享同一 agentLoop 核心（cli.ts/server.ts）"
       ],
       "difference": [
-        "App 入口是单一技术端口",
-        "Agent 入口是多业务渠道",
-        "从服务导出扩展到用户触达"
+        "App 入口是单一技术端口（TCP/HTTP）；Agent 入口是多业务渠道（slack/email/sms/webhook）",
+        "App 面向服务导出与流量路由；Agent 面向对话触达与事件驱动",
+        "App 从端口自含扩展自包含；Agent 从随处触发扩展到用户触达",
+        "App 的消费方是另一个程序（routing layer）；Agent 的消费方是用户所在的业务系统",
+        "差异根源：App 服务抽象是端口、Agent 服务抽象是渠道与会话"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/port-binding.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/intro.md",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/Procfile",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/web.rb",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-11-trigger-from-anywhere.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-06-launch-pause-resume.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/server.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/cli.ts",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-scaling",
       "name": "规模化与单元粒度",
       "what": [
-        "进程模型扩展/小 Agent 组合，皆单元化扩展",
-        "App 靠 formation 横向扩展",
-        "Agent 靠小 Agent 编排",
-        "巨型单元只能纵向难维护"
+        "App 用进程模型横向扩展：share-nothing、可水平分区（concurrency.md）",
+        "Agent 用多个小而专注的 Agent 组合，而非单个巨型 Agent（factor-10）",
+        "App 中进程是 first-class citizen，按工作类型分 process type（concurrency.md）",
+        "Agent 每个小 Agent 聚焦单一领域，3-10 步最多 20 步（factor-10）",
+        "单元化扩展两种形态：App 靠副本数、Agent 靠能力组合",
+        "巨型单元难维护：App 单 JVM uberprocess 受限、Agent 长上下文易迷失（concurrency.md/factor-10）",
+        "Agent 是更大确定性系统中的一个构建块（factor-10）",
+        "规模化是进程编队（formation）与小 Agent 编排（DAG）的共同主题"
       ],
       "why": [
-        "巨型单元难扩展难维护",
-        "小单元组合可靠可替换易测试"
+        "单个 VM 只能纵向扩展且增长有限，必须能跨多机多进程扩展（concurrency.md）",
+        "上下文越长 LLM 越易迷失或失去焦点，小步聚焦保性能（factor-10）",
+        "share-nothing 进程使扩容简单可靠，加并发是可靠操作（concurrency.md）",
+        "小 Agent 带来：上下文可控、责任清晰、可靠性高、易测试、易调试（factor-10 五收益）",
+        "即便 LLM 变强，小 Agent 仍必要：可渐进扩大范围而保质量（factor-10）"
       ],
       "how": [
-        "App 按工作类型分 process type",
-        "Agent 拆小 Agent 入 DAG"
+        "App：按工作类型定义 process type（web/worker），每类型可 0..n 实例（concurrency.md）",
+        "App：进程编队 formation 由类型数组与实例数构成（concurrency.md）",
+        "App：进程不 daemonize 不写 PID 文件，交进程管理器（concurrency.md）",
+        "App：单进程内可用线程/async 复用，但扩展仍靠多进程（concurrency.md）",
+        "Agent：把任务拆给聚焦单领域的小 Agent，控制上下文规模（factor-10）",
+        "Agent：用确定性 DAG 编排小 Agent，追求微代理在确定性 DAG 模式（workshop 2025-07-16）",
+        "Agent：随 LLM 能力增强渐进扩大 agent scope，而非一次做大（factor-10）",
+        "Agent：小 Agent 便于随处触发与独立测试（factor-10/11）"
       ],
       "app_side": [
-        "进程 share-nothing 可水平分区",
-        "web/worker 分型",
-        "交进程管理器"
+        "PHP 按需子进程、Java 单 uberprocess 是两种极端（concurrency.md）",
+        "web 进程处理 HTTP 请求、worker 处理后台长任务（concurrency.md）",
+        "线程/async（EventMachine/Twisted/Node）可内部复用但非扩展手段（concurrency.md）",
+        "跨多物理机多进程运行，水平分区可行（concurrency.md）",
+        "进程管理器管理输出流、响应崩溃、处理重启（concurrency.md）",
+        "systemd/云平台分布式进程管理器/Foreman 承担治理（concurrency.md）",
+        "扩容即增加 process formation 中某类型实例数（concurrency.md）"
       ],
       "agent_side": [
-        "小 Agent 聚焦单领域",
-        "确定性 DAG 编排",
-        "随能力扩展"
+        "小 Agent 聚焦单领域、步数受控，上下文窗口保持小（factor-10）",
+        "责任清晰：每个 Agent 有明确定义的 scope 与目的（factor-10）",
+        "可靠性高：不轻易在复杂工作流中迷失（factor-10）",
+        "易测试易调试：可单独验证特定功能（factor-10）",
+        "确定性 DAG 编排多个小 Agent（workshop 2025-07-16 方向）",
+        "边界贴近模型能力可创造魔法时刻（factor-10 引 NotebookLM）",
+        "渐进扩展：今天拿到结果，明天随上下文可靠而扩大 scope（factor-10）"
       ],
       "difference": [
-        "App 单元是同质副本",
-        "Agent 单元是异质能力",
-        "App 靠副本数、Agent 靠组合"
+        "App 单元是同质进程副本；Agent 单元是异质能力的小 Agent",
+        "App 扩展靠增加副本数（水平分区）；Agent 扩展靠能力组合（DAG 编排）",
+        "App 单元由系统进程管理器调度；Agent 单元由确定性编排器调度",
+        "App 规模化面向吞吐；Agent 规模化面向任务复杂度",
+        "差异根源：App 资源瓶颈是计算/内存；Agent 瓶颈是上下文/注意力"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/concurrency.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/processes.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-10-small-focused-agents.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-11-trigger-from-anywhere.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-12-stateless-reducer.md",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-07-16/walkthrough.yaml",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-human",
       "name": "人为交互边界",
       "what": [
-        "管理任务/人类批准，皆人机协作边界",
-        "App 用 admin 进程执行运维",
-        "Agent 把人类接入建模成工具调用"
+        "App 的管理/维护任务作为一次性进程运行，与常规进程同环境（admin-processes.md）",
+        "Agent 把人类接入建模成一类工具调用，主动寻求批准（factor-07）",
+        "App 管理进程包括数据库迁移、REPL 控制台、一次性脚本（admin-processes.md）",
+        "Agent 的 RequestHumanInput 工具带 question/context/options（urgency/format/choices）（factor-07 代码）",
+        "高赌注动作需人把关：App 运维操作、Agent 审批前不执行（factor-08/07）",
+        "人机协作不打断主路径：App admin 独立进程、Agent 异步 break 等响应（factor-07 durable）",
+        "Agent 人类响应经 webhook 恢复 thread 续跑（factor-07/server.ts）",
+        "人从操作者变决策者：两侧边界的角色迁移"
       ],
       "why": [
-        "高赌注动作需人把关",
-        "人机协作不打断主路径"
+        "迁移/REPL/修复脚本是应用运维刚需，需在一致环境下运行（admin-processes.md）",
+        "admin 进程用与常规进程相同的代码库和 config，避免同步问题（admin-processes.md）",
+        "人类联系工具化让 LLM 以结构化方式请求输入与审批（factor-07）",
+        "可协调多个不同人类的结构化输入（factor-07）",
+        "与暂停恢复结合形成持久、可靠、可检视的多人工作流（factor-07 收益 5）"
       ],
       "how": [
-        "App 一次性进程同环境执行",
-        "Agent 暂停循环等审批"
+        "App：manage.py migrate / rake db:migrate 运行迁移（admin-processes.md）",
+        "App：python/perl 无参解释器或 irb/rails console 开 REPL（admin-processes.md）",
+        "App：一次性脚本入 repo（php scripts/fix_bad_records.php）同环境执行（admin-processes.md）",
+        "Agent：定义 RequestHumanInput 工具，LLM 输出结构化请求（factor-07 代码）",
+        "Agent：request_human_input 分支保存 thread 状态并 notify_human 后 break（factor-07 代码）",
+        "Agent：webhook 带 thread_id 恢复，加载状态追加响应继续决策（factor-07/server.ts）",
+        "Agent：divide 意图在 cli.ts 请求 Enter 审批、在 server.ts 经 HumanLayer function_call 审批（cli.ts/server.ts）",
+        "Agent：function_call.completed 中 approved 才执行工具，否则写入拒绝反馈（server.ts）"
       ],
       "app_side": [
-        "admin 进程与常规同环境",
-        "迁移/REPL 随应用发布",
-        "admin 代码不分离"
+        "Django manage.py migrate、Rails rake db:migrate（admin-processes.md）",
+        "REPL 检查活库模型：python/irb/rails console（admin-processes.md）",
+        "一次性修复脚本提交进应用 repo（admin-processes.md）",
+        "admin 代码随应用发布，避免同步问题（admin-processes.md）",
+        "全部进程类型用同一依赖隔离技术（bundle exec rake db:migrate）（admin-processes.md）",
+        "本地直接 shell 命令、生产用 ssh/远程执行机制（admin-processes.md）",
+        "偏好自带 REPL 且易跑一次性脚本的语言（admin-processes.md）"
       ],
       "agent_side": [
-        "联系人类=工具调用",
-        "保存状态通知跳出循环",
-        "webhook 恢复续跑"
+        "人类联系工具化：RequestHumanInput 声明 urgency/format/choices（factor-07）",
+        "save_state + notify_human + return 打断循环，等响应回带 thread ID（factor-07 代码）",
+        "webhook 收到 response_from_human 事件加载 thread 续跑（factor-07/server.ts）",
+        "内层/外层循环支持 Agent→Human 初始化（外环 agent）（factor-07）",
+        "多人类输入协调：通过结构化事件跟踪不同来源（factor-07）",
+        "多 Agent 扩展：同一抽象支持 Agent→Agent 请求响应（factor-07）",
+        "server.ts 的 divide 分支：createFunctionCall 提交审批、回程执行/拒绝（server.ts）",
+        "cli.ts 的 askHumanCLI：Enter 批准、带反馈取消（cli.ts）"
       ],
       "difference": [
-        "App 侧人是运维执行者",
-        "Agent 侧人是自动决策节点",
-        "人从操作者变决策者"
+        "App 侧人是运维执行者（运行迁移/脚本）；Agent 侧人是自动决策节点（批准/提供信息）",
+        "App 管理任务手动触发一次性运行；Agent 审批自动等待循环内工具",
+        "App admin 进程独立于 process formation；Agent 审批是循环内的工具调用",
+        "App 人机边界在部署管线外；Agent 人机边界在推理循环内",
+        "差异根源：App 人类执行事后维护、Agent 人类参与事前决策"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/admin-processes.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/dependencies.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-07-contact-humans-with-tools.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-06-launch-pause-resume.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-08-own-your-control-flow.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/cli.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/server.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/a2h.ts",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "t-parity",
       "name": "环境一致性",
       "what": [
-        "开发生产一致，传统靠环境等价",
-        "Agent 靠 prompt 版本化",
-        "缩小差异才能持续交付"
+        "App 保持开发、预发布、生产环境尽可能相似（dev-prod-parity.md）",
+        "Agent 通过 prompt 版本化与上下文函数化保证可复现（factor-02/03）",
+        "App 三大差距：时间差距、人员差距、工具差距（dev-prod-parity.md）",
+        "Agent 的不一致表现为：本地能跑、上线失控（prompt/上下文漂移）",
+        "缩小差异是持续交付的前提（dev-prod-parity.md）",
+        "Agent 确定性组件优先、LLM 作库而非框架（workshop/12fa 现代观）",
+        "backing service 差异也是环境漂移源（dev-prod-parity.md/backing-services.md）",
+        "一致性从同构环境演进到同构行为：App 环境等价、Agent 可回放"
       ],
       "why": [
-        "dev/prod 差异致「开发能过生产失败」",
-        "Agent 侧不一致则「本地能跑上线失控」"
+        "dev/prod 差异导致「开发能过、生产失败」的经典问题（dev-prod-parity.md）",
+        "持续部署需要把时间差距缩至小时级（dev-prod-parity.md）",
+        "工具栈差异（Nginx/SQLite/OS X vs Apache/MySQL/Linux）是隐性故障源（dev-prod-parity.md）",
+        "Agent 侧 prompt 不一致则无法在测试环境复现生产行为（factor-02）",
+        "LLM 是统计性组件，必须版本化其「输入面」才能保证可回放（factor-02/03）"
       ],
       "how": [
-        "App 缩小三大差距",
-        "Agent 确定性组件优先",
-        "官方现代化：可观测性+Identity"
+        "App：把时间差距从周缩到小时：写码后数分钟部署（dev-prod-parity.md）",
+        "App：人员差距缩小：写码者参与部署与观察生产（dev-prod-parity.md）",
+        "App：工具差距缩小：开发与生产堆栈尽可能相似（dev-prod-parity.md）",
+        "App：适配器层让 DB/队列/缓存在多种服务间切换不改代码（dev-prod-parity.md 表）",
+        "Agent：prompt 全控制、可测试、可评测（factor-02）",
+        "Agent：上下文格式自定义与函数化，保证输入可复现（factor-03）",
+        "Agent：BAML 客户端与模型 provider 可切换、生成器版本锁定（clients.baml/generators.baml）",
+        "Agent：确定性组件优先，LLM 决策点最小化（12fa 现代观）"
       ],
       "app_side": [
-        "三大差距最小化",
-        "各 deploy 同类型同版本服务",
-        "容器虚拟贴近生产"
+        "传统部署间隔周级→十二因子小时级（dev-prod-parity.md 表）",
+        "传统写码者与部署者不同人→十二因子同人（dev-prod-parity.md 表）",
+        "传统环境发散→十二因子尽可能相似（dev-prod-parity.md 表）",
+        "ActiveRecord 等适配器适配 MySQL/PostgreSQL/SQLite（dev-prod-parity.md 表）",
+        "容器/虚拟化贴近生产环境，进一步消除工具差异（dev-prod-parity.md 现代实践）",
+        "本地第三方服务不区分，config 句柄可随时切换（backing-services.md）",
+        "站点 i18n locales 与 $PORT 环境在本地/生产保持一致（web.rb/Procfile）"
       ],
       "agent_side": [
-        "prompt/上下文构建函数化",
-        "确定性组件优先",
-        "LLM 作库而非框架"
+        "prompt 无黑盒抽象，完全掌握指令内容（factor-02）",
+        "为 prompt 建立测试与评测，类同代码质量门禁（factor-02）",
+        "上下文格式 token 高效且可复现（factor-03）",
+        "LLM 作库而非框架：确定性代码控制行为（12fa 现代观/workshop）",
+        "渐进扩大 agent scope 保质量，避免一次性失控（factor-10）",
+        "BAML 生成客户端版本锁定 0.88.0，杜绝环境间漂移（generators.baml）",
+        "官方现代化方向：可观测性 + Identity 治理生产 Agent（workshop 演进）"
       ],
       "difference": [
-        "App 靠环境等价（同构环境）",
-        "Agent 靠可复现性（版本化可回放）",
-        "从同构环境演进到同构行为"
+        "App 靠环境等价（同构运行环境）；Agent 靠可复现性（版本化可回放）",
+        "App 关注运行环境一致；Agent 关注推理输入（prompt/上下文）一致",
+        "App 外置的是环境变量值一致；Agent 外置的是指令与上下文一致",
+        "从同构环境演进到同构行为：App 复制环境、Agent 复制决策输入",
+        "差异根源：App 的可变面是运行时配置、Agent 的可变面是模型输入"
       ],
       "cases": [],
-      "anti_patterns": []
+      "anti_patterns": [],
+      "source_refs": [
+        {
+          "path": "app-content-en/dev-prod-parity.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/backing-services.md",
+          "note": ""
+        },
+        {
+          "path": "app-content-en/config.md",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/web.rb",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/Procfile",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-02-own-your-prompts.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-03-own-your-context-window.md",
+          "note": ""
+        },
+        {
+          "path": "agent-content/factor-10-small-focused-agents.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/clients.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/generators.baml",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "tool-create-agent",
       "name": "create-12-factor-agent 脚手架",
       "what": [
-        "基于 template 目录的一键脚手架，生成 12-factor agent 的 TS 项目骨架（package.json、tsconfig、.gitignore 齐备）",
-        "src/ 下六个核心模块：cli.ts 命令行外层循环、agent.ts 线程与 agentLoop、state.ts 文件系统线程存储、server.ts Express 事件入口、a2h.ts 人类审批 A2H API 类型、index.ts 入口",
-        "baml_src/ 提供 BAML 工具定义：agent.baml 的 DetermineNextStep 意图枚举、tool_calculator.baml 加减乘除四则工具、clients.baml 多 LLM 客户端、generators.baml",
-        "依赖锁定 @boundaryml/baml、humanlayer、express、zod、tsx、typescript，开箱即跑"
+        "基于 template/ 目录的一键脚手架，生成 12-factor agent 的 TS 项目骨架（package.json/tsconfig/.gitignore 齐备）",
+        "src/ 六个核心模块：cli.ts 命令行外层循环、agent.ts 线程与 agentLoop、state.ts 文件系统线程存储、server.ts Express 事件入口、a2h.ts 人类审批 A2H API 类型、index.ts 入口",
+        "baml_src/ 提供 BAML 工具定义：agent.baml 的 DetermineNextStep 意图枚举（HumanTools/CalculatorTools/CustomerSupportTools union）、tool_calculator.baml 四则工具、clients.baml 多 LLM 客户端、generators.baml TS 生成器",
+        "依赖锁定 @boundaryml/baml、humanlayer、express、zod、tsx、typescript，开箱即跑",
+        "Thread 事件流 + serializeForLLM 把事件序列化为 XML 喂给 BAML（agent.ts）",
+        "agentLoop 用 while(true) 按 intent 分派工具或返回 thread 转人类（agent.ts）",
+        "FileSystemThreadStore 实现 ThreadStore 接口（create/get/update），JSON+可读文本双落盘 .threads 目录（state.ts）",
+        "server.ts 暴露 POST /api/v1/conversations，处理 conversation.created / human_contact.completed / function_call.completed 三类事件（server.ts）"
       ],
       "why": [
-        "手工搭建 12-factor agent 需处理 BAML 初始化、humanlayer 审批集成、线程状态持久化等大量样板，脚手架把官方工作坊验证过的骨架固化",
-        "让开发者专注扩展自己的工具与业务逻辑，而非重复配置"
+        "手工搭建 12-factor agent 需处理 BAML 初始化、humanlayer 审批集成、线程状态持久化等大量样板，脚手架固化官方工作坊验证过的骨架",
+        "六模块职责分离：状态/审批/入口/循环各自独立，不被塞进单一 agent.ts",
+        "ThreadStore 接口抽象使状态存储可按需替换 redis/sqlite/postgres（state.ts 注释）",
+        "内置 divide 意图强制人类审批的完整链路演示，含 CLI 与 HTTP 双入口（cli.ts/server.ts）",
+        "让开发者专注扩展自己的工具与业务逻辑，而非重复配置",
+        "BAML 生成客户端由 generators.baml 版本锁定，保证声明与实现同步"
       ],
       "how": [
-        "运行脚手架把 template 目录复制进目标项目，改名后即可启动",
-        "基于 Thread 的 serializeForLLM 把事件流序列化喂给 BAML，agentLoop 按意图分派工具或转人类",
-        "修改 agent.baml 的 client 行切换模型提供商（openai/anthropic/baseten 等），baml-cli generate 重新生成客户端",
-        "状态可替换：FileSystemThreadStore 按 ThreadStore 接口可换成 redis/sqlite/postgres"
+        "运行脚手架把 template/ 目录复制进目标项目，改名后即可启动",
+        "扩展工具三步：tool_calculator.baml 加 intent 类 → agent.baml 的 union 类型加入 → handleNextStep 加 switch 分支（agent.baml/agent.ts）",
+        "改 clients.baml 的 provider 行切换模型提供商（openai/anthropic），baml-cli generate 重新生成客户端（clients.baml）",
+        "状态可替换：FileSystemThreadStore 按 ThreadStore 接口换成 redis/sqlite/postgres（state.ts）",
+        "CLI 外层循环 cliOuterLoop：create thread → agentLoop → store.update → askHumanCLI 审批（cli.ts）",
+        "server 外层循环 outerLoop：读事件 → reload/新建 thread → handleNextStep/推响应 → innerLoop → createHumanContact/createFunctionCall（server.ts）",
+        "人类审批双路径：CLI 走 approveCLI 本地交互；server 走 HumanLayer createFunctionCall 异步审批回程（cli.ts/server.ts）",
+        "修改 agent.baml 的 prompt 后需重跑 baml-cli generate，保证客户端与源码同步（generators.baml）"
       ],
       "cases": [
-        "官方 2025-05-17 工作坊从裸仓库逐步手工构建出同名骨架（hello-world→cli-and-agent→calculator-tools→humanlayer-webhook）",
-        "模板内置 divide 意图强制人类审批的分支示例，演示 a2h 审批接入点"
+        "官方 2025-05-17 工作坊从裸仓库逐步手工构建出同名骨架，final/ 与 template/ 六模块完全对应（agent/state/server/cli/a2h/index）",
+        "模板内置 divide 意图强制人类审批分支：cli.ts 中 Enter 批准、server.ts 中 function_call.completed 事件回程执行（cli.ts/server.ts）",
+        "客户支持场景：agent.baml 内置 ProcessRefund 工具并强制 request_approval_from_manager 前置（agent.baml）",
+        "2025-05 与 2025-05-17 两份 workshop 的 walkthrough/ 每章快照即模板的逐步演进史"
       ],
       "anti_patterns": [
-        "改 src 代码却不重跑 baml-cli generate，导致生成的 BAML 客户端与源码不同步",
-        "跳过 a2h/state 模块把人类审批与状态持久化全塞进 agent.ts，使循环逻辑不可维护",
-        "把模板当黑盒整体复制后原地修改，未按 ThreadStore 接口抽象状态存储"
+        "改 src 代码却不重跑 baml-cli generate，导致生成的 BAML 客户端与源码不同步（generators.baml 版本锁定失效）",
+        "跳过 a2h/state 模块，把人类审批与状态持久化全塞进 agent.ts，使循环逻辑不可维护",
+        "把模板当黑盒整体复制后原地修改，未按 ThreadStore 接口抽象状态存储，后续难替换",
+        "只在 CLI 入口验证，不测 server.ts 的 webhook 回程恢复路径，长任务审批链断裂",
+        "直接在模板业务上改却不维护 thread_id 回程状态，导致 server.ts 404 Thread not found（server.ts notFound）"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/agent.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/cli.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/state.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/server.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/a2h.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/src/index.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/agent.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/tool_calculator.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/clients.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/baml_src/generators.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/create-12-factor-agent/template/package.json",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "tool-walkthroughgen",
       "name": "Walkthroughgen 教程生成器",
       "what": [
-        "从单个 walkthrough.yaml 生成教程、README、文档的 CLI 工具，`walkthroughgen generate <yaml>`",
+        "从单个 walkthrough.yaml 生成教程、README、文档的 CLI 工具，命令为 walkthroughgen generate <yaml>（src/cli.ts）",
         "多 targets：markdown 输出（含 diff 代码块、可折叠段落、语法高亮）、folders 逐节工作目录（by-section + final 最终工程）、ipynb（Python 版扩展出 notebook）",
-        "增量变更：以虚拟文件状态跟踪每节文件，同一文件被覆盖时用 diff 库输出最小变更，无实际改动则跳过",
-        "step 类型覆盖 file 复制、dir 建目录、command 执行（incremental 标记仅作用于 folders 构建）、results 期望输出"
+        "增量变更：以虚拟文件状态跟踪每节文件，同一文件被覆盖时用 diff 库输出最小变更（formatMinimalDiff），无实际改动则跳过",
+        "step 类型覆盖：file 复制、dir 建目录、command 执行（incremental 标记仅作用于 folders 构建）、results 期望输出、run_main（Python 版）",
+        "onChange.diff / onChange.cp / newFiles.cat / newFiles.cp 控制展示方式（src/cli.ts targets 配置）",
+        "folders target 为每节建独立工作目录并生成 README.md，skip 数组排除 cleanup 等纯维护节，final.dirName 累积最终工程（src/cli.ts）",
+        "Python 版 walkthroughgen_py.py 把 yaml 转 Jupyter notebook，内嵌 Colab BAML 安装、userdata 处理与 get_baml_client 绕行（CLAUDE.md）",
+        "jest 测试覆盖 CLI 基础行为（--help/缺参/不存在的 yaml 等）与 e2e 生成流程（test/e2e/test-e2e.ts）"
       ],
       "why": [
         "手工维护教程时 markdown、示例目录、最终工程三处极易失同步，单一 YAML 源驱动全部输出",
-        "自动生成 diff 与 cp 命令，让读者精确复现每一步文件变更"
+        "自动生成 diff 与 cp 命令，让读者精确复现每一步文件变更",
+        "虚拟文件状态避免重复展示相同内容，仅呈现真正变化",
+        "incremental 标记区分「文档里展示命令」与「构建工作目录时真实执行命令」两种语义",
+        "双语言扩展（TS markdown+folders / Python ipynb）验证方法论跨栈可复现",
+        "每节一个可运行检查点，降低入门门槛"
       ],
       "how": [
-        "walkthrough/ 目录按 00-、01- 前缀存放每步快照文件，yaml 的 file 步骤声明 src/dest",
-        "targets 配置输出：onChange.diff 对已存在文件打印最小 diff，newFiles.cat/cp 控制新文件展示方式",
-        "folders target 为每节建独立工作目录并生成 readme.md，skip 数组排除 cleanup 等纯维护节",
-        "Python 版由 walkthroughgen_py.py 把 yaml 转 Jupyter notebook，内嵌 Colab BAML 安装与 userdata 处理"
+        "walkthrough/ 目录按 00-、01- 前缀存放每步快照文件，yaml 的 file 步骤声明 src/dest（examples/typescript）",
+        "targets 配置输出：onChange.diff 对已存在文件打印最小 diff，newFiles.cat/cp 控制新文件展示方式（src/cli.ts）",
+        "folders target：逐节复制工作状态到独立目录、生成节 README，final 目录累积全部步骤结果（src/cli.ts）",
+        "command+incremental:true 才在 applyStepsToWorkingDir 中执行，否则仅展示（src/cli.ts applyStepsToWorkingDir）",
+        "formatMinimalDiff 用 Diff.createPatch 加 context:2 滤掉无实际变化行对，输出干净 diff 块（src/cli.ts）",
+        "Python 版由 walkthroughgen_py.py 将 yaml 转为 nbformat notebook，注入 baml-cli generate 与 Colab secrets 辅助单元",
+        "run_main 步骤支持 regenerate_baml:true 标记，BAML 变更后自动重新生成（2025-07-16 walkthrough.yaml）",
+        "生成 markdown 时对既有文件先 diff 后决定展示「show file」还是「skip this step」折叠块（src/cli.ts）"
       ],
       "cases": [
-        "官方 2025-05-17 TS 工作坊：walkthrough.yaml 驱动生成 build/walkthrough.md + build/sections + final 完整工程",
-        "2025-07-16 Python 工作坊：targets 指向 ipynb，生成 Colab 兼容 notebook"
+        "官方 2025-05-17 TS 工作坊：walkthrough.yaml 驱动生成 build/walkthrough.md + build/sections + build/final 完整工程",
+        "2025-07-16 Python 工作坊：targets 指向 ipynb，生成 workshop_final.ipynb Colab 兼容 notebook",
+        "examples/typescript 最小示例：yaml + walkthrough/00-02 快照生成 TypeScript CLI 入门教程",
+        "examples/walkthroughgen 自举示例：用 walkthroughgen 教如何用 walkthroughgen"
       ],
       "anti_patterns": [
         "教程文档与 walkthrough 快照文件手工编辑不同步，导致生成的 diff 失真",
         "incremental 标记错用使 npm install 等命令在 markdown 流程中也被执行（应只发生在构建工作目录时）",
-        "把命令结果直接写死进 yaml 而非用 results 声明，读者无法验证期望输出"
+        "把命令结果直接写死进 yaml 而非用 results 声明，读者无法验证期望输出",
+        "忽略 folders skip 配置使 cleanup 残留脏状态混入 final 工程",
+        "改动 CLI 参数却不跑 jest 回归，--help/缺参/缺文件等边界行为静默损坏"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "agent-packages/walkthroughgen/src/cli.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/src/index.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/readme.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/prompt.md",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/examples/typescript/walkthrough.yaml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/examples/walkthroughgen/walkthrough.yaml",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/test/e2e/test-e2e.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-packages/walkthroughgen/package.json",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "tool-workshops",
       "name": "官方工作坊",
       "what": [
         "两次官方工作坊均以 walkthrough.yaml 为唯一源，主题都是「从裸仓库逐章构建 12-factor agent」",
-        "2025-05-17 TS 版：14 节（cleanup + Chapter 0-11 + Chapter XX），从 Hello World 一路到 email 审批与 HumanLayer Webhook 集成",
+        "2025-05-17 TS 版：cleanup + Chapter 0-11 + Chapter XX（HumanLayer Webhook），从 Hello World 一路到 email 审批与 webhook 集成（walkthrough.yaml）",
         "2025-07-16 Python 版：8 章（hello-world→context-window），targets 为 ipynb 输出 Jupyter notebook，面向 Google Colab",
-        "两种形态：walkthroughgen 的 markdown+folders（TS）vs walkthroughgen_py 的 notebook（Python）"
+        "两种形态：walkthroughgen 的 markdown+folders（TS）vs walkthroughgen_py 的 notebook（Python）",
+        "章节递进覆盖：工具定义→工具循环→BAML 测试→人类工具→状态管理→人类审批→webhook（walkthrough.yaml sections）",
+        "2025-05 目录含完整 13 节 sections（00-hello-world…12-humanlayer-webhook）+ final 工程",
+        "final/ 工程即完整六模块骨架（src/agent.ts、cli.ts、state.ts、server.ts、index.ts + baml_src 四文件）",
+        "每章一个可运行检查点，快照文件经 walkthroughgen 自动生成章节 README"
       ],
       "why": [
         "把抽象方法论变成可跟随的动手路径，每章一个可运行检查点，降低入门门槛",
-        "TS/Python 双语言 + CLI/notebook 双形态，验证方法论跨技术栈可复现"
+        "TS/Python 双语言 + CLI/notebook 双形态，验证方法论跨技术栈可复现",
+        "从零构建比只看成品更内化：读者亲手经历每个文件变更",
+        "工作坊产物即 create-12-factor-agent 模板的验证来源，两者互为证明",
+        "2025-07-16 终点明确指向「微代理在确定性 DAG」模式，衔接方法论未来方向"
       ],
       "how": [
         "以 walkthrough.yaml 声明章节与步骤（file/dir/command/results），walkthrough/ 目录存每章快照",
-        "TS 版生成 by-section 工作目录与 final 工程，每个增量命令标注 incremental 只用于目录构建",
-        "Python 版由 walkthroughgen_py 转 notebook，注入 baml-cli generate 与 Colab secrets（OpenAI key）辅助单元",
-        "章节递进覆盖：工具定义→工具循环→BAML 测试→人类工具→状态管理→人类审批→webhook"
+        "TS 版生成 by-section 工作目录与 final 工程，每个增量命令标注 incremental 只用于目录构建（walkthrough.yaml targets）",
+        "Python 版由 walkthroughgen_py 转 notebook，注入 baml-cli generate 与 Colab secrets（OpenAI key）辅助单元（walkthroughgen_py.py）",
+        "章节递进：0 hello-world → 1 CLI+agent loop → 2 calculator tools → 3 tool loop → 4 BAML tests → 5 human tools → 6 customize prompt → 7 context window → 8 API endpoints → 9 state → 10-11 human approval → XX webhook（walkthrough.yaml）",
+        "每章 walkthrough 快照经 walkthroughgen 生成 README，读者按 diff/cp 步骤逐节构建（sections/*/README.md）",
+        "notebook 环境教训固化为 CLAUDE.md 实现要点：无 async、无 sys.argv、全局命名空间、IN_COLAB 检测（CLAUDE.md）"
       ],
       "cases": [
-        "05-17 TS 版 14 节从空目录构建出含 email/webhook 审批的完整 agent",
-        "07-16 Python 版 8 节 + Colab 环境，终点指向「微代理在确定性 DAG」模式"
+        "2025-05-17 TS 版 13 节从空目录构建出含 email/webhook 审批的完整 agent（build/sections + build/final）",
+        "2025-07-16 Python 版 8 节 + Colab 环境，workshop_final.ipynb 输出验证（2025-07-16/）",
+        "2025-05 与 2025-05-17 为同一内容的两份版本目录，sections 逐章对应",
+        "章节 README 与 template/src 六模块完全对应，工作坊即脚手架的逐步说明"
       ],
       "anti_patterns": [
         "跳章节不跑前序步骤，导致后续文件变更缺少依赖上下文、diff 对不上",
         "把工作坊当演示 PPT 而非动手构建，跳过 walkthrough 快照文件手敲内容",
-        "忽略 cleanup 节残留旧文件，使后续生成的 final 工程混入脏状态"
+        "忽略 cleanup 节残留旧文件，使后续生成的 final 工程混入脏状态",
+        "只看 final 工程而不看增量 diff，丧失对每步变更动因的理解",
+        "在 notebook 环境误用 async/await 或 sys.argv，违背 CLAUDE.md 固化的约束（无 async、无 sys.argv）"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "agent-workshops/2025-05-17/walkthrough.yaml",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-05-17/sections/00-hello-world/README.md",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-05-17/sections/01-cli-and-agent/README.md",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-05-17/sections/03-tool-loop/README.md",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-05/walkthrough.yaml",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-05/final/src/agent.ts",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-05/final/baml_src/agent.baml",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-07-16/walkthrough.yaml",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-07-16/walkthroughgen_py.py",
+          "note": ""
+        },
+        {
+          "path": "agent-workshops/2025-07-16/CLAUDE.md",
+          "note": ""
+        }
+      ]
     },
     {
       "id": "tool-app-site",
       "name": "12factor.net 站点",
       "what": [
-        "12factor.net 官网是 Sinatra（web.rb）+ ERB 视图的 Ruby 应用，Jekyll 式 content/ 内容目录，部署在 Heroku",
-        "Procfile 仅一行 `web: ruby web.rb -p $PORT`，web 进程经 web.rb 启动，端口来自 $PORT 环境变量（端口绑定原则）",
-        "web.rb 实现 i18n 多语言（locales/*.yml）、/blog、/community、/sitemap.xml 动态生成、www→裸域 301 重定向、可选 PASSWORD 会话保护",
-        "app.json 声明 Heroku 部署配置（stack=heroku-22），TOC 数组集中管理 12 因子章节顺序"
+        "12factor.net 官网是 Sinatra（web.rb）+ ERB 视图的 Ruby 应用，部署在 Heroku（Readme.md）",
+        "Procfile 仅一行 `web: ruby web.rb -p $PORT`，web 进程经 web.rb 启动，端口来自 $PORT 环境变量（Procfile）",
+        "web.rb 实现 i18n 多语言（locales/*.yml）、/blog、/community、/sitemap.xml 动态生成、www→裸域 301 重定向、可选 PASSWORD 会话保护（web.rb）",
+        "app.json 声明 Heroku 部署配置（stack=heroku-22）（app.json）",
+        "TOC 数组集中管理 12 因子章节顺序：codebase→admin-processes（web.rb TOC）",
+        "Gemfile 声明 sinatra/builder/thin/maruku/i18n/puma/rack-ssl-enforcer 等依赖（Gemfile）",
+        "12 因子条目以数据驱动渲染而非硬编码路由：/:factor 校验 TOC 后 ERB 渲染（web.rb）",
+        "blog POSTS 白名单与 sitemap 由 MAIN_PATHS/TOC/POSTS × locales 动态生成（web.rb）"
       ],
       "why": [
         "官方站点吃自己的狗粮：Procfile 声明进程类型、$PORT 端口绑定、ENV 注入配置（PASSWORD/FORCE_SSL）都是 12-factor 原则的活教材",
-        "内容与渲染分离，12 因子条目以数据驱动而非硬编码在路由"
+        "内容与渲染分离：12 因子条目以 TOC 数据驱动，增删章节不改路由",
+        "展示端口绑定+进程声明的生产实践，作为读者可部署参考实现",
+        "PASSWORD 会话保护示范凭据走 ENV 而非代码（web.rb）",
+        "为 12-factor 方法论提供多语言、可寻址、可审计的权威展示层"
       ],
       "how": [
-        "Procfile 声明 web 进程，`ruby web.rb -p $PORT` 绑定 Heroku 注入的端口",
-        "web.rb 用 Sinatra + ERB 渲染，i18n backend 加载 locales 实现多语言，locale 前缀路由分发",
-        "PASSWORD env 开启时进入登录守卫，FORCE_SSL 时启用 Rack::SslEnforcer 强制 HTTPS",
-        "TOC = %w(codebase dependencies config backing-services ... admin-processes) 即教义章节固定顺序"
+        "Procfile 声明 web 进程类型，`ruby web.rb -p $PORT` 绑定 Heroku 注入的端口（Procfile）",
+        "web.rb 用 Sinatra + ERB 渲染，i18n backend 加载 locales 实现多语言，locale 前缀路由分发（web.rb before '/:locale/*'）",
+        "PASSWORD env 开启时进入登录守卫，FORCE_SSL 时启用 Rack::SslEnforcer 强制 HTTPS（web.rb configure）",
+        "TOC = %w(codebase dependencies config backing-services … admin-processes) 即教义章节固定顺序（web.rb）",
+        "sitemap.xml 由 MAIN_PATHS/TOC/POSTS × I18n.available_locales 生成，含 hreflang 变体（web.rb sitemap 块）",
+        "host 为 www.12factor.com 时 301 归一化到裸域，符合可寻址性规范（web.rb before 块）",
+        "本地 bundle install + heroku local:start 开发，PR 合并自动部署（Readme.md）"
       ],
       "cases": [
         "官方 12factor.net 生产部署：12 因子条目 + 博客 + 社区页 + 多语言 + 站点地图",
-        "host 为 www.12factor.com 时 301 归一化到裸域，符合可寻址性规范"
+        "blog POSTS 白名单校验，未收录文章返回 404（web.rb POSTS + halt 404）",
+        "每 deploy 端口由 Heroku $PORT 环境注入，本地由 heroku local 提供（Procfile/Readme.md）",
+        "alternate_links helper 生成 hreflang=x-default 与各语言 alternates（web.rb helpers）"
       ],
       "anti_patterns": [
-        "把章节内容硬编码进 web.rb 路由而非集中到 TOC/content 数据驱动",
+        "把章节内容硬编码进 web.rb 路由而非集中到 TOC 数据驱动，增删章节需改代码",
         "在代码里写死端口而非读取 $PORT，违反端口绑定原则",
-        "凭据写入配置/代码而非走 ENV（站内用 PASSWORD env 正示范避免此坑）"
+        "凭据写入配置/代码而非走 ENV（站内用 PASSWORD env 正示范避免此坑）",
+        "忽略 locale 前缀路由导致 i18n 页面 404（web.rb before '/:locale/*' 处理）",
+        "不把依赖声明进 Gemfile 导致新环境缺包（Gemfile 显式声明反例）"
       ],
       "app_side": [],
       "agent_side": [],
-      "difference": []
+      "difference": [],
+      "source_refs": [
+        {
+          "path": "app-deploy/web.rb",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/Procfile",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/app.json",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/Gemfile",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/Readme.md",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/.github/dependabot.yml",
+          "note": ""
+        },
+        {
+          "path": "app-deploy/CONTRIBUTING.md",
+          "note": ""
+        }
+      ]
     }
   ]
 }
