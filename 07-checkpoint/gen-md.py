@@ -124,6 +124,7 @@ with open('06-md/02-stage.md', 'w', encoding='utf-8') as f:
 
 # ---------- 03-learning-path.md ----------
 def topo(nodes, edges):
+    # 排序稳定版拓扑排序：入度 0 节点与邻接表均按字典序，保证跨环境可复现
     from collections import defaultdict, deque
     ids = {n['id'] for n in nodes}
     indeg = defaultdict(int); adj = defaultdict(list)
@@ -131,12 +132,15 @@ def topo(nodes, edges):
         if e['type'] != 'prerequisite': continue
         if e['from'] in ids and e['to'] in ids:
             adj[e['from']].append(e['to']); indeg[e['to']] += 1
-    q = deque([n for n in ids if indeg[n] == 0]); order = []
+    for u in adj:
+        adj[u].sort()
+    q = deque(sorted(n for n in ids if indeg[n] == 0)); order = []
     while q:
         u = q.popleft(); order.append(u)
         for v in adj[u]:
             indeg[v] -= 1
-            if indeg[v] == 0: q.append(v)
+            if indeg[v] == 0:
+                q.append(v)
     return order
 
 app_nodes = [n for n in dag['nodes'] if n['src'] == 'app']
