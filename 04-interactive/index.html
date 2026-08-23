@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 Factor 方法论图谱 · 交互式 DAG 总览</title>
+<style>
+
+  :root { --bg:#0f1117; --panel:#161a22; --border:#2a2f3a; --text:#e6e8ee; --dim:#9aa3b2; --accent:#4f8cff; --warn:#e0c35e; --danger:#e05563; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; height:100vh; overflow:hidden; }
+  header { position:fixed; top:0; left:0; right:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:15px; font-weight:600; white-space:nowrap; }
+  header a { color:var(--accent); text-decoration:none; font-size:13px; }
+  header a:hover { text-decoration:underline; }
+  .badge { background:#20324f; color:#7fb0ff; padding:2px 10px; border-radius:20px; font-size:12px; white-space:nowrap; }
+  .hint { color:var(--dim); font-size:11px; }
+  .controls { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .seg { display:inline-flex; background:#0b0e14; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .seg button { background:transparent; color:var(--dim); border:none; padding:5px 12px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .seg button.active { background:var(--accent); color:#fff; }
+  .seg button:hover:not(.active) { color:var(--text); }
+  .btn { background:#20324f; color:#7fb0ff; border:1px solid #2a3a55; border-radius:20px; padding:4px 14px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .btn:hover { background:#2a3a55; }
+  .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn.on { background:#0f2b1f; color:#6fd3ae; border-color:#2fb98a; }
+  #side { position:fixed; right:0; top:52px; bottom:0; width:300px; background:var(--panel); border-left:1px solid var(--border); padding:14px; overflow:auto; z-index:9; }
+  #side h2 { font-size:13px; margin-bottom:8px; color:var(--dim); }
+  #side .legend { font-size:12px; color:var(--dim); line-height:1.9; }
+  #side .legend b { color:var(--text); }
+  #side .legend .sw { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+  #zoominfo { position:fixed; bottom:14px; left:18px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:12px; color:var(--dim); z-index:9; }
+  #zoominfo b { color:var(--text); }
+  #crumb { position:fixed; top:52px; left:18px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:12px; color:var(--dim); z-index:9; display:none; align-items:center; gap:8px; }
+  #crumb b { color:var(--accent); }
+  #crumb a { color:var(--dim); cursor:pointer; text-decoration:underline; }
+  #crumb a:hover { color:var(--accent); }
+  #graph { position:fixed; top:52px; left:0; right:0; bottom:0; }
+  #glegend { margin-top:6px; }
+  #glegend .row { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--dim); margin:3px 0; cursor:pointer; }
+  #glegend .row:hover { color:var(--text); }
+  #glegend .row .sw { width:14px; height:14px; border-radius:3px; flex:0 0 auto; }
+  #glegend .row.active { color:var(--text); font-weight:600; }
+  #empty { position:fixed; inset:0; top:52px; display:none; align-items:center; justify-content:center; color:var(--dim); font-size:14px; background:var(--bg); z-index:5; }
+  @media (max-width:768px){
+    #side { width:220px; }
+    header { padding:6px 10px; gap:8px; }
+    header h1 { font-size:13px; }
+    .hint { display:none; }
+  }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>12 Factor 方法论图谱 <span class="badge">交互 DAG</span></h1>
+  <a href="../index.html">← 根入口</a>
+  <a href="../03-groups/index.html">组目录</a>
+  <span id="crumb"></span>
+  <button id="backbtn" class="btn" style="display:none;">← 返回组级</button>
+  <div class="controls">
+    <button id="bridgebtn" class="btn">桥接高亮</button>
+  </div>
+</header>
+<div id="empty"></div>
+<div id="graph"></div>
+<div id="crumb"></div>
+<div id="side">
+  <h2>图例</h2>
+  <div class="legend" id="legend"></div>
+  <h2 style="margin-top:12px;">组配色</h2>
+  <div id="glegend"></div>
+</div>
+<div id="zoominfo">模式 <b id="zmode">组级</b> · 节点 <b id="zcount">0</b></div>
+
+<script src="vendor/cytoscape.min.js"></script>
+<script src="vendor/cytoscape-dagre.min.js"></script>
+<script>
+
+(function(){
+  'use strict';
+  const DATA = {"meta":{"title":"12 Factor 方法论合并知识图谱","subtitle":"12 Factor App × 12 Factor Agent — 软件工程方法论统一图谱","generated":"2026-08-23","total_groups":16,"total_nodes":38,"total_edges":61,"stages":["basic","intermediate","advanced"],"edge_types":["prerequisite","variant","combination","cooccurrence","dependency"],"dag_acyclic":true},"groups":[{"id":"GA","name":"12 Factor App 体系","domain":"传统软件工程","kind":"source","stage_range":["basic","intermediate"],"node_ids":["app-codebase","app-deps","app-config","app-backing","app-build-run","app-processes","app-port","app-concurrency","app-disposability","app-dev-prod","app-logs","app-admin"]},{"id":"GB","name":"12 Factor Agent 体系","domain":"LLM Agent 工程","kind":"source","stage_range":["basic","intermediate","advanced"],"node_ids":["ag-nl2tool","ag-prompts","ag-context","ag-tools","ag-state","ag-pause","ag-human","ag-control","ag-errors","ag-small","ag-trigger","ag-reducer"]},{"id":"GT01","name":"无状态性","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-stateless"]},{"id":"GT02","name":"生命周期与可处置性","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-disposable"]},{"id":"GT03","name":"配置与可变性外置","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-config"]},{"id":"GT04","name":"可观测性与错误可见性","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-observability"]},{"id":"GT05","name":"依赖与工具显式化","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-deps"]},{"id":"GT06","name":"控制流与阶段治理","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-control"]},{"id":"GT07","name":"自含入口与触达","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-entry"]},{"id":"GT08","name":"规模化与单元粒度","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-scaling"]},{"id":"GT09","name":"人为交互边界","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-human"]},{"id":"GT10","name":"环境一致性","domain":"桥接主题","kind":"bridge","stage_range":["advanced"],"node_ids":["t-parity"]},{"id":"GX1","name":"基础与运行时","domain":"横切·工程阶段","kind":"crosscut","stage_range":["basic","intermediate","advanced"],"node_ids":["app-codebase","app-deps","app-backing","app-processes","app-port","app-concurrency","ag-state","ag-pause","ag-reducer","ag-small"]},{"id":"GX2","name":"配置与交付","domain":"横切·工程阶段","kind":"crosscut","stage_range":["basic","intermediate"],"node_ids":["app-config","app-build-run","app-dev-prod","ag-prompts","ag-context","ag-control","ag-errors"]},{"id":"GX3","name":"交互与运维","domain":"横切·工程阶段","kind":"crosscut","stage_range":["basic","intermediate","advanced"],"node_ids":["app-logs","app-admin","ag-nl2tool","ag-tools","ag-human","ag-trigger"]},{"id":"G-TOOLS","name":"辅助工具集","domain":"工具","kind":"tool","stage_range":["basic","intermediate","advanced"],"node_ids":["tool-create-agent","tool-walkthroughgen","tool-workshops","tool-app-site"]}],"nodes":[{"id":"app-codebase","name":"代码库","type":"principle","src":"app","group":"GA","stage":"basic","brief":"一个代码库，多环境部署，版本控制跟踪一切"},{"id":"app-deps","name":"依赖","type":"principle","src":"app","group":"GA","stage":"basic","brief":"显式声明并隔离依赖，绝不依赖系统级隐式包"},{"id":"app-config","name":"配置","type":"principle","src":"app","group":"GA","stage":"basic","brief":"配置存于环境变量，与代码严格分离"},{"id":"app-backing","name":"后端服务","type":"principle","src":"app","group":"GA","stage":"basic","brief":"后端服务作为附加资源，可随时替换连接"},{"id":"app-build-run","name":"构建·发布·运行","type":"principle","src":"app","group":"GA","stage":"intermediate","brief":"严格分离构建、发布、运行三阶段"},{"id":"app-processes","name":"进程","type":"principle","src":"app","group":"GA","stage":"basic","brief":"以一个或多个无状态进程执行应用"},{"id":"app-port","name":"端口绑定","type":"principle","src":"app","group":"GA","stage":"basic","brief":"通过端口绑定自含导出服务，不依赖注入的 Web 服务器"},{"id":"app-concurrency","name":"并发","type":"principle","src":"app","group":"GA","stage":"intermediate","brief":"通过进程模型横向扩展"},{"id":"app-disposability","name":"可处置性","type":"principle","src":"app","group":"GA","stage":"intermediate","brief":"快速启动与优雅终止，最大化鲁棒性"},{"id":"app-dev-prod","name":"开发/线上等价","type":"principle","src":"app","group":"GA","stage":"intermediate","brief":"保持开发、预发布、生产环境尽可能相似"},{"id":"app-logs","name":"日志","type":"principle","src":"app","group":"GA","stage":"intermediate","brief":"将日志视为事件流，不关心存储格式"},{"id":"app-admin","name":"管理进程","type":"principle","src":"app","group":"GA","stage":"intermediate","brief":"管理/维护任务作为一次性进程运行"},{"id":"ag-nl2tool","name":"自然语言→工具调用","type":"principle","src":"agent","group":"GB","stage":"basic","brief":"LLM 将自然语言转换为结构化工具调用对象"},{"id":"ag-prompts","name":"掌控你的 Prompt","type":"principle","src":"agent","group":"GB","stage":"basic","brief":"像管理代码一样版本化、测试、部署 prompt"},{"id":"ag-context","name":"掌控上下文窗口","type":"principle","src":"agent","group":"GB","stage":"intermediate","brief":"对上下文进行工程化管理（上下文工程）"},{"id":"ag-tools","name":"工具即结构化输出","type":"principle","src":"agent","group":"GB","stage":"basic","brief":"工具只是模型的结构化输出，可无限组合"},{"id":"ag-state","name":"统一执行/业务状态","type":"principle","src":"agent","group":"GB","stage":"intermediate","brief":"将执行状态与业务状态统一为单一事实源"},{"id":"ag-pause","name":"启动/暂停/恢复","type":"principle","src":"agent","group":"GB","stage":"intermediate","brief":"用简单 API 管理 Agent 生命周期"},{"id":"ag-human","name":"工具调用联系人类","type":"principle","src":"agent","group":"GB","stage":"intermediate","brief":"把人类接入作为一类工具调用，主动寻求批准"},{"id":"ag-control","name":"掌控控制流","type":"principle","src":"agent","group":"GB","stage":"intermediate","brief":"控制流由代码决定，LLM 只做决策点"},{"id":"ag-errors","name":"压缩错误进上下文","type":"principle","src":"agent","group":"GB","stage":"intermediate","brief":"把错误摘要压缩回上下文窗口供模型反思"},{"id":"ag-small","name":"小而专注的 Agent","type":"principle","src":"agent","group":"GB","stage":"advanced","brief":"用多个小 Agent 而非一个巨型 Agent 解决问题"},{"id":"ag-trigger","name":"随处触发","type":"principle","src":"agent","group":"GB","stage":"advanced","brief":"从任何触发源唤起 Agent，触达用户所在之处"},{"id":"ag-reducer","name":"无状态 Reducer","type":"principle","src":"agent","group":"GB","stage":"advanced","brief":"将 Agent 建模为无状态 reducer（state, event）→ state"},{"id":"t-stateless","name":"无状态性","type":"bridge","src":"bridge","group":"GT01","stage":"advanced","brief":"无状态是传统应用与 Agent 共有的可靠运行基石"},{"id":"t-disposable","name":"生命周期与可处置性","type":"bridge","src":"bridge","group":"GT02","stage":"advanced","brief":"进程可快速启停，Agent 可暂停恢复，本质同源"},{"id":"t-config","name":"配置与可变性外置","type":"bridge","src":"bridge","group":"GT03","stage":"advanced","brief":"可变部分（环境变量 / prompt）外置于代码之外"},{"id":"t-observability","name":"可观测性与错误可见性","type":"bridge","src":"bridge","group":"GT04","stage":"advanced","brief":"运行可见性是传统日志与 Agent 错误压缩的共同目标"},{"id":"t-deps","name":"依赖与工具显式化","type":"bridge","src":"bridge","group":"GT05","stage":"advanced","brief":"显式声明依赖 / 工具，不隐式依赖环境"},{"id":"t-control","name":"控制流与阶段治理","type":"bridge","src":"bridge","group":"GT06","stage":"advanced","brief":"确定性控制流 / 阶段分离保证可预测交付"},{"id":"t-entry","name":"自含入口与触达","type":"bridge","src":"bridge","group":"GT07","stage":"advanced","brief":"自含导出服务 / 随处触发，皆是不依赖宿主"},{"id":"t-scaling","name":"规模化与单元粒度","type":"bridge","src":"bridge","group":"GT08","stage":"advanced","brief":"进程模型扩展 / 小 Agent 组合，皆是单元化扩展"},{"id":"t-human","name":"人为交互边界","type":"bridge","src":"bridge","group":"GT09","stage":"advanced","brief":"一次性管理任务 / 人类批准，皆是人机协作边界"},{"id":"t-parity","name":"环境一致性","type":"bridge","src":"bridge","group":"GT10","stage":"advanced","brief":"开发与生产一致，传统靠环境等价，Agent 靠 prompt 版本化"},{"id":"tool-create-agent","name":"create-12-factor-agent 脚手架","type":"tool","src":"tool","group":"G-TOOLS","stage":"intermediate","brief":"官方 CLI 脚手架，一键生成符合 12 要素的 Agent 项目骨架"},{"id":"tool-walkthroughgen","name":"Walkthroughgen 教程生成器","type":"tool","src":"tool","group":"G-TOOLS","stage":"intermediate","brief":"从 YAML 配置生成分步教程/文档与工作目录，跟踪增量 diff"},{"id":"tool-workshops","name":"官方工作坊材料","type":"tool","src":"tool","group":"G-TOOLS","stage":"advanced","brief":"2025 年两次官方工作坊（TS/Python 双版本）的演练材料与样例"},{"id":"tool-app-site","name":"12factor.net 站点源码","type":"tool","src":"tool","group":"G-TOOLS","stage":"basic","brief":"官方文档站自身即 Jekyll 应用，是 App 原则的参考实现"}],"edges":[{"from":"app-deps","to":"app-build-run","type":"prerequisite","label":"依赖在构建阶段声明"},{"from":"app-codebase","to":"app-build-run","type":"prerequisite","label":"代码库是构建的输入"},{"from":"app-backing","to":"app-config","type":"prerequisite","label":"后端服务句柄存于配置"},{"from":"app-config","to":"app-dev-prod","type":"prerequisite","label":"配置差异是环境漂移主因"},{"from":"app-processes","to":"app-port","type":"prerequisite","label":"无状态进程通过端口导出服务"},{"from":"app-processes","to":"app-concurrency","type":"prerequisite","label":"进程模型是并发的基座"},{"from":"app-processes","to":"app-disposability","type":"prerequisite","label":"进程可处置是鲁棒性前提"},{"from":"app-concurrency","to":"app-admin","type":"prerequisite","label":"管理进程独立于进程编队"},{"from":"ag-nl2tool","to":"ag-tools","type":"prerequisite","label":"工具是自然语言调用的结构化输出"},{"from":"ag-tools","to":"ag-human","type":"prerequisite","label":"联系人类是一类工具调用"},{"from":"ag-nl2tool","to":"ag-control","type":"prerequisite","label":"工具调用需要确定性控制流"},{"from":"ag-tools","to":"ag-control","type":"prerequisite","label":"工具组合受控制流编排"},{"from":"ag-prompts","to":"ag-context","type":"prerequisite","label":"拥有 prompt 才能掌控上下文"},{"from":"ag-context","to":"ag-errors","type":"prerequisite","label":"错误压缩是上下文工程应用"},{"from":"ag-state","to":"ag-pause","type":"prerequisite","label":"统一状态支持暂停恢复"},{"from":"ag-state","to":"ag-reducer","type":"prerequisite","label":"统一状态是无状态 reducer 基础"},{"from":"ag-control","to":"ag-reducer","type":"prerequisite","label":"确定性控制流保障 reducer 语义"},{"from":"ag-reducer","to":"ag-small","type":"prerequisite","label":"无状态 reducer 使小 Agent 可行"},{"from":"ag-small","to":"ag-trigger","type":"prerequisite","label":"小 Agent 便于随处触发"},{"from":"app-processes","to":"t-stateless","type":"prerequisite","label":"从无状态进程理解无状态性"},{"from":"t-stateless","to":"ag-reducer","type":"prerequisite","label":"无状态性落到 Agent 的 reducer"},{"from":"app-disposability","to":"t-disposable","type":"prerequisite","label":"从可处置进程理解生命周期"},{"from":"t-disposable","to":"ag-pause","type":"prerequisite","label":"生命周期落到 Agent 暂停恢复"},{"from":"app-config","to":"t-config","type":"prerequisite","label":"从环境配置理解可变性外置"},{"from":"t-config","to":"ag-prompts","type":"prerequisite","label":"可变性外置落到 prompt 管理"},{"from":"app-logs","to":"t-observability","type":"prerequisite","label":"从日志事件流理解可观测性"},{"from":"t-observability","to":"ag-errors","type":"prerequisite","label":"可观测性落到错误压缩"},{"from":"app-deps","to":"t-deps","type":"prerequisite","label":"从依赖声明理解显式化"},{"from":"t-deps","to":"ag-tools","type":"prerequisite","label":"显式化落到工具定义"},{"from":"app-build-run","to":"t-control","type":"prerequisite","label":"从三阶段分离理解控制流"},{"from":"t-control","to":"ag-control","type":"prerequisite","label":"控制流治理落到 Agent 编排"},{"from":"app-port","to":"t-entry","type":"prerequisite","label":"从端口绑定理解自含入口"},{"from":"t-entry","to":"ag-trigger","type":"prerequisite","label":"自含入口落到随处触发"},{"from":"app-concurrency","to":"t-scaling","type":"prerequisite","label":"从进程扩展理解规模化"},{"from":"t-scaling","to":"ag-small","type":"prerequisite","label":"规模化落到小 Agent 组合"},{"from":"app-admin","to":"t-human","type":"prerequisite","label":"从管理进程理解人机边界"},{"from":"t-human","to":"ag-human","type":"prerequisite","label":"人机边界落到人类批准"},{"from":"app-dev-prod","to":"t-parity","type":"prerequisite","label":"从环境等价理解一致性"},{"from":"t-parity","to":"ag-prompts","type":"prerequisite","label":"一致性落到 prompt 环境"},{"from":"app-processes","to":"ag-reducer","type":"variant","label":"无状态进程 ↔ 无状态 reducer"},{"from":"app-disposability","to":"ag-pause","type":"variant","label":"可处置性 ↔ 暂停恢复"},{"from":"app-config","to":"ag-prompts","type":"variant","label":"环境配置 ↔ prompt 管理"},{"from":"app-logs","to":"ag-errors","type":"variant","label":"日志流 ↔ 错误压缩"},{"from":"app-deps","to":"ag-tools","type":"variant","label":"依赖清单 ↔ 工具定义"},{"from":"app-build-run","to":"ag-control","type":"variant","label":"阶段分离 ↔ 控制流所有权"},{"from":"app-port","to":"ag-trigger","type":"variant","label":"端口自含 ↔ 随处触发"},{"from":"ag-tools","to":"ag-human","type":"combination","label":"工具 + 人类批准"},{"from":"app-deps","to":"app-backing","type":"combination","label":"依赖声明 + 后端资源"},{"from":"ag-context","to":"ag-errors","type":"combination","label":"上下文 + 错误压缩"},{"from":"app-processes","to":"app-port","type":"cooccurrence","label":"进程与端口绑定共现"},{"from":"ag-state","to":"ag-pause","type":"cooccurrence","label":"状态统一与暂停恢复共现"},{"from":"app-codebase","to":"ag-prompts","type":"dependency","label":"prompt 应像代码库一样管理"},{"from":"app-backing","to":"ag-tools","type":"dependency","label":"工具是 Agent 的外部后端服务"},{"from":"tool-create-agent","to":"ag-nl2tool","type":"combination","label":"脚手架内建自然语言→工具调用模板"},{"from":"tool-create-agent","to":"ag-tools","type":"combination","label":"模板含 BAML 工具定义（tool_calculator）"},{"from":"tool-create-agent","to":"ag-human","type":"combination","label":"模板含 a2h.ts 人类批准机制"},{"from":"tool-create-agent","to":"ag-reducer","type":"combination","label":"模板含 state.ts 无状态 reducer"},{"from":"tool-walkthroughgen","to":"tool-workshops","type":"prerequisite","label":"工作坊由 walkthroughgen 生成"},{"from":"tool-workshops","to":"ag-prompts","type":"combination","label":"工作坊演练 prompt 管理与工具编排"},{"from":"tool-app-site","to":"app-codebase","type":"dependency","label":"站点是 App 原则的参考实现"},{"from":"tool-app-site","to":"app-build-run","type":"dependency","label":"Procfile 三阶段部署实践"}],"groupEdges":[{"source":"GA","target":"GT01","viaFrom":"app-processes","viaTo":"t-stateless","type":"prerequisite"},{"source":"GT01","target":"GB","viaFrom":"t-stateless","viaTo":"ag-reducer","type":"prerequisite"},{"source":"GA","target":"GT02","viaFrom":"app-disposability","viaTo":"t-disposable","type":"prerequisite"},{"source":"GT02","target":"GB","viaFrom":"t-disposable","viaTo":"ag-pause","type":"prerequisite"},{"source":"GA","target":"GT03","viaFrom":"app-config","viaTo":"t-config","type":"prerequisite"},{"source":"GT03","target":"GB","viaFrom":"t-config","viaTo":"ag-prompts","type":"prerequisite"},{"source":"GA","target":"GT04","viaFrom":"app-logs","viaTo":"t-observability","type":"prerequisite"},{"source":"GT04","target":"GB","viaFrom":"t-observability","viaTo":"ag-errors","type":"prerequisite"},{"source":"GA","target":"GT05","viaFrom":"app-deps","viaTo":"t-deps","type":"prerequisite"},{"source":"GT05","target":"GB","viaFrom":"t-deps","viaTo":"ag-tools","type":"prerequisite"},{"source":"GA","target":"GT06","viaFrom":"app-build-run","viaTo":"t-control","type":"prerequisite"},{"source":"GT06","target":"GB","viaFrom":"t-control","viaTo":"ag-control","type":"prerequisite"},{"source":"GA","target":"GT07","viaFrom":"app-port","viaTo":"t-entry","type":"prerequisite"},{"source":"GT07","target":"GB","viaFrom":"t-entry","viaTo":"ag-trigger","type":"prerequisite"},{"source":"GA","target":"GT08","viaFrom":"app-concurrency","viaTo":"t-scaling","type":"prerequisite"},{"source":"GT08","target":"GB","viaFrom":"t-scaling","viaTo":"ag-small","type":"prerequisite"},{"source":"GA","target":"GT09","viaFrom":"app-admin","viaTo":"t-human","type":"prerequisite"},{"source":"GT09","target":"GB","viaFrom":"t-human","viaTo":"ag-human","type":"prerequisite"},{"source":"GA","target":"GT10","viaFrom":"app-dev-prod","viaTo":"t-parity","type":"prerequisite"},{"source":"GT10","target":"GB","viaFrom":"t-parity","viaTo":"ag-prompts","type":"prerequisite"}],"groupColor":{"GA":"#4f8cff","GB":"#e05563","GT01":"#2fb98a","GT02":"#2fb98a","GT03":"#2fb98a","GT04":"#2fb98a","GT05":"#2fb98a","GT06":"#2fb98a","GT07":"#2fb98a","GT08":"#2fb98a","GT09":"#2fb98a","GT10":"#2fb98a","GX1":"#b48ae0","GX2":"#b48ae0","GX3":"#b48ae0"},"stageColor":{"basic":"#4f8cff","intermediate":"#2fb98a","advanced":"#e8933b"},"edgeColor":{"prerequisite":"#4f8cff","variant":"#e0c35e","combination":"#b48ae0","cooccurrence":"#5ad0d0","dependency":"#e8933b"}};
+
+  // ===== 常量 =====
+  const EDGE_COLOR = DATA.edgeColor;
+  const STAGE_ORDER = ['basic','intermediate','advanced'];
+  const STAGE_LABEL = { basic:'基础', intermediate:'进阶', advanced:'高级' };
+  const STAGE_COLOR = DATA.stageColor;
+  const EDGE_LABEL = { prerequisite:'前置(prerequisite)', variant:'变体(variant)', combination:'组合(combination)', cooccurrence:'共现(cooccurrence)', dependency:'依赖关联(dependency)' };
+
+  const nodeById = {};
+  DATA.nodes.forEach(n => nodeById[n.id] = n);
+  const groupById = {};
+  DATA.groups.forEach(g => groupById[g.id] = g);
+  const nodeToGroup = {};
+  DATA.groups.forEach(g => g.node_ids.forEach(nid => nodeToGroup[nid] = g.id));
+  const groupNodeIndex = {};
+  DATA.groups.forEach(g => g.node_ids.forEach((nid,i) => { groupNodeIndex[nid] = i; }));
+
+  // ===== 状态 =====
+  let currentGroup = null;   // null = 组级视图
+  let bridgeMode = false;    // 桥接高亮模式
+
+  const $ = id => document.getElementById(id);
+  const crumb = $('crumb');
+
+  function isBridge(nid){ const n = nodeById[nid]; return n && (n.type === 'bridge' || n.src === 'bridge'); }
+
+  // ===== 组级视图 =====
+  function buildGroupNodes(){
+    const nodes = DATA.groups.map(g => ({
+      data:{
+        id:'grp-'+g.id, label: g.name, kind:'group', group:g.id, gname:g.name,
+        domain:g.domain, gkind:g.kind,
+        coreCount: g.node_ids.length,
+        totalCount: g.node_ids.length
+      }
+    }));
+    let edges = [];
+    DATA.groupEdges.forEach(ge => {
+      edges.push({ data:{ id:'grp-'+ge.source+'->grp-'+ge.target, source:'grp-'+ge.source, target:'grp-'+ge.target, kind:'group', type:ge.type, viaFrom:ge.viaFrom, viaTo:ge.viaTo } });
+    });
+    const seen = new Set();
+    edges = edges.filter(e => {
+      const k = e.data.source+'|'+e.data.target;
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+    return { nodes, edges };
+  }
+
+  // ===== 组内视图（含跨组 stub）=====
+  function buildGroupDrill(gid){
+    const g = groupById[gid];
+    const members = g.node_ids;
+    const memberSet = new Set(members);
+    const relatedIds = new Set(members);
+    const edges = [];
+    DATA.edges.forEach(e => {
+      if (bridgeMode && !(isBridge(e.from) || isBridge(e.to))) return;
+      const s = e.from, t = e.to;
+      const sIn = memberSet.has(s), tIn = memberSet.has(t);
+      if (sIn && tIn){
+        edges.push({ data:{ id:s+'->'+t, source:s, target:t, type:e.type, label:e.label } });
+      } else if (sIn || tIn){
+        const other = sIn ? t : s;
+        if (nodeById[other] && !memberSet.has(other)){
+          relatedIds.add(other);
+          edges.push({ data:{ id:s+'->'+t, source:s, target:t, type:e.type, label:e.label } });
+        }
+      }
+    });
+    const nodes = [];
+    relatedIds.forEach(id => {
+      const n = nodeById[id];
+      if (!n) return;
+      const isMember = memberSet.has(id);
+      nodes.push({
+        data:{
+          id, label:n.name, kind:'node', group:n.group, gname: groupById[n.group] ? groupById[n.group].name : '',
+          stage:n.stage, src:n.src, brief:n.brief || '',
+          member:isMember, mode: isMember ? 'member' : 'stub'
+        }
+      });
+    });
+    nodes.sort((a,b) => {
+      const am = a.data.member ? 0 : 1, bm = b.data.member ? 0 : 1;
+      if (am !== bm) return am - bm;
+      if (a.data.member) return groupNodeIndex[a.data.id] - groupNodeIndex[b.data.id];
+      return a.data.id < b.data.id ? -1 : 1;
+    });
+    return { nodes, edges };
+  }
+
+  // ===== 桥接模式：只看 bridge 主题及其连接边 =====
+  function buildBridgeView(){
+    const bridgeIds = DATA.nodes.filter(n => isBridge(n.id)).map(n => n.id);
+    const idSet = new Set(bridgeIds);
+    const nodes = bridgeIds.map(id => {
+      const n = nodeById[id];
+      return { data:{ id, label:n.name, kind:'node', group:n.group, gname: groupById[n.group]?groupById[n.group].name:'', stage:n.stage, src:n.src, brief:n.brief||'', member:true, mode:'member' } };
+    });
+    const edges = [];
+    DATA.edges.forEach(e => {
+      if (idSet.has(e.from) && idSet.has(e.to)){
+        edges.push({ data:{ id:e.from+'->'+e.to, source:e.from, target:e.to, type:e.type, label:e.label } });
+      }
+    });
+    return { nodes, edges };
+  }
+
+  // ===== 渲染 =====
+  function render(doFit=true){
+    let els, mode;
+    if (bridgeMode){
+      els = buildBridgeView();
+      mode = '桥接主题';
+    } else if (currentGroup === null){
+      els = buildGroupNodes();
+      mode = '组级';
+    } else {
+      els = buildGroupDrill(currentGroup);
+      mode = currentGroup + ' · ' + (groupById[currentGroup] ? groupById[currentGroup].name : '');
+    }
+    cy.elements().remove();
+    cy.add(els.nodes);
+    cy.add(els.edges);
+    applyViewStyles();
+    $('zcount').textContent = cy.nodes().length;
+    $('zmode').textContent = mode;
+    cy.layout({ name:'dagre', rankDir:'LR', nodeSep:40, rankSep:70, padding:40 }).run();
+    if (doFit) cy.fit(undefined, 50);
+    updateCrumb();
+  }
+
+  function applyViewStyles(){
+    cy.nodes().forEach(n => {
+      const d = n.data();
+      let bw = 1, bc = 'rgba(255,255,255,0.35)', op = 1;
+      if (d.kind === 'group') bw = 3;
+      if (bridgeMode){
+        if (d.kind === 'node' && !isBridge(d.id)) op = 0.08;
+        if (d.kind === 'group') op = 0.15;
+      }
+      n.style('border-width', bw);
+      n.style('border-color', bc);
+      n.style('opacity', op);
+    });
+  }
+
+  // ===== 视图切换 =====
+  function toggleBridge(){
+    bridgeMode = !bridgeMode;
+    currentGroup = null;
+    $('bridgebtn').classList.toggle('on', bridgeMode);
+    render();
+  }
+  $('bridgebtn').addEventListener('click', toggleBridge);
+
+  function goBack(){
+    if (currentGroup !== null){
+      currentGroup = null;
+      render();
+    }
+  }
+  $('backbtn').addEventListener('click', goBack);
+
+  // ===== cytoscape =====
+  const cy = cytoscape({
+    container: document.getElementById('graph'),
+    elements: [],
+    style: [
+      { selector:'node', style:{
+        label:'data(label)', 'text-valign':'center','text-halign':'center', color:'#fff',
+        'font-size':9, 'text-wrap':'wrap', 'text-max-width':90
+      }},
+      { selector:'node[kind="group"]', style:{
+        'background-color': function(ele){ return DATA.groupColor[ele.data('group')] || '#243040'; },
+        'border-width':3,'border-color':'rgba(255,255,255,0.5)','width':130,'height':46,'font-size':12,
+        'text-wrap':'wrap','text-max-width':116
+      }},
+      { selector:'node[kind="node"]', style:{
+        'background-color': function(ele){ return DATA.groupColor[ele.data('group')] || '#2b3550'; },
+        'border-width':1,'border-color':'rgba(255,255,255,0.35)','width':58,'height':30, shape:'round-rectangle'
+      }},
+      { selector:'node[kind="node"][mode="stub"]', style:{
+        'background-color':'#2a2e38','border-width':1,'border-color':'#555a66',
+        'width':52,'height':26, opacity:0.55, 'font-size':8
+      }},
+      { selector:'edge', style:{
+        'curve-style':'bezier','target-arrow-shape':'triangle','arrow-scale':0.7,
+        'line-color': function(ele){ return EDGE_COLOR[ele.data('type')] || '#4a5265'; },
+        'target-arrow-color': function(ele){ return EDGE_COLOR[ele.data('type')] || '#4a5265'; },
+        'width':1.3
+      }},
+      { selector:'edge[type="prerequisite"]', style:{ 'width':2.0 } },
+      { selector:'edge[type="variant"]', style:{ 'line-style':'dashed' } },
+      { selector:'edge[type="cooccurrence"]', style:{ 'line-style':'dotted' } }
+    ],
+    layout: { name:'dagre', rankDir:'LR', nodeSep:40, rankSep:70, padding:40 },
+    wheelSensitivity: 0.3,
+    minZoom: 0.05,
+    maxZoom: 5,
+  });
+  window.__cy = cy;
+
+  // ===== 交互 =====
+  cy.on('tap', 'node', (evt) => {
+    const d = evt.target.data();
+    if (currentGroup === null){
+      if (d.kind === 'group'){
+        currentGroup = d.group;
+        render();
+      }
+    } else {
+      if (d.kind === 'node'){
+        window.location.href = '../02-node-pages/' + d.id + '.html';
+      }
+    }
+  });
+
+  // ===== hash 路由 =====
+  function handleHash(){
+    const h = location.hash.replace(/^#/,'');
+    if (!h) return;
+    if (groupById[h]){
+      currentGroup = h;
+      bridgeMode = false;
+      $('bridgebtn').classList.remove('on');
+      render();
+    } else if (nodeById[h]){
+      const g = nodeToGroup[h];
+      if (g){
+        currentGroup = g;
+        bridgeMode = false;
+        $('bridgebtn').classList.remove('on');
+        render();
+        const el = cy.$('#'+CSS.escape(h));
+        if (el.length){
+          cy.animate({ fit:{ eles: el, padding: 120 }, duration: 500 });
+          el.style('border-width', 4); el.style('border-color', '#ffd700');
+        }
+      }
+    }
+  }
+  window.addEventListener('hashchange', handleHash);
+
+  // ===== crumb 更新 =====
+  function updateCrumb(){
+    if (currentGroup !== null && !bridgeMode){
+      const g = groupById[currentGroup];
+      crumb.style.display = 'inline-flex';
+      $('backbtn').style.display = 'inline-block';
+      crumb.innerHTML = '<b>'+currentGroup+'</b> '+escapeHtml(g ? g.name : '')+' <span style="color:var(--dim)">· '+ (g ? g.node_ids.length : 0) +' 节点</span>';
+    } else {
+      crumb.style.display = 'none';
+      $('backbtn').style.display = 'none';
+    }
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // ===== 图例 =====
+  function buildLegend(){
+    const lg = $('legend');
+    let html = '<b>组节点</b>（'+DATA.groups.length+' 组，彩色，点击下钻）<br>';
+    html += '<b>知识节点</b>（'+DATA.nodes.length+' 个，点击跳转节点页）<br>';
+    html += '<b>边类型</b>：<br>';
+    Object.keys(EDGE_COLOR).forEach(t => {
+      html += '<span class="sw" style="background:'+EDGE_COLOR[t]+'"></span>'+EDGE_LABEL[t]+'<br>';
+    });
+    html += '<b>阶段</b>：';
+    STAGE_ORDER.forEach(s => { html += '<span class="sw" style="background:'+STAGE_COLOR[s]+'"></span>'+STAGE_LABEL[s]+' '; });
+    html += '<br><b>桥接模式</b>：仅显示 10 个桥接主题及其连接边';
+    lg.innerHTML = html;
+  }
+
+  // ===== 组配色图例 =====
+  const gl = $('glegend');
+  DATA.groups.forEach(g => {
+    const d = document.createElement('div');
+    d.className = 'row';
+    d.dataset.gid = g.id;
+    const sw = document.createElement('span');
+    sw.className = 'sw';
+    sw.style.background = DATA.groupColor[g.id];
+    const txt = document.createElement('span');
+    txt.textContent = g.name + ' (' + g.id + ')';
+    d.appendChild(sw);
+    d.appendChild(txt);
+    d.addEventListener('click', () => {
+      currentGroup = g.id;
+      bridgeMode = false;
+      $('bridgebtn').classList.remove('on');
+      render();
+    });
+    gl.appendChild(d);
+  });
+
+  // ===== 初始渲染 =====
+  buildLegend();
+  render();
+  handleHash();
+})();
+
+</script>
+</body>
+</html>

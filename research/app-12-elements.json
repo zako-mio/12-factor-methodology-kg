@@ -1,0 +1,368 @@
+{
+  "meta": {
+    "source": "heroku/12factor content/en",
+    "count": 12
+  },
+  "elements": [
+    {
+      "id": "codebase",
+      "name": "Codebase",
+      "definition": "One codebase tracked in revision control, many deploys.",
+      "what": [
+        "十二要素应用始终使用版本控制系统（如 Git、Mercurial 或 Subversion）跟踪代码",
+        "codebase 是单个仓库（集中式）或共享根提交的一组仓库（分布式），codebase 与应用之间永远是一对一的对应关系",
+        "同一 app 有多个 codebase 则是分布式系统，每个组件各自是一个 app 并可各自满足十二要素",
+        "一个 app 只有一个 codebase，但会有许多 deploy（生产站点、一个或多个 staging 站点、每个开发者的本地运行副本）"
+      ],
+      "why": [
+        "多个 app 共享同一份代码违反十二要素",
+        "所有 deploy 共享同一 codebase，不同 deploy 可运行不同版本，从而能标识为同一 app 的不同部署"
+      ],
+      "how": [
+        "使用版本控制系统维护单一 codebase",
+        "共享代码应抽取为库，通过依赖管理器（dependency manager）引入",
+        "区分 codebase 与 deploy 的概念"
+      ],
+      "anti_patterns": [
+        "多个 codebase 对应一个 app（其实是分布式系统）",
+        "多个 app 共享同一份代码（应抽取共享库）"
+      ],
+      "cases": [
+        "Git: http://git-scm.com/",
+        "Mercurial: https://www.mercurial-scm.org/",
+        "Subversion: http://subversion.apache.org/",
+        "示意图 /images/codebase-deploys.png"
+      ]
+    },
+    {
+      "id": "dependencies",
+      "name": "Dependencies",
+      "definition": "Explicitly declare and isolate dependencies.",
+      "what": [
+        "十二要素应用绝不依赖系统级包的隐式存在",
+        "通过依赖声明清单（dependency declaration manifest）完整且精确地声明全部依赖",
+        "执行时使用依赖隔离工具（dependency isolation tool），确保无隐式依赖从周围系统泄漏进来",
+        "完整、显式的依赖规范统一应用于生产与开发环境"
+      ],
+      "why": [
+        "显式声明依赖能简化新开发者的环境搭建：只需语言运行时和依赖管理器，一条确定性构建命令即可跑起来",
+        "不依赖系统工具的隐式存在，因为无法保证未来所有运行系统的工具存在或其版本兼容"
+      ],
+      "how": [
+        "依赖声明与隔离必须总是同时使用，二者缺一不可",
+        "Ruby/Bundler：Gemfile 声明 + bundle exec 隔离",
+        "Python：Pip 声明 + Virtualenv 隔离；C 可用 Autoconf 声明 + 静态链接隔离",
+        "确定性的 build command（如 bundle install、lein deps）"
+      ],
+      "anti_patterns": [
+        "只做声明不做隔离，或只做隔离不做声明",
+        "依赖系统工具的隐式存在（如 shell 调用 ImageMagick 或 curl）",
+        "依赖系统级安装的 site packages"
+      ],
+      "cases": [
+        "Bundler: https://bundler.io/（Gemfile + bundle exec）",
+        "Pip: http://www.pip-installer.org/en/latest/，Virtualenv: http://www.virtualenv.org/en/latest/",
+        "Autoconf: http://www.gnu.org/s/autoconf/",
+        "Leiningen: https://github.com/technomancy/leiningen#readme"
+      ]
+    },
+    {
+      "id": "config",
+      "name": "Config",
+      "definition": "Store config in the environment.",
+      "what": [
+        "config 是不同 deploy（staging、production、开发者环境）之间可能变化的一切：数据库/Memcached 等后端服务的资源句柄、外部服务（如 S3、Twitter）凭据、各 deploy 特有的值（如规范主机名）",
+        "十二要素要求配置与代码严格分离",
+        "config 存于环境变量（env vars）中：跨 deploy 变更无需改代码，几乎不会意外被提交进代码仓库，且是语言和 OS 无关的标准",
+        "env vars 是粒度化控件，彼此完全正交，绝不按命名环境分组，而是针对每个 deploy 独立管理"
+      ],
+      "why": [
+        "config 在各 deploy 间差异大，而代码不随 deploy 变化",
+        "配置以常量形式写进代码违反十二要素",
+        "不签入仓库的配置文件（如 config/database.yml）虽优于代码内常量，但易误签入、散落各处且格式语言/框架相关",
+        "把 config 按环境名（development、test、production）分组无法干净扩展，随 deploy 增多会组合爆炸、管理脆弱"
+      ],
+      "how": [
+        "将所有 config 放入环境变量",
+        "对每个 deploy 独立管理 env vars，不使用 grouped environments",
+        "用试金石检验：codebase 能否随时开源而不泄露任何凭据"
+      ],
+      "anti_patterns": [
+        "将 config 作为代码中的常量存储",
+        "使用 config 文件而非 env vars（易误签入、散落、格式相关）",
+        "将 config 按环境分组（development/test/production）导致组合爆炸"
+      ],
+      "cases": [
+        "内部应用配置（如 Rails 的 config/routes.rb、Spring 的模块连接）不属于此 config 定义，最适合放在代码中",
+        "Java System Properties 被明确对比为不如 env vars"
+      ]
+    },
+    {
+      "id": "backing-services",
+      "name": "Backing services",
+      "definition": "Treat backing services as attached resources.",
+      "what": [
+        "backing service 是应用在正常运行中通过网络消费的任何服务：数据存储（MySQL/CouchDB）、消息/队列系统（RabbitMQ/Beanstalkd）、SMTP 邮件、缓存系统（Memcached）等",
+        "十二要素应用的代码对本地服务与第三方服务不做区分，两者都是通过 config 中 URL 或定位符/凭据访问的附加资源",
+        "每个不同的 backing service 都是一个资源；同一类型服务出现多次（如两个 MySQL 用于分片）视为两个独立资源",
+        "deploy 可以随意挂接/摘除资源，无需任何代码改动"
+      ],
+      "why": [
+        "本地管理的服务与第三方托管服务（Postmark、New Relic、Loggly、S3、Twitter、Google Maps 等）可以互换而不改代码",
+        "资源与 deploy 是松散耦合的",
+        "硬件出问题时管理员可以拆下现有数据库、挂上从备份恢复的新数据库，无需改代码"
+      ],
+      "how": [
+        "将 backing service 视为 attached resources，通过 config 中的资源句柄访问",
+        "把本地 MySQL 换成第三方托管（如 Amazon RDS）、本地 SMTP 换成 Postmark 时仅改 config 中的资源句柄"
+      ],
+      "anti_patterns": [
+        "在代码中区分本地与第三方服务",
+        "将 backing service 与特定 deploy 强耦合而非松散附加"
+      ],
+      "cases": [
+        "Amazon RDS: http://aws.amazon.com/rds/",
+        "Postmark: http://postmarkapp.com/，New Relic: http://newrelic.com/，Loggly: http://www.loggly.com/",
+        "Amazon S3: http://aws.amazon.com/s3/",
+        "示意图 /images/attached-resources.png"
+      ]
+    },
+    {
+      "id": "build-release-run",
+      "name": "Build, release, run",
+      "definition": "Strictly separate build and run stages.",
+      "what": [
+        "codebase 经三个阶段转化为（非开发）deploy：build 阶段把代码仓库转换为可执行包（build），fetch 依赖并编译二进制与静态资源；release 阶段把 build 与当前 config 结合，产出可立即执行的 release；run 阶段（运行时）在执行环境中启动一组进程来运行某个选定 release",
+        "十二要素应用严格分离 build、release、run 三个阶段",
+        "每个 release 应有唯一 ID（时间戳如 2011-04-06-20:32:17 或递增数字如 v100）",
+        "release 是只追加（append-only）的账本，创建后不可变更，任何修改都必须创建新 release"
+      ],
+      "why": [
+        "运行时无法修改代码，因为没有途径把改动传播回 build 阶段",
+        "run 阶段应保持尽可能少的活动部件，因为运行问题会在无开发者在场的半夜导致应用崩溃；build 阶段可以更复杂，因为出错总在开发者驱动的部署前台"
+      ],
+      "how": [
+        "严格划分 build（构建）→ release（release = build + config）→ run（运行）",
+        "使用带 release 管理功能的部署工具（如 Capistrano 的 releases 目录 + rollback）支持回滚",
+        "为每个 release 打唯一 ID，release 一经创建不可变更"
+      ],
+      "anti_patterns": [
+        "在运行时修改代码",
+        "变更既有 release（应创建新 release）"
+      ],
+      "cases": [
+        "Capistrano: https://github.com/capistrano/capistrano/wiki",
+        "示意图 /images/release.png"
+      ]
+    },
+    {
+      "id": "processes",
+      "name": "Processes",
+      "definition": "Execute the app as one or more stateless processes.",
+      "what": [
+        "应用在执行环境中作为一个或多个进程运行",
+        "十二要素进程是无状态（stateless）且 share-nothing 的，任何需要持久化的数据必须存入有状态的 backing service（通常是数据库）",
+        "进程的内存空间或文件系统只能用作短暂、单事务的缓存，绝不假设缓存内容在未来的请求或任务中仍可用",
+        "sticky sessions（把用户会话数据缓存进进程内存并期望后续请求路由到同一进程）违反十二要素，绝不应使用或依赖"
+      ],
+      "why": [
+        "同一类型通常运行多个进程，未来请求很可能由不同进程处理",
+        "即使只运行一个进程，重启（代码部署、配置变更或环境将进程迁移到不同物理位置）通常也会抹掉所有本地状态"
+      ],
+      "how": [
+        "将进程设计为无状态、share-nothing，持久数据放入 backing service",
+        "会话状态数据适合放入带过期机制的数据存储（如 Memcached 或 Redis）",
+        "资源编译应在 build 阶段完成（配置 django-assetpackager/Jammit/Rails asset pipeline 在 build 阶段打包资源）"
+      ],
+      "anti_patterns": [
+        "sticky sessions",
+        "把文件系统当作编译后资源的缓存（应在 build 阶段编译）",
+        "假设内存/磁盘缓存对后续请求可用"
+      ],
+      "cases": [
+        "shared-nothing: http://en.wikipedia.org/wiki/Shared_nothing_architecture",
+        "Memcached: http://memcached.org/，Redis: http://redis.io/",
+        "django-assetpackager: http://code.google.com/p/django-assetpackager/，Jammit: http://documentcloud.github.io/jammit/，Rails asset pipeline: http://ryanbigg.com/guides/asset_pipeline.html"
+      ]
+    },
+    {
+      "id": "port-binding",
+      "name": "Port binding",
+      "definition": "Export services via port binding.",
+      "what": [
+        "十二要素应用完全自包含，不依赖执行环境在运行时注入 webserver 来创建面向 Web 的服务",
+        "Web 应用通过绑定端口导出 HTTP 服务，并在该端口上监听请求",
+        "通过依赖声明把 webserver 库加入应用（如 Python 的 Tornado、Ruby 的 Thin、Java 的 Jetty），完全发生在 user space（应用代码内）",
+        "HTTP 并非唯一可导出的服务，几乎任何服务器软件都可通过进程绑定端口并等待请求来运行（如 XMPP 的 ejabberd、Redis 协议）"
+      ],
+      "why": [
+        "避免依赖运行时注入 webserver 容器（如 PHP 在 Apache 内、Java 在 Tomcat 内）",
+        "与执行环境的契约就是绑定端口以提供请求服务"
+      ],
+      "how": [
+        "在应用内通过依赖声明引入 webserver 库，绑定端口并监听请求",
+        "部署时由 routing layer 把公开主机名的请求路由到绑定了端口的 web 进程",
+        "一个 app 可通过提供 URL 作为消费方 config 中的资源句柄，成为另一个 app 的 backing service"
+      ],
+      "anti_patterns": [
+        "在 webserver 容器内部运行应用（如 PHP 作为 Apache 模块、Java 在 Tomcat 内）",
+        "依赖执行环境在运行时注入 webserver"
+      ],
+      "cases": [
+        "Tornado: http://www.tornadoweb.org/，Thin: http://code.macournoyer.com/thin/，Jetty: http://www.eclipse.org/jetty/",
+        "ejabberd: http://www.ejabberd.im/，Redis: http://redis.io/",
+        "本地开发示例 http://localhost:5000/"
+      ]
+    },
+    {
+      "id": "concurrency",
+      "name": "Concurrency",
+      "definition": "Scale out via the process model.",
+      "what": [
+        "十二要素应用中进程是一等公民，进程模型强烈借鉴 unix 服务守护进程模型",
+        "开发者可把不同类型的工作分配给不同 process type（如 web 进程处理 HTTP 请求、worker 进程处理长时间后台任务）",
+        "这不排除单个进程内部通过 VM 线程或 async/evented 模型（EventMachine、Twisted、Node.js）做多路复用，但单个 VM 只能纵向扩展，应用还必须能跨多台物理机的多个进程横向扩展",
+        "进程类型数组及各类型进程数量合称 process formation"
+      ],
+      "why": [
+        "进程模型在横向扩展（scale out）时真正发光：share-nothing、可水平分区的特性使增加并发简单可靠",
+        "对比：PHP 作为 Apache 子进程按需启动、Java 用单个巨型 uberprocess 预留大量资源，两种情况下运行进程对开发者几乎不可见"
+      ],
+      "how": [
+        "按工作类型划分 process type（web/worker 等），组成 process formation",
+        "进程永不 daemonize 或写 PID 文件，交由操作系统进程管理器（如 systemd、云平台分布式进程管理器、开发时用 Foreman）管理输出流、响应崩溃进程、处理用户发起的重启与关闭"
+      ],
+      "anti_patterns": [
+        "进程 daemonize 或写 PID 文件（应由进程管理器管理）",
+        "只用单进程巨型 JVM 这类仅能纵向扩展的模型",
+        "让运行进程对开发者不可见"
+      ],
+      "cases": [
+        "unix 进程模型参考: https://adam.herokuapp.com/past/2011/5/9/applying_the_unix_process_model_to_web_apps/",
+        "EventMachine: https://github.com/eventmachine/eventmachine，Twisted: http://twistedmatrix.com/trac/，Node.js: http://nodejs.org/",
+        "systemd: https://www.freedesktop.org/wiki/Software/systemd/，Foreman: http://blog.daviddollar.org/2011/05/06/introducing-foreman.html",
+        "示意图 /images/process-types.png"
+      ]
+    },
+    {
+      "id": "disposability",
+      "name": "Disposability",
+      "definition": "Maximize robustness with fast startup and graceful shutdown.",
+      "what": [
+        "十二要素应用的进程是可抛弃的（disposable），可以随时启动或停止",
+        "进程应尽量最小化启动时间：理想情况下从启动命令执行到就绪接收请求或任务只需几秒",
+        "进程收到进程管理器的 SIGTERM 时应优雅关闭：web 进程停止监听服务端口（拒绝新请求）、等当前请求完成后再退出",
+        "进程还应能抵御突然死亡（底层硬件故障），架构上要能处理意外、非优雅的终止"
+      ],
+      "why": [
+        "可抛弃性促成快速弹性扩展、快速部署代码/配置变更，以及生产部署的健壮性",
+        "短启动时间为 release 流程和扩容提供更多灵活性，且便于进程管理器在必要时把进程迁移到新物理机",
+        "优雅关闭模型隐含要求 HTTP 请求短暂（不超过几秒），或长轮询时客户端应能无缝重连"
+      ],
+      "how": [
+        "worker 优雅关闭：把当前任务归还工作队列（RabbitMQ 中 worker 可发送 NACK；Beanstalkd 在 worker 断开时自动把任务还回队列；基于锁的系统如 Delayed Job 须释放任务记录上的锁）",
+        "优雅关闭隐含要求所有任务可重入（reentrant），通常通过把结果包进事务或使操作幂等实现",
+        "应对突然死亡：使用健壮的队列后端（如 Beanstalkd）在客户端断开或超时时把任务还回队列"
+      ],
+      "anti_patterns": [
+        "启动时间长",
+        "收到 SIGTERM 时不平滑退出",
+        "任务不可重入/不幂等，导致 worker 崩溃后任务无法安全重试"
+      ],
+      "cases": [
+        "SIGTERM: http://en.wikipedia.org/wiki/SIGTERM",
+        "RabbitMQ NACK: http://www.rabbitmq.com/amqp-0-9-1-quickref.html#basic.nack，Beanstalkd: https://beanstalkd.github.io，Delayed Job: https://github.com/collectiveidea/delayed_job#readme",
+        "Crash-only design: http://lwn.net/Articles/191059/，CouchDB 概述: http://docs.couchdb.org/en/latest/intro/overview.html"
+      ]
+    },
+    {
+      "id": "dev-prod-parity",
+      "name": "Dev/prod parity",
+      "definition": "Keep development, staging, and production as similar as possible.",
+      "what": [
+        "传统上开发与生产之间存在三大差距：时间差距（代码要数天到数月才上线）、人员差距（开发者写代码、运维部署）、工具差距（开发用 Nginx/SQLite/OS X，生产用 Apache/MySQL/Linux）",
+        "十二要素应用通过缩小开发与生产差距来支持持续部署",
+        "把时间差距做小：开发者写完代码几小时甚至几分钟后即可部署",
+        "把人员差距做小：写代码的开发者密切参与部署并在生产观察其行为；把工具差距做小：让开发与生产尽可能相似"
+      ],
+      "why": [
+        "开发与生产使用不同的 backing service 会导致微小不兼容，让开发和 staging 中能工作、通过测试的代码在生产失败，制造摩擦、抑制持续部署",
+        "这种摩擦及其对持续部署的抑制作用在应用整个生命周期中合计成本极高"
+      ],
+      "how": [
+        "所有 deploy（开发者环境、staging、生产）使用相同类型和版本的同一种 backing service",
+        "现代 backing service（Memcached、PostgreSQL、RabbitMQ）经 Homebrew、apt-get 等包装系统易装易跑；或用 Chef/Puppet 声明式供给 + Docker/Vagrant 轻量虚拟环境贴近生产",
+        "adapters 仍有用（便于迁移到新 backing service），但不能用它在开发/生产之间使用不同服务"
+      ],
+      "anti_patterns": [
+        "本地用轻量服务（SQLite、进程内存缓存）而生产用重服务（PostgreSQL、Memcached）",
+        "用 adapters 抽象掉差异来掩盖开发与生产用不同 backing service"
+      ],
+      "cases": [
+        "对比表：时间间隔 Weeks vs Hours、代码作者与部署者 Different vs Same people、环境 Divergent vs As similar as possible",
+        "adapter 示例：ActiveRecord（MySQL/PostgreSQL/SQLite）、Celery（RabbitMQ/Beanstalkd/Redis）、ActiveSupport::Cache（Memory/filesystem/Memcached）",
+        "Homebrew: http://mxcl.github.com/homebrew/，apt-get: https://help.ubuntu.com/community/AptGet/HowTo，Chef: http://www.opscode.com/chef/，Puppet: http://docs.puppetlabs.com/，Docker: https://www.docker.com/，Vagrant: http://vagrantup.com/"
+      ]
+    },
+    {
+      "id": "logs",
+      "name": "Logs",
+      "definition": "Treat logs as event streams.",
+      "what": [
+        "log 是从所有运行中进程和 backing service 的输出流收集的、按时间排序的聚合事件流，无固定起点或终点，应用运行期间持续流动",
+        "十二要素应用绝不过问其输出流的路由或存储，不应尝试写或管理 logfile",
+        "每个运行中的进程将其事件流不加缓冲地（unbuffered）写入 stdout",
+        "staging/production 部署中，执行环境捕获各进程的流、与应用所有其他流合并，路由到一个或多个最终目的地供查看和长期归档"
+      ],
+      "why": [
+        "日志提供对运行中应用行为的可见性",
+        "文件系统上的 logfile 只是输出格式之一，不是本质",
+        "归档目的地对应用不可见也不可配置，完全由执行环境管理"
+      ],
+      "how": [
+        "进程把事件流无缓冲写到 stdout，本地开发时在终端前台实时查看",
+        "事件流可路由到文件、实时 tail、日志索引分析系统（如 Splunk）或通用数据仓库（如 Hadoop/Hive）",
+        "借助开源日志路由器（如 Logplex、Fluentd）汇总路由"
+      ],
+      "anti_patterns": [
+        "应用自己写/管理 logfile",
+        "应用关心日志的路由与存储（应由执行环境管理）"
+      ],
+      "cases": [
+        "logs are streams, not files: https://adam.herokuapp.com/past/2011/4/1/logs_are_streams_not_files/",
+        "Logplex: https://github.com/heroku/logplex，Fluentd: https://github.com/fluent/fluentd",
+        "Splunk: http://www.splunk.com/，Hadoop/Hive: http://hive.apache.org/",
+        "日志分析能力：查找历史事件、大规模趋势绘图（如每分钟请求数）、按用户定义启发式的主动告警（如每分钟错误数超阈值）"
+      ]
+    },
+    {
+      "id": "admin-processes",
+      "name": "Admin processes",
+      "definition": "Run admin/management tasks as one-off processes.",
+      "what": [
+        "process formation 是应用正常运行时处理常规业务（如 web 请求）的进程数组；此外开发者常需执行一次性管理/维护任务",
+        "一次性 admin 进程应在与常规长运行进程完全相同的环境中运行，针对某个 release，使用与该 release 上任何进程相同的 codebase 和 config",
+        "admin 代码必须随应用代码一起发布，以避免同步问题",
+        "所有进程类型应使用相同的依赖隔离技术"
+      ],
+      "why": [
+        "一次性任务需要访问与生产应用相同的代码库、配置和依赖环境，才能正确操作线上数据（如数据库迁移、运行 REPL、执行一次性脚本）"
+      ],
+      "how": [
+        "示例：数据库迁移（Django 的 manage.py migrate、Rails 的 rake db:migrate）、运行 REPL/console（python/perl/irb/rails console）、运行签入仓库的一次性脚本（php scripts/fix_bad_records.php）",
+        "依赖隔离与长运行进程一致：Ruby web 用 bundle exec thin start，则迁移用 bundle exec rake db:migrate；Python 用 Virtualenv 的 vendored bin/python 同时运行 Tornado 与 manage.py",
+        "本地部署在 checkout 目录内用 shell 命令直接调用；生产部署用 ssh 或执行环境提供的远程命令执行机制"
+      ],
+      "anti_patterns": [
+        "admin 代码与应用代码分离导致同步问题",
+        "admin 进程不使用与常规进程相同的依赖隔离",
+        "在非 release 环境（缺少相同 config/codebase）中运行一次性任务"
+      ],
+      "cases": [
+        "Django: manage.py migrate / manage.py，Rails: rake db:migrate / rails console / irb",
+        "REPL: http://en.wikipedia.org/wiki/Read-eval-print_loop",
+        "十二要素偏好开箱即提供 REPL、易于运行一次性脚本的语言"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1144 @@
+{
+  "meta": {
+    "count": 38
+  },
+  "nodes": [
+    {
+      "id": "app-codebase",
+      "name": "代码库",
+      "what": [
+        "一个 app 一个 codebase、多个 deploy",
+        "codebase 与应用一对一，多 codebase 即分布式系统",
+        "共享代码抽成库而非复制"
+      ],
+      "why": [
+        "单一 codebase 使各部署可标识为同一 app 的不同版本"
+      ],
+      "how": [
+        "版本控制跟踪一切",
+        "区分 codebase 与 deploy",
+        "共享代码经依赖管理器引入"
+      ],
+      "cases": [
+        "Git/Mercurial/Subversion"
+      ],
+      "anti_patterns": [
+        "多 codebase 对应一 app",
+        "多 app 共享同一代码"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-deps",
+      "name": "依赖",
+      "what": [
+        "清单完整精确声明全部依赖",
+        "隔离工具杜绝隐式依赖泄漏",
+        "开发生产统一使用"
+      ],
+      "why": [
+        "显式声明简化环境搭建，一条命令跑通",
+        "系统工具存在与版本无法保证"
+      ],
+      "how": [
+        "声明与隔离同时使用",
+        "Bundler/Pip+Virtualenv 等",
+        "确定性 build command"
+      ],
+      "cases": [
+        "Bundler、Pip、Autoconf、Leiningen"
+      ],
+      "anti_patterns": [
+        "只声明不隔离或反之",
+        "依赖隐式系统工具",
+        "依赖系统级 site packages"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-config",
+      "name": "配置",
+      "what": [
+        "config 是随 deploy 变化的一切：句柄、凭据、特有值",
+        "配置存于环境变量，与代码严格分离",
+        "env vars 正交，按 deploy 独立管理"
+      ],
+      "why": [
+        "config 随部署变化而代码不变",
+        "代码内常量/配置文件易泄露且脆弱",
+        "按环境分组随部署增多组合爆炸"
+      ],
+      "how": [
+        "全部 config 入 env vars",
+        "每 deploy 独立管理",
+        "试金石：开源不泄凭据"
+      ],
+      "cases": [
+        "env vars 优于 Java System Properties"
+      ],
+      "anti_patterns": [
+        "config 作为代码常量",
+        "用 config 文件",
+        "按环境名分组"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-backing",
+      "name": "后端服务",
+      "what": [
+        "backing service 是应用网络消费的任何服务",
+        "本地与第三方不做区分，经 config 句柄访问",
+        "deploy 可随意挂摘资源不改代码"
+      ],
+      "why": [
+        "本地与托管服务可互换",
+        "资源与 deploy 松散耦合",
+        "故障时可拆旧挂新"
+      ],
+      "how": [
+        "视为 attached resources",
+        "换服务仅改资源句柄"
+      ],
+      "cases": [
+        "Amazon RDS、Postmark、S3"
+      ],
+      "anti_patterns": [
+        "代码区分本地与第三方",
+        "与 deploy 强耦合"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-build-run",
+      "name": "构建·发布·运行",
+      "what": [
+        "build 转代码为可执行包，release=build+config，run 启动进程",
+        "每 release 唯一 ID",
+        "release 只追加，创建后不可变"
+      ],
+      "why": [
+        "运行时无法把改动传播回 build",
+        "run 阶段保持最少活动部件"
+      ],
+      "how": [
+        "严格分离三阶段",
+        "Capistrano releases 支持回滚",
+        "release 打唯一 ID"
+      ],
+      "cases": [
+        "Capistrano"
+      ],
+      "anti_patterns": [
+        "运行时修改代码",
+        "变更既有 release"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-processes",
+      "name": "进程",
+      "what": [
+        "进程无状态、share-nothing",
+        "持久数据存入有状态 backing service",
+        "内存/文件系统仅作单事务缓存"
+      ],
+      "why": [
+        "多进程下请求由不同进程处理",
+        "重启抹掉本地状态"
+      ],
+      "how": [
+        "无状态设计，持久数据外置",
+        "会话数据入带过期的存储",
+        "资源在 build 阶段编译"
+      ],
+      "cases": [
+        "Memcached、Redis、asset pipeline"
+      ],
+      "anti_patterns": [
+        "sticky sessions",
+        "文件系统当缓存",
+        "假设缓存对后续请求可用"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-port",
+      "name": "端口绑定",
+      "what": [
+        "应用自含，不依赖注入 webserver",
+        "绑定端口导出 HTTP 服务",
+        "webserver 库作依赖进 user space"
+      ],
+      "why": [
+        "避免依赖运行时注入的容器",
+        "契约即绑定端口提供服务"
+      ],
+      "how": [
+        "依赖声明引入 Tornado/Thin/Jetty",
+        "routing layer 路由请求",
+        "可成为另一 app 的 backing service"
+      ],
+      "cases": [
+        "Tornado、Thin、Jetty"
+      ],
+      "anti_patterns": [
+        "在 webserver 容器内运行",
+        "依赖运行时注入 webserver"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-concurrency",
+      "name": "并发",
+      "what": [
+        "进程是一等公民，借鉴 unix 模型",
+        "按工作类型分 process type",
+        "formation 含类型数组与数量",
+        "还需跨多机横向扩展"
+      ],
+      "why": [
+        "进程模型在 scale out 时发光",
+        "巨型 JVM 仅能纵向扩展"
+      ],
+      "how": [
+        "划分 web/worker 组成 formation",
+        "进程交系统进程管理器管理"
+      ],
+      "cases": [
+        "systemd、Foreman、Node.js"
+      ],
+      "anti_patterns": [
+        "进程 daemonize/写 PID",
+        "单进程巨型模型",
+        "进程对开发者不可见"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-disposability",
+      "name": "可处置性",
+      "what": [
+        "进程可随时启动或停止",
+        "启动时间最小化，几秒就绪",
+        "SIGTERM 优雅关闭",
+        "抵御意外终止"
+      ],
+      "why": [
+        "促成快速弹性扩展与部署",
+        "短启动便于迁移",
+        "隐含要求请求短暂可重连"
+      ],
+      "how": [
+        "任务归还原队列",
+        "任务可重入/幂等",
+        "健壮队列应对突然死亡"
+      ],
+      "cases": [
+        "RabbitMQ NACK、Beanstalkd"
+      ],
+      "anti_patterns": [
+        "启动时间长",
+        "不平滑退出",
+        "任务不可重入"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-dev-prod",
+      "name": "开发/线上等价",
+      "what": [
+        "缩小时间/人员/工具三大差距",
+        "支持持续部署",
+        "各 deploy 用同类型同版本服务"
+      ],
+      "why": [
+        "服务差异致微不兼容，生产失败",
+        "摩擦抑制持续部署，成本极高"
+      ],
+      "how": [
+        "包装系统易装现代服务",
+        "Docker/Vagrant 贴近生产",
+        "adapters 不能掩盖差异"
+      ],
+      "cases": [
+        "Chef、Puppet、Docker、Vagrant"
+      ],
+      "anti_patterns": [
+        "本地轻量生产重量",
+        "adapters 掩盖差异"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-logs",
+      "name": "日志",
+      "what": [
+        "日志是按时间排序的聚合事件流",
+        "应用不过问路由或存储",
+        "进程无缓冲写 stdout"
+      ],
+      "why": [
+        "日志提供运行可见性",
+        "logfile 只是输出格式之一"
+      ],
+      "how": [
+        "无缓冲写 stdout",
+        "路由到文件/Splunk/数据仓库",
+        "Logplex/Fluentd 汇总"
+      ],
+      "cases": [
+        "Logplex、Fluentd、Splunk"
+      ],
+      "anti_patterns": [
+        "应用写/管理 logfile",
+        "关心路由存储"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "app-admin",
+      "name": "管理进程",
+      "what": [
+        "一次性任务作为一次性进程运行",
+        "与常规进程同 codebase/config/release",
+        "admin 代码随应用发布"
+      ],
+      "why": [
+        "一次性任务需生产同环境才能正确操作线上数据"
+      ],
+      "how": [
+        "迁移/REPL/一次性脚本",
+        "依赖隔离与长进程一致",
+        "本地 shell、生产 ssh"
+      ],
+      "cases": [
+        "manage.py migrate、rake db:migrate"
+      ],
+      "anti_patterns": [
+        "admin 代码与应用分离",
+        "依赖隔离不一致"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-nl2tool",
+      "name": "自然语言→工具调用",
+      "what": [
+        "自然语言翻译为结构化工具调用对象",
+        "确定性代码执行 payload",
+        "真实 Agent 先查询 ID 构建 payload"
+      ],
+      "why": [
+        "最常见最强大的模式，既能推理又能执行",
+        "结构化输出让后续处理依赖确定代码"
+      ],
+      "how": [
+        "LLM 返回 nextStep 对象",
+        "switch/if 分发，未知走 else",
+        "参考 mailcrew"
+      ],
+      "cases": [
+        "Stripe payment link、mailcrew"
+      ],
+      "anti_patterns": [
+        "不回收结果循环",
+        "ID 硬编码不进查询"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-prompts",
+      "name": "掌控你的 Prompt",
+      "what": [
+        "prompt 作一等公民代码",
+        "用 BAML 写带类型签名的函数",
+        "收益：可控、可测、可迭代、透明"
+      ],
+      "why": [
+        "prompt 是应用逻辑与 LLM 的主接口",
+        "黑盒框架难精确调优定位"
+      ],
+      "how": [
+        "不依赖框架抽象，直接写显式 prompt",
+        "像代码一样建测试与 evals"
+      ],
+      "cases": [
+        "BAML 的 DetermineNextStep"
+      ],
+      "anti_patterns": [
+        "依赖黑盒 Agent 抽象",
+        "prompt 工程完全外包"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-context",
+      "name": "掌控上下文窗口",
+      "what": [
+        "输入本质是「发生了什么，下一步是什么」",
+        "上下文含 prompt/检索/历史/记忆",
+        "可自建格式，XML 标签表达事件流"
+      ],
+      "why": [
+        "标准消息格式可优化",
+        "上下文是主接口，掌控构造大幅提性能"
+      ],
+      "how": [
+        "事件驱动 Thread/Event 模型",
+        "event_to_prompt 渲染",
+        "实验存什么 vs 传什么"
+      ],
+      "cases": [
+        "Context Engineering Cheat Sheet"
+      ],
+      "anti_patterns": [
+        "无条件用标准消息",
+        "残留错误污染推理",
+        "用采样参数弥补构造不足"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-tools",
+      "name": "工具即结构化输出",
+      "what": [
+        "工具调用=LLM 输出可解析的 JSON",
+        "三步：输出 JSON→执行→喂回",
+        "决策与执行分离",
+        "不锁死固定函数对应"
+      ],
+      "why": [
+        "使决策执行解耦",
+        "为掌控控制流铺路"
+      ],
+      "how": [
+        "数据类按 intent 输出 JSON",
+        "switch 分发未知走 else"
+      ],
+      "cases": [
+        "CreateIssue/SearchIssues"
+      ],
+      "anti_patterns": [
+        "工具与固定函数一一对应"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-state",
+      "name": "统一执行/业务状态",
+      "what": [
+        "统一执行状态与业务状态",
+        "执行状态是上下文元数据",
+        "不放不必要的东西进 LLM"
+      ],
+      "why": [
+        "单一事实来源：简单/可序列化/易调试/可恢复/可分叉"
+      ],
+      "how": [
+        "thread=事件流承载一切",
+        "执行状态从 thread 推断"
+      ],
+      "cases": [
+        "7 条收益清单"
+      ],
+      "anti_patterns": [
+        "两套独立系统",
+        "硬塞不可入上下文之物"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-pause",
+      "name": "启动/暂停/恢复",
+      "what": [
+        "用户/应用/其他 Agent 用简单 API 管理",
+        "长操作时可暂停",
+        "webhook 触发恢复"
+      ],
+      "why": [
+        "满足对程序的标准预期",
+        "编排器多缺「选择与执行之间」暂停点"
+      ],
+      "how": [
+        "launch/pause/resume API",
+        "与 thread 持久化配合恢复"
+      ],
+      "cases": [
+        "pause-resume 动画"
+      ],
+      "anti_patterns": [
+        "依赖无中间暂停的编排器"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-human",
+      "name": "工具调用联系人类",
+      "what": [
+        "请求人类输入建模成工具调用",
+        "显式声明意图而非 token 隐式选择",
+        "支持外循环与多人类接入"
+      ],
+      "why": [
+        "清晰指令、内外循环、多人类、多 Agent、持久化"
+      ],
+      "how": [
+        "RequestHumanInput 保存状态跳出循环",
+        "webhook 收回复重入循环"
+      ],
+      "cases": [
+        "request_human_input→human_response"
+      ],
+      "anti_patterns": [
+        "token 隐式决定联系人类",
+        "只支持 chat 流"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-control",
+      "name": "掌控控制流",
+      "what": [
+        "自建控制结构，工具选择与执行间可中断",
+        "某些工具调用是跳出循环的理由",
+        "可融入缓存/LLM-judge/限速等"
+      ],
+      "why": [
+        "无该粒度被迫三选一：sleep/低风险/yolo",
+        "自建才能支持自然工作流"
+      ],
+      "how": [
+        "while True 按 intent 分支",
+        "async break、sync continue"
+      ],
+      "cases": [
+        "handle_next_step 三分支"
+      ],
+      "anti_patterns": [
+        "while...sleep 内存等待",
+        "限制低风险调用",
+        "无复核的 yolo"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-errors",
+      "name": "压缩错误进上下文",
+      "what": [
+        "失败时格式化错误追加进上下文",
+        "errorCounter 限重试约 3 次",
+        "达阈值跳出或升级人类"
+      ],
+      "why": [
+        "自愈与持久化",
+        "错误+阈值是拉人进循环的触发点"
+      ],
+      "how": [
+        "type='error' 事件回写继续循环",
+        "计数成功清零失败自增"
+      ],
+      "cases": [
+        "基础版+计数进阶版"
+      ],
+      "anti_patterns": [
+        "过度重试空转",
+        "原始错误原样回塞"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-small",
+      "name": "小而专注的 Agent",
+      "what": [
+        "构建小而专注的 Agent",
+        "3-10 步最多 20 步",
+        "Agent 是更大确定性系统的构件"
+      ],
+      "why": [
+        "任务越大上下文越长，LLM 越易迷失",
+        "有意识地控制规模是关键"
+      ],
+      "how": [
+        "拆成单领域小 Agent 编排",
+        "随能力提升逐步扩展范围"
+      ],
+      "cases": [
+        "NotebookLM「紧贴模型能力边界」"
+      ],
+      "anti_patterns": [
+        "单体 Agent 上下文爆长",
+        "上下文不可靠时激进扩展"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-trigger",
+      "name": "随处触发",
+      "what": [
+        "从 slack/email/sms 等渠道触发并回复",
+        "支持事件/cron 等非人类触发",
+        "可运行 5/20/90 分钟"
+      ],
+      "why": [
+        "像数字同事融入工作流",
+        "可审计性与执行大事的信心"
+      ],
+      "how": [
+        "暴露多通道入口",
+        "关键决策点联系人类"
+      ],
+      "cases": [
+        "slack/email/sms、events/crons"
+      ],
+      "anti_patterns": [
+        "单一入口/单一聊天界面",
+        "因无复核不给高价值权限"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "ag-reducer",
+      "name": "无状态 Reducer",
+      "what": [
+        "Agent 建模为无状态归约器（foldl）",
+        "输入历史事件，产出下动作",
+        "thread 作纯数据累积"
+      ],
+      "why": [
+        "收束统一状态为函数式视角",
+        "无状态化可序列化/恢复/分叉"
+      ],
+      "how": [
+        "循环建模为 reducer 归约事件",
+        "状态+事件进，下状态+副作用出"
+      ],
+      "cases": [
+        "agent-foldl 概念图"
+      ],
+      "anti_patterns": [
+        "状态藏全局可变变量"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "t-stateless",
+      "name": "无状态性",
+      "what": [
+        "无状态是两套体系共有的可靠运行基石",
+        "App 进程无状态、状态沉入 backing service",
+        "Agent 把状态重构为事件归约"
+      ],
+      "why": [
+        "无状态让单元可丢弃、重启、迁移、恢复",
+        "是扩展与弹性运维前提"
+      ],
+      "how": [
+        "App 状态外置到数据库",
+        "Agent 状态逻辑外置为 thread"
+      ],
+      "app_side": [
+        "进程 share-nothing、会话入缓存",
+        "持久数据入 backing service",
+        "内存仅单事务缓存"
+      ],
+      "agent_side": [
+        "thread=单一事实源，可序列化",
+        "执行状态从上下文推断",
+        "reducer：事件进、状态出"
+      ],
+      "difference": [
+        "App 物理外置状态",
+        "Agent 逻辑外置状态",
+        "易失状态变可重建数据"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-disposable",
+      "name": "生命周期与可处置性",
+      "what": [
+        "进程可快速启停，Agent 可暂停恢复",
+        "运行单元不绑定物理位置",
+        "App 进程级启停，Agent 任务级暂停"
+      ],
+      "why": [
+        "可处置促成快速部署与弹性伸缩",
+        "暂停恢复把可抛弃扩展到长任务续跑"
+      ],
+      "how": [
+        "App 短启动+优雅关闭",
+        "Agent launch/pause/resume+thread 持久化"
+      ],
+      "app_side": [
+        "几秒就绪，SIGTERM 优雅关闭",
+        "任务幂等可重试",
+        "抵御突然死亡"
+      ],
+      "agent_side": [
+        "简单 API 启动暂停恢复",
+        "关键暂停点=工具选择与执行之间",
+        "恢复即加载 thread 状态"
+      ],
+      "difference": [
+        "App 进程级秒级无状态自动管理",
+        "Agent 任务级分钟级需持久化",
+        "粒度从进程升到工作流"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-config",
+      "name": "配置与可变性外置",
+      "what": [
+        "可变部分外置：config 入 env，prompt 作代码",
+        "变更不触及核心逻辑",
+        "外置是版本化/回滚/审计前提"
+      ],
+      "why": [
+        "配置随部署变化而代码不变",
+        "prompt 是 Agent 的配置面"
+      ],
+      "how": [
+        "App 用 env vars 按 deploy 管理",
+        "Agent 把 prompt 版本化测试回滚"
+      ],
+      "app_side": [
+        "配置全入 env vars",
+        "开源不泄凭据试金石",
+        "拒绝 config 文件与分组"
+      ],
+      "agent_side": [
+        "prompt 版本化可回滚",
+        "不被框架外包",
+        "上下文构建函数化"
+      ],
+      "difference": [
+        "App 外置的是运行时值",
+        "Agent 外置的是指令与策略",
+        "Agent 的外置物本身是代码"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-observability",
+      "name": "可观测性与错误可见性",
+      "what": [
+        "运行可见性是日志与错误压缩的共同目标",
+        "App 把日志当事件流",
+        "Agent 把错误压缩进上下文"
+      ],
+      "why": [
+        "可见性支撑排障审计告警",
+        "Agent 还支撑自愈与拉人决策"
+      ],
+      "how": [
+        "App 无缓冲写 stdout 交环境路由",
+        "Agent 错误摘要回写 thread 设阈值"
+      ],
+      "app_side": [
+        "事件流写 stdout",
+        "Logplex/Fluentd 路由归档",
+        "趋势绘图与主动告警"
+      ],
+      "agent_side": [
+        "错误压缩成事件回写",
+        "3 次阈值升级",
+        "失败即跳出/重置/升级"
+      ],
+      "difference": [
+        "App 观测消费者是人类（事后）",
+        "Agent 观测消费者是 LLM（实时）",
+        "可观测性从辅助变运行机制"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-deps",
+      "name": "依赖与工具显式化",
+      "what": [
+        "显式声明依赖/工具，不隐式依赖环境",
+        "App 用 manifest 声明并隔离",
+        "Agent 用结构化输出声明工具"
+      ],
+      "why": [
+        "隐式依赖无法保证存在与兼容",
+        "显式化才能隔离测试替换"
+      ],
+      "how": [
+        "App 声明+隔离双管齐下",
+        "Agent 以 intent schema 定义工具"
+      ],
+      "app_side": [
+        "清单完整声明全部依赖",
+        "bundle exec/venv 隔离",
+        "禁止隐式系统级依赖"
+      ],
+      "agent_side": [
+        "工具=intent 结构化输出",
+        "决策与执行分离",
+        "工具可组合可测试"
+      ],
+      "difference": [
+        "App 显式化对象是库与包",
+        "Agent 是行为能力与副作用",
+        "Agent 需额外关注授权安全"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-control",
+      "name": "控制流与阶段治理",
+      "what": [
+        "确定性控制流/阶段分离保证可预测交付",
+        "App 分离 build/release/run",
+        "Agent 代码控循环，LLM 只选路"
+      ],
+      "why": [
+        "阶段分离支持不可变发布回滚",
+        "确定性控制流可中断可审计"
+      ],
+      "how": [
+        "App release 只追加回滚",
+        "Agent while-loop+intent 分支"
+      ],
+      "app_side": [
+        "三阶段严格分离",
+        "release 不可变只追加",
+        "run 最少活动部件"
+      ],
+      "agent_side": [
+        "自建控制流 LLM 决策点",
+        "选择与执行间可中断",
+        "async break、sync continue"
+      ],
+      "difference": [
+        "App 是部署管线纵向流程",
+        "Agent 是运行循环横向迭代",
+        "前者治理交付后者治理行为"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-entry",
+      "name": "自含入口与触达",
+      "what": [
+        "自含导出服务/随处触发，皆不依赖宿主",
+        "App 端口绑定自含导出",
+        "Agent 从用户所在渠道触达",
+        "入口自定而非宿主注入"
+      ],
+      "why": [
+        "不依赖宿主才能保证可移植与触达",
+        "入口自主是自包含前提"
+      ],
+      "how": [
+        "App webserver 进 user space 绑端口",
+        "Agent 暴露多通道入口"
+      ],
+      "app_side": [
+        "应用自含绑端口",
+        "不依赖注入 webserver",
+        "可作另一 app 的 backing service"
+      ],
+      "agent_side": [
+        "多通道触发与回复",
+        "支持非人类源",
+        "关键点联系人类"
+      ],
+      "difference": [
+        "App 入口是单一技术端口",
+        "Agent 入口是多业务渠道",
+        "从服务导出扩展到用户触达"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-scaling",
+      "name": "规模化与单元粒度",
+      "what": [
+        "进程模型扩展/小 Agent 组合，皆单元化扩展",
+        "App 靠 formation 横向扩展",
+        "Agent 靠小 Agent 编排",
+        "巨型单元只能纵向难维护"
+      ],
+      "why": [
+        "巨型单元难扩展难维护",
+        "小单元组合可靠可替换易测试"
+      ],
+      "how": [
+        "App 按工作类型分 process type",
+        "Agent 拆小 Agent 入 DAG"
+      ],
+      "app_side": [
+        "进程 share-nothing 可水平分区",
+        "web/worker 分型",
+        "交进程管理器"
+      ],
+      "agent_side": [
+        "小 Agent 聚焦单领域",
+        "确定性 DAG 编排",
+        "随能力扩展"
+      ],
+      "difference": [
+        "App 单元是同质副本",
+        "Agent 单元是异质能力",
+        "App 靠副本数、Agent 靠组合"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-human",
+      "name": "人为交互边界",
+      "what": [
+        "管理任务/人类批准，皆人机协作边界",
+        "App 用 admin 进程执行运维",
+        "Agent 把人类接入建模成工具调用"
+      ],
+      "why": [
+        "高赌注动作需人把关",
+        "人机协作不打断主路径"
+      ],
+      "how": [
+        "App 一次性进程同环境执行",
+        "Agent 暂停循环等审批"
+      ],
+      "app_side": [
+        "admin 进程与常规同环境",
+        "迁移/REPL 随应用发布",
+        "admin 代码不分离"
+      ],
+      "agent_side": [
+        "联系人类=工具调用",
+        "保存状态通知跳出循环",
+        "webhook 恢复续跑"
+      ],
+      "difference": [
+        "App 侧人是运维执行者",
+        "Agent 侧人是自动决策节点",
+        "人从操作者变决策者"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "t-parity",
+      "name": "环境一致性",
+      "what": [
+        "开发生产一致，传统靠环境等价",
+        "Agent 靠 prompt 版本化",
+        "缩小差异才能持续交付"
+      ],
+      "why": [
+        "dev/prod 差异致「开发能过生产失败」",
+        "Agent 侧不一致则「本地能跑上线失控」"
+      ],
+      "how": [
+        "App 缩小三大差距",
+        "Agent 确定性组件优先",
+        "官方现代化：可观测性+Identity"
+      ],
+      "app_side": [
+        "三大差距最小化",
+        "各 deploy 同类型同版本服务",
+        "容器虚拟贴近生产"
+      ],
+      "agent_side": [
+        "prompt/上下文构建函数化",
+        "确定性组件优先",
+        "LLM 作库而非框架"
+      ],
+      "difference": [
+        "App 靠环境等价（同构环境）",
+        "Agent 靠可复现性（版本化可回放）",
+        "从同构环境演进到同构行为"
+      ],
+      "cases": [],
+      "anti_patterns": []
+    },
+    {
+      "id": "tool-create-agent",
+      "name": "create-12-factor-agent 脚手架",
+      "what": [
+        "基于 template 目录的一键脚手架，生成 12-factor agent 的 TS 项目骨架（package.json、tsconfig、.gitignore 齐备）",
+        "src/ 下六个核心模块：cli.ts 命令行外层循环、agent.ts 线程与 agentLoop、state.ts 文件系统线程存储、server.ts Express 事件入口、a2h.ts 人类审批 A2H API 类型、index.ts 入口",
+        "baml_src/ 提供 BAML 工具定义：agent.baml 的 DetermineNextStep 意图枚举、tool_calculator.baml 加减乘除四则工具、clients.baml 多 LLM 客户端、generators.baml",
+        "依赖锁定 @boundaryml/baml、humanlayer、express、zod、tsx、typescript，开箱即跑"
+      ],
+      "why": [
+        "手工搭建 12-factor agent 需处理 BAML 初始化、humanlayer 审批集成、线程状态持久化等大量样板，脚手架把官方工作坊验证过的骨架固化",
+        "让开发者专注扩展自己的工具与业务逻辑，而非重复配置"
+      ],
+      "how": [
+        "运行脚手架把 template 目录复制进目标项目，改名后即可启动",
+        "基于 Thread 的 serializeForLLM 把事件流序列化喂给 BAML，agentLoop 按意图分派工具或转人类",
+        "修改 agent.baml 的 client 行切换模型提供商（openai/anthropic/baseten 等），baml-cli generate 重新生成客户端",
+        "状态可替换：FileSystemThreadStore 按 ThreadStore 接口可换成 redis/sqlite/postgres"
+      ],
+      "cases": [
+        "官方 2025-05-17 工作坊从裸仓库逐步手工构建出同名骨架（hello-world→cli-and-agent→calculator-tools→humanlayer-webhook）",
+        "模板内置 divide 意图强制人类审批的分支示例，演示 a2h 审批接入点"
+      ],
+      "anti_patterns": [
+        "改 src 代码却不重跑 baml-cli generate，导致生成的 BAML 客户端与源码不同步",
+        "跳过 a2h/state 模块把人类审批与状态持久化全塞进 agent.ts，使循环逻辑不可维护",
+        "把模板当黑盒整体复制后原地修改，未按 ThreadStore 接口抽象状态存储"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "tool-walkthroughgen",
+      "name": "Walkthroughgen 教程生成器",
+      "what": [
+        "从单个 walkthrough.yaml 生成教程、README、文档的 CLI 工具，`walkthroughgen generate <yaml>`",
+        "多 targets：markdown 输出（含 diff 代码块、可折叠段落、语法高亮）、folders 逐节工作目录（by-section + final 最终工程）、ipynb（Python 版扩展出 notebook）",
+        "增量变更：以虚拟文件状态跟踪每节文件，同一文件被覆盖时用 diff 库输出最小变更，无实际改动则跳过",
+        "step 类型覆盖 file 复制、dir 建目录、command 执行（incremental 标记仅作用于 folders 构建）、results 期望输出"
+      ],
+      "why": [
+        "手工维护教程时 markdown、示例目录、最终工程三处极易失同步，单一 YAML 源驱动全部输出",
+        "自动生成 diff 与 cp 命令，让读者精确复现每一步文件变更"
+      ],
+      "how": [
+        "walkthrough/ 目录按 00-、01- 前缀存放每步快照文件，yaml 的 file 步骤声明 src/dest",
+        "targets 配置输出：onChange.diff 对已存在文件打印最小 diff，newFiles.cat/cp 控制新文件展示方式",
+        "folders target 为每节建独立工作目录并生成 readme.md，skip 数组排除 cleanup 等纯维护节",
+        "Python 版由 walkthroughgen_py.py 把 yaml 转 Jupyter notebook，内嵌 Colab BAML 安装与 userdata 处理"
+      ],
+      "cases": [
+        "官方 2025-05-17 TS 工作坊：walkthrough.yaml 驱动生成 build/walkthrough.md + build/sections + final 完整工程",
+        "2025-07-16 Python 工作坊：targets 指向 ipynb，生成 Colab 兼容 notebook"
+      ],
+      "anti_patterns": [
+        "教程文档与 walkthrough 快照文件手工编辑不同步，导致生成的 diff 失真",
+        "incremental 标记错用使 npm install 等命令在 markdown 流程中也被执行（应只发生在构建工作目录时）",
+        "把命令结果直接写死进 yaml 而非用 results 声明，读者无法验证期望输出"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "tool-workshops",
+      "name": "官方工作坊",
+      "what": [
+        "两次官方工作坊均以 walkthrough.yaml 为唯一源，主题都是「从裸仓库逐章构建 12-factor agent」",
+        "2025-05-17 TS 版：14 节（cleanup + Chapter 0-11 + Chapter XX），从 Hello World 一路到 email 审批与 HumanLayer Webhook 集成",
+        "2025-07-16 Python 版：8 章（hello-world→context-window），targets 为 ipynb 输出 Jupyter notebook，面向 Google Colab",
+        "两种形态：walkthroughgen 的 markdown+folders（TS）vs walkthroughgen_py 的 notebook（Python）"
+      ],
+      "why": [
+        "把抽象方法论变成可跟随的动手路径，每章一个可运行检查点，降低入门门槛",
+        "TS/Python 双语言 + CLI/notebook 双形态，验证方法论跨技术栈可复现"
+      ],
+      "how": [
+        "以 walkthrough.yaml 声明章节与步骤（file/dir/command/results），walkthrough/ 目录存每章快照",
+        "TS 版生成 by-section 工作目录与 final 工程，每个增量命令标注 incremental 只用于目录构建",
+        "Python 版由 walkthroughgen_py 转 notebook，注入 baml-cli generate 与 Colab secrets（OpenAI key）辅助单元",
+        "章节递进覆盖：工具定义→工具循环→BAML 测试→人类工具→状态管理→人类审批→webhook"
+      ],
+      "cases": [
+        "05-17 TS 版 14 节从空目录构建出含 email/webhook 审批的完整 agent",
+        "07-16 Python 版 8 节 + Colab 环境，终点指向「微代理在确定性 DAG」模式"
+      ],
+      "anti_patterns": [
+        "跳章节不跑前序步骤，导致后续文件变更缺少依赖上下文、diff 对不上",
+        "把工作坊当演示 PPT 而非动手构建，跳过 walkthrough 快照文件手敲内容",
+        "忽略 cleanup 节残留旧文件，使后续生成的 final 工程混入脏状态"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    },
+    {
+      "id": "tool-app-site",
+      "name": "12factor.net 站点",
+      "what": [
+        "12factor.net 官网是 Sinatra（web.rb）+ ERB 视图的 Ruby 应用，Jekyll 式 content/ 内容目录，部署在 Heroku",
+        "Procfile 仅一行 `web: ruby web.rb -p $PORT`，web 进程经 web.rb 启动，端口来自 $PORT 环境变量（端口绑定原则）",
+        "web.rb 实现 i18n 多语言（locales/*.yml）、/blog、/community、/sitemap.xml 动态生成、www→裸域 301 重定向、可选 PASSWORD 会话保护",
+        "app.json 声明 Heroku 部署配置（stack=heroku-22），TOC 数组集中管理 12 因子章节顺序"
+      ],
+      "why": [
+        "官方站点吃自己的狗粮：Procfile 声明进程类型、$PORT 端口绑定、ENV 注入配置（PASSWORD/FORCE_SSL）都是 12-factor 原则的活教材",
+        "内容与渲染分离，12 因子条目以数据驱动而非硬编码在路由"
+      ],
+      "how": [
+        "Procfile 声明 web 进程，`ruby web.rb -p $PORT` 绑定 Heroku 注入的端口",
+        "web.rb 用 Sinatra + ERB 渲染，i18n backend 加载 locales 实现多语言，locale 前缀路由分发",
+        "PASSWORD env 开启时进入登录守卫，FORCE_SSL 时启用 Rack::SslEnforcer 强制 HTTPS",
+        "TOC = %w(codebase dependencies config backing-services ... admin-processes) 即教义章节固定顺序"
+      ],
+      "cases": [
+        "官方 12factor.net 生产部署：12 因子条目 + 博客 + 社区页 + 多语言 + 站点地图",
+        "host 为 www.12factor.com 时 301 归一化到裸域，符合可寻址性规范"
+      ],
+      "anti_patterns": [
+        "把章节内容硬编码进 web.rb 路由而非集中到 TOC/content 数据驱动",
+        "在代码里写死端口而非读取 $PORT，违反端口绑定原则",
+        "凭据写入配置/代码而非走 ENV（站内用 PASSWORD env 正示范避免此坑）"
+      ],
+      "app_side": [],
+      "agent_side": [],
+      "difference": []
+    }
+  ]
+}

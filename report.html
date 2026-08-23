@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission 报告：12 Factor 方法论合并知识图谱</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; max-width: 960px; margin: 0 auto; padding: 24px; color: #1f2328; line-height: 1.7; background: #fafbfc; }
+  h1 { font-size: 1.5em; border-bottom: 3px solid #0969da; padding-bottom: 10px; }
+  h2 { font-size: 1.15em; margin-top: 28px; border-left: 4px solid #0969da; padding-left: 10px; }
+  .meta { background: #ddf4ff; border-radius: 6px; padding: 12px 16px; font-size: 0.92em; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #d0d7de; padding: 8px 12px; text-align: left; font-size: 0.93em; }
+  th { background: #f6f8fa; }
+  code { background: #eff1f3; border-radius: 4px; padding: 2px 6px; font-size: 0.88em; }
+  li { margin: 6px 0; }
+  .lesson { background: #fff8c5; border-left: 4px solid #d4a72c; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 10px 0; }
+  .ok { color: #1a7f37; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>Mission 报告：12 Factor 方法论合并知识图谱</h1>
+
+<div class="meta">
+  <strong>日期</strong>：2026-08-23<br>
+  <strong>任务目录</strong>：<code>~/opencode/archive/Mission-file/2026-08/0823-12factor-methodology/</code><br>
+  <strong>GATE</strong>：Plan 13 → Deep；Build 17 → Deep（Variant 继承 <code>[COMPLEXITY: 15/20]</code>）
+</div>
+
+<div class="section">
+<h2>一、当时情况</h2>
+<p>用户先下载了 12 Factor App（heroku/12factor）与 12 Factor Agent（humanlayer/12-factor-agents）两个项目，随后提出：参考此前两个方法论库（0822-plugin-dag 的动态图技术、0820-algorithm-knowledge-graph 的知识图谱组织思路），将这两套 12-factor 方法论<strong>合并为一个统一的知识图谱</strong>（本质都是软件工程思路），并保留"AI 友好 + 人类友好"双交付结构。Plan 阶段用户补充：两库中存在的<strong>工具类内容</strong>（脚手架、教程生成器、工作坊等）也应设法融入图谱。</p>
+</div>
+
+<div class="section">
+<h2>二、制定计划</h2>
+<ol>
+  <li><strong>Grill-Me 需求澄清</strong>（20 项决策收敛）：合并策略=双体系+桥接；节点粒度=原则+桥接主题；边=继承四类+依赖；分组=来源+主题+横切三层；视图=四视图+对照；阶段=三档；路径=多路径自动生成；内容=官方+联网；语言=中文为主；规模=30-40 节点；位置=新建 0823-12factor-methodology/；保留脚本链。</li>
+  <li><strong>内容采集</strong>：3 路并行子Agent——App 12 要素官方摘录、Agent 12 条官方摘录、联网补充（中文解读/HN/桥接长文）。</li>
+  <li><strong>数据设计</strong>：主Agent 亲写 methodology-dag.json（34 节点→后扩 38），桥接主题含三栏对比设计。</li>
+  <li><strong>生成链路</strong>：07-checkpoint/gen-*.py 脚本化生成节点页/组页/视图/交互图/MD 镜像/根索引。</li>
+  <li><strong>工具融入</strong>：新增 4 工具节点（create-agent/walkthroughgen/workshops/12factor.net 站点），重跑生成链。</li>
+  <li><strong>质量门控</strong>：七项门控（覆盖/结构/断链/无环/四向覆盖/抽查/交互一致）+ 报告双版本。</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>三、执行情况</h2>
+<ol>
+  <li><strong>需求澄清</strong>：Grill-Me 协议逐项访谈 11 轮，收敛 20 项决策，用户确认后进入 Build。</li>
+  <li><strong>内容采集</strong>：3 个 general 子Agent 并行成功——<code>research/app-12-elements.json</code>（12 要素）、<code>research/agent-12-factors.json</code>（12 条，警告 factor-12 原文极短）、<code>research/web-research.json</code>（11 条联网 findings）。</li>
+  <li><strong>DAG 设计</strong>：主Agent 设计 34 节点（12 App + 12 Agent + 10 桥接主题）、16 组、53 边；Kahn 无环验证通过；修正 meta 计数（15→16 组）。</li>
+  <li><strong>节点内容</strong>：子Agent 生成 node-content.json（34 节点五段式，bridge 含三栏），校验 34/34 一致。</li>
+  <li><strong>页面生成</strong>：子Agent 编写 6 个生成脚本并产出全部 HTML（节点页/组页/视图/交互图/根索引），vendor 从 0820 复制；自检 56 HTML div 平衡、0 断链。</li>
+  <li><strong>工具融入</strong>（用户补充需求）：新增 G-TOOLS 工具组 + 4 工具节点 + 10 条工具边；gen_common.py 扩展 tool 类型样式；子Agent 基于真实源码撰写 4 工具五段式内容（template 六模块/BAML/Procfile 等）；node-content 38 节点；重跑生成链全部成功。</li>
+  <li><strong>MD 镜像补齐</strong>：发现 06-md 缺失，主Agent 亲写 gen-md.py 生成 42 文件（4 索引 + 38 节点 MD）。</li>
+  <li><strong>文案修正</strong>：gen-index.py 3 处硬编码旧数字（15 组/34 节点）改为动态取数并加工具统计。</li>
+  <li><strong>质量门控</strong>：独立脚本实测——61 HTML 0 错误（UTF-8/div 平衡/断链）；DAG Kahn 无环（38/38）；四向覆盖 38 全一致；交互图 DATA 与 DAG 一致（38/61/16）。</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>四、完成情况</h2>
+<table>
+  <tr><th>交付物</th><th>数量</th><th>说明</th></tr>
+  <tr><td><code>01-dag-data/methodology-dag.json</code></td><td>38 节点/16 组/61 边</td><td>5 类边，DAG 无环</td></tr>
+  <tr><td><code>01-dag-data/node-content.json</code></td><td>38 节点</td><td>五段式内容，bridge 含三栏对比</td></tr>
+  <tr><td><code>02-node-pages/</code></td><td>38 页</td><td>节点详情页（五段式）</td></tr>
+  <tr><td><code>03-groups/</code></td><td>17 文件</td><td>16 组页 + 组总索引</td></tr>
+  <tr><td><code>05-views/</code></td><td>4 页</td><td>总览/阶段/学习路径/跨体系对照</td></tr>
+  <tr><td><code>04-interactive/</code></td><td>index + vendor</td><td>cytoscape 两级下钻 + 桥接高亮</td></tr>
+  <tr><td><code>06-md/</code></td><td>42 文件</td><td>AI 友好镜像（4 索引 + 38 节点 MD）</td></tr>
+  <tr><td><code>07-checkpoint/</code></td><td>7 个 py</td><td>可重复生成脚本链</td></tr>
+  <tr><td><code>research/</code></td><td>3 文件</td><td>内容来源与桥接设计依据</td></tr>
+  <tr><td><code>quality-gate.md</code></td><td>1</td><td>七项门控全部通过</td></tr>
+  <tr><td><code>report.md / report.html</code></td><td>2</td><td>本报告双版本</td></tr>
+</table>
+<p>根入口 <code>index.html</code>：统计 38 节点 / 16 组 / 61 边，12+12+10+4 构成，快速开始指引。</p>
+</div>
+
+<div class="section">
+<h2>五、反思 / 分析 / 建议</h2>
+<div class="lesson"><strong>用户中途补充"工具融入"需求验证了脚本链价值</strong>：数据更新 → 重跑 gen-*.py 即全量再生成（约 10 秒），无需手改任何页面。这正是保留 07-checkpoint 的意义。</div>
+<div class="lesson"><strong>硬编码文案陷阱</strong>：gen-index.py 中 3 处"15 组/34 节点"硬编码未随数据变化自动更新，靠人工 grep 才发现。教训：生成脚本中的统计类文案应一律从 DAG meta 动态取数，不写死数字（已修复）。</div>
+<div class="lesson"><strong>MD 镜像曾被遗漏</strong>：子Agent 生成的 6 个脚本未覆盖 06-md（设计决策 12 要求）。主Agent 补写 gen-md.py。教训：委派 prompt 应显式列出全部交付物清单并逐一核对，不能默认子Agent 全覆盖。</div>
+<ul>
+  <li><strong>工具节点是加分项</strong>：create-12-factor-agent 模板、walkthroughgen、工作坊材料让图谱从"纯理论原则"升级为"可实操方法论"，12factor.net 站点作为 App 原则参考实现补齐了 App 侧工具视角。</li>
+  <li><strong>桥接主题设计是灵魂</strong>：10 个主题经 prerequisite（App→主题→Agent）构成"打通路径"，variant 标注语义对应——这是两套方法论合并的价值核心，也是后续扩展（如新增第 13 因子）的挂载点。</li>
+</ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,349 @@
+{
+  "meta": {
+    "source": "humanlayer/12-factor-agents content",
+    "count": 12
+  },
+  "factors": [
+    {
+      "id": "factor-01",
+      "name": "Natural Language to Tool Calls",
+      "definition": "将自然语言转换为结构化的工具调用（tool calls），是构建 Agent 最常见的模式之一，能让你构建出既能推理任务又能执行任务的 Agent。",
+      "what": [
+        "该模式原子化地应用时，就是把一句自然语言（如「给 Terri 创建一个 750 美元用于赞助二月 AI Tinkerers meetup 的支付链接」）翻译成描述 Stripe API 调用的结构化对象（create_payment_link + 参数）。",
+        "之后由确定性代码接手该 payload 并执行相应动作。",
+        "真实的 Agent 通常要先列出客户、产品、价格列表来构建包含正确 ID 的 payload，或者把 ID 放进 prompt/上下文窗口（两者在 factor-03 看来其实是同一回事）。",
+        "完整的 Agent 会把 API 调用结果收回来再循环处理，最终返回给用户如「已成功创建支付链接」这样的回复。"
+      ],
+      "why": [
+        "自然语言→结构化工具调用是 Agent 构建中最常见、最强大的模式，让 Agent 既能有推理能力又能执行任务。",
+        "把语言模型生成的「下一步动作」以结构化对象输出，使后续处理可以依赖确定的代码逻辑而不是自由文本。"
+      ],
+      "how": [
+        "LLM 接收自然语言，返回一个结构化对象（如 nextStep），其中包含 function 名与 parameters。",
+        "用确定性代码做 switch/if 分发：命中已知函数就执行对应 API 调用（如 stripe.paymentlinks.create），未知函数则走 else 兜底分支。",
+        "示例代码：llm.determineNextStep(...) 后按 nextStep.function 分支处理。",
+        "参考实现：mailcrew（dexhorthy 的仓库），视频演示如何列出 customers/products/prices 构建 payload。"
+      ],
+      "anti_patterns": [
+        "只做原子化翻译而不把结果回收循环：文中明确「跳过把 API 调用结果收回来循环的步骤」，留待另一个 factor 处理（是否并入由你自己决定）。",
+        "把 ID 硬编码进 payload 而不是去查询——真实场景需要先查客户/产品/价格拿到正确 ID。"
+      ],
+      "cases": [
+        "Stripe create_payment_link JSON payload 示例（amount/customer/product/price/quantity/memo）。",
+        "Python 示例：llm.determineNextStep → if nextStep.function == 'create_payment_link': stripe.paymentlinks.create(...)。",
+        "真实 Agent：github.com/dexhorthy/mailcrew（附 YouTube 视频）。"
+      ]
+    },
+    {
+      "id": "factor-02",
+      "name": "Own your prompts",
+      "definition": "不要把 prompt 工程外包给框架：自己拥有 prompt，把它当作一等公民的代码来对待。",
+      "what": [
+        "有些框架提供「黑盒」式 API（Agent(role=..., goal=..., personality=..., tools=...) + agent.run(task)），这能帮你引入顶级的 prompt 工程，但往往难以微调或逆向工程到恰好正确的 token。",
+        "主张把 prompt 当作一等公民代码：例如用 BAML 之类工具写一个带类型签名的 DetermineNextStep(thread: string)，把 system/user 角色模板、部署检查清单、工具列表、审批流程都写进 prompt。",
+        "拥有自己 prompt 的关键收益：完全控制、可测试与可评测（evals）、快速迭代、透明可见、以及「角色越权」（role hacking）——利用支持非标准 user/assistant 角色用法的 API。",
+        "作者立场：不知道什么是最佳 prompt，但希望你有尝试「一切」的灵活性。"
+      ],
+      "why": [
+        "prompt 是应用逻辑与 LLM 之间的主要接口，拥有完全控制权才能获得生产级 Agent 所需的灵活性与可控性。",
+        "黑盒框架难以把恰好正确的 token 送入模型，也难以定位问题。"
+      ],
+      "how": [
+        "不依赖框架的 Agent/Task 抽象，直接用 BAML（或任何 prompt 工具，甚至手工模板）写显式 prompt。",
+        "示例：Rust 风格函数 DetermineNextStep(thread: string) -> DoneForNow | ListGitTags | DeployBackend | DeployFrontend | RequestMoreInformation，内部用 system 角色写系统提示词、user 角色注入 thread。",
+        "像写普通代码一样为 prompt 建测试与 evals，基于真实表现快速迭代。",
+        "可用非标准角色技巧（如已弃用的 OpenAI completions 非 chat API），包括所谓的「model gaslighting」技术。"
+      ],
+      "anti_patterns": [
+        "依赖框架的「黑盒」Agent(role/goal/personality/tools) + agent.run(task) 抽象：虽然起步容易，但难以调优和逆向工程。",
+        "把 prompt 工程完全外包给框架，导致无法精确控制送入模型的指令。"
+      ],
+      "cases": [
+        "黑盒反例代码：Agent(role, goal, personality, tools) / task / agent.run。",
+        "正面示例：BAML（github.com/boundaryml/baml）写的 DetermineNextStep 部署管理 prompt，含 staging→production、request_approval、检查 tag/环境/状态等逻辑。",
+        "引用了 Hamel 的博客（hamel.dev/blog/posts/prompt）作为非新观点佐证。"
+      ]
+    },
+    {
+      "id": "factor-03",
+      "name": "Own your context window",
+      "definition": "你不一定要用标准的消息格式来向 LLM 传递上下文——上下文工程（context engineering）是一切，自己掌控上下文窗口的构造方式。",
+      "what": [
+        "对 Agent 而言，任何时刻你给 LLM 的输入本质上都是「到目前为止发生了什么，下一步是什么」。",
+        "LLM 是接受输入产出输出的无状态函数，想得到最好输出就要给它最好的输入。",
+        "上下文包含：prompt/指令、检索到的文档（RAG）、历史状态/工具调用/结果、来自相关但独立历史的记忆（Memory）、以及要求输出何种结构化数据的指令。",
+        "区别于标准消息格式，可以自建上下文格式：例如把整个上下文窗口打包进单条 user 消息，用 XML 风格标签（<slack_message>、<list_git_tags_result>、<error>、<human_response>）表达事件流，让模型从中推断「下一步」。"
+      ],
+      "why": [
+        "标准 message 格式对多数场景够用，但想真正榨干今天的 LLM，需要以最 token-与 attention-高效的方式把上下文送进去。",
+        "上下文窗口是与 LLM 的主要接口，掌控其构造能大幅提升 Agent 性能。",
+        "不在本文讨论范围（刻意排除）：temperature/top_p/frequency_penalty 等采样参数、训练自己的模型、微调。"
+      ],
+      "how": [
+        "用事件驱动的 Thread/Event 模型：Thread.events 是 Event 列表，Event 有 type（Literal 枚举）与 data，event_to_prompt 把事件渲染成 <type>...</type> 的 XML 字符串，thread_to_prompt 用换行连接。",
+        "然后把 thread_to_prompt(thread) 交给 determine_next_step。",
+        "上下文格式自建（XML 只是其中一种例子），根据用途不断实验「存什么 vs 传给 LLM 什么」。",
+        "五个收益：信息密度、错误处理（把错误放回上下文帮助恢复；错误解决后可从上下文窗口隐藏失败的调用）、安全性（过滤敏感数据）、灵活性、token 效率。",
+        "参考社区：Karpathy 与 tobi 的推文、@lenadroid 的 Context Engineering Cheat Sheet（2025 年 7 月）。"
+      ],
+      "anti_patterns": [
+        "无条件使用标准的 system/user/assistant/tool 消息数组格式而不做优化。",
+        "把已解决的错误或失败调用留在上下文窗口中污染后续推理。",
+        "试图用采样参数（temperature/top_p/frequency_penalty）或微调来弥补上下文构造的不足（不在本文讨论范围）。"
+      ],
+      "cases": [
+        "标准消息格式 YAML 示例（system + user + assistant tool_calls + tool result）。",
+        "自定义单 user 消息 XML 上下文示例（slack_message/list_git_tags/list_git_tags_result）。",
+        "Python 代码：Thread/Event 类、event_to_prompt、thread_to_prompt。",
+        "三个上下文窗口演化示例：初始 Slack 请求 → 列出 git tags 后 → 出错并恢复后（deploy_backend 失败 → request_more_information → human_response）。"
+      ]
+    },
+    {
+      "id": "factor-04",
+      "name": "Tools are just structured outputs",
+      "definition": "工具本质上就是 LLM 输出的、用来触发确定性代码的结构化数据，不必复杂化。",
+      "what": [
+        "「让 LLM 使用若干工具之一」其实就是让 LLM 输出可解析成表示这些工具的对象的 JSON。",
+        "简单三步模式：①LLM 输出结构化 JSON；②确定性代码执行相应动作（如调用外部 API）；③结果被捕获并喂回上下文。",
+        "这实现了 LLM 决策与应用程序动作之间的干净分离：LLM 决定做什么，你的代码控制怎么做——LLM「调用了工具」并不意味着你必须每次都以同样的方式去执行某个对应函数。",
+        "「下一步」不必原子化到「运行纯函数并返回结果」，把工具调用想成「模型输出描述确定性代码应做什么的 JSON」能解锁大量灵活性。"
+      ],
+      "why": [
+        "把工具调用降维成结构化输出，能让决策与执行解耦，从而灵活控制「工具被调用后实际发生什么」。",
+        "避免被「工具调用 = 固定函数」的思维锁死，为自定义控制流（factor-08）铺路。"
+      ],
+      "how": [
+        "定义数据类如 CreateIssue(intent: \"create_issue\", issue: Issue) 与 SearchIssues，让 LLM 按 intent 字段输出 JSON。",
+        "确定性代码 switch 分发：create_payment_link → stripe.paymentlinks.create；wait_for_a_while → 某种 monadic 处理；未知 intent 走兜底。",
+        "与 factor-08（own your control flow）结合使用以获得更大灵活性。"
+      ],
+      "anti_patterns": [
+        "把工具调用与某个固定函数一一对应、每次都以相同方式执行，忽略「模型调用了工具但你可以决定怎么做」的自由度。"
+      ],
+      "cases": [
+        "CreateIssue/SearchIssues 数据类示例（intent 字段 + Issue 结构）。",
+        "Stripe 支付链接 switch 语句（含 wait_for_a_while 的 monadic 注释与未知工具 else 分支）。",
+        "延伸阅读：boundaryml.com 的 Schema-Aligned Parsing 博客（Prompting vs JSON Mode vs Function Calling vs Constrained Generation vs SAP）、Vellum 的 structured outputs/JSON mode 博客、LlamaIndex 的 OpenAI JSON vs Function Calling。"
+      ]
+    },
+    {
+      "id": "factor-05",
+      "name": "Unify execution state and business state",
+      "definition": "尽可能把执行状态（当前步、下一步、等待状态、重试次数）与业务状态（Agent 工作流到目前为止发生的事）统一起来，而不是分开管理。",
+      "what": [
+        "许多基础设施系统（AI 之外也一样）试图把「执行状态」与「业务状态」分离，对 AI 应用常引入复杂抽象去跟踪当前步/下一步/等待状态/重试次数等，这种分离带来的复杂度可能不值得。",
+        "执行状态=当前步、下一步、等待状态、重试次数等；业务状态=工作流中已发生的事（如 OpenAI messages 列表、工具调用与结果列表等）。",
+        "可以这样工程化你的应用：从上下文窗口就能推断出全部执行状态——执行状态往往只是「到目前为止发生了什么」的元数据。",
+        "确实有一些不能放进上下文窗口的东西（session id、密码上下文等），但目标是尽量少。借助 factor-03 可控制真正送进 LLM 的内容。"
+      ],
+      "why": [
+        "把状态统一到一个单一事实来源（thread）上，换来：简单（单一状态来源）、可序列化（thread 平凡可序列化/反序列化）、易调试（全部历史一处可见）、灵活（加新状态只需加新事件类型）、可恢复（加载 thread 即可从任意点恢复）、可分叉（复制 thread 子集到新 context/state ID）、人机界面与可观测性（thread 平凡转为人类可读 markdown 或 Web 应用 UI）。"
+      ],
+      "how": [
+        "用「thread = 事件流」承载一切：把每次工具调用、结果、人类回复、错误都作为事件追加进 thread。",
+        "执行状态不再单独存储，而是从 thread 上下文推断。",
+        "拥抱 factor-03 控制进 LLM 的内容；需要跨上下文的东西（如 session id）尽力最小化。"
+      ],
+      "anti_patterns": [
+        "不必要地把执行状态与业务状态分成两套独立系统管理，为跟踪 step/waiting/retry 引入过度复杂抽象。",
+        "把不能放进上下文的东西（session id、密码上下文等）也硬塞进 LLM 输入。"
+      ],
+      "cases": [
+        "GIF 动画（img/155-unify-state-animation.gif）演示状态统一。",
+        "7 条收益清单（Simplicity/Serialization/Debugging/Flexibility/Recovery/Forking/Human Interfaces and Observability）。"
+      ]
+    },
+    {
+      "id": "factor-06",
+      "name": "Launch/Pause/Resume with simple APIs",
+      "definition": "Agent 也只是程序，用户、应用、流水线和其他 Agent 应该能用简单 API 启动、查询、暂停、恢复和停止 Agent。",
+      "what": [
+        "应该让用户、应用、流水线和其他 Agent 用简单 API 就能启动 Agent。",
+        "当需要长时间运行的操作时，Agent 及其编排的确定性代码应能暂停 Agent。",
+        "外部触发器（如 webhook）应能让 Agent 从离开的地方恢复，而无需与 Agent 编排器深度集成。",
+        "与 factor-05（统一执行/业务状态）和 factor-08（掌控控制流）密切相关，但可独立实现。"
+      ],
+      "why": [
+        "作为程序，Agent 需要满足人们对启动、查询、恢复、停止程序的标准预期。",
+        "很多 AI 编排器支持暂停/恢复，但不支持「工具选择与工具执行之间」的暂停点——这正是一个关键缺口（详见 factor-07、factor-11）。"
+      ],
+      "how": [
+        "提供简单的启动 API（launch）、暂停 API（pause，配合长时间运行操作）、恢复 API（resume，配合 webhook 等外部触发）。",
+        "暂停/恢复要与状态持久化（factor-05 的 thread）配合：恢复即加载状态继续。"
+      ],
+      "anti_patterns": [
+        "依赖不支持「工具选择与工具执行之间」暂停的编排器，导致无法在工具执行前插入审批/复核。"
+      ],
+      "cases": [
+        "pause-resume 动画 GIF（img/165-pause-resume-animation.gif）。",
+        "文中明确关联 factor-05、factor-07（用工具调用联系人类）、factor-08、factor-11。"
+      ]
+    },
+    {
+      "id": "factor-07",
+      "name": "Contact humans with tool calls",
+      "definition": "把「请求人类输入」也建模成工具调用，让 Agent 能通过结构化事件与人类协作（而非只靠传统聊天界面）。",
+      "what": [
+        "LLM API 默认面对一个高风险的 token 选择：返回纯文本内容还是返回结构化数据？第一个 token 的选择（如 the weather in tokyo 的 the 还是 fetch_weather 的 |JSON> 标记）承载了很大权重。",
+        "可以让 LLM 始终输出 JSON，然后用自然语言 token（如 request_human_input、done_for_now）声明意图，而不是依赖「正经」工具（如 check_weather_in_city）。",
+        "示例：定义 RequestHumanInput 工具（intent=request_human_input、question、context、options：urgency/format/choices）。",
+        "在 agent loop 中遇到该 intent 时：把 human_input_requested 事件追加进 thread、保存状态、通知人类、跳出循环等待携带 thread ID 的回复。",
+        "后续可通过 webhook 接收 slack/email/sms 等事件：加载 thread、推入 response_from_human 事件、重新 determine_next_step 并处理。"
+      ],
+      "why": [
+        "收益：①清晰指令——不同类型的人类接触工具让 LLM 输出更具体；②内外循环——支持 chatGPT 风格之外的工作流（控制流与上下文初始化可能是 Agent→Human 而非 Human→Agent，如 cron 或事件触发）；③多人类接入——通过结构化事件轻松跟踪协调不同人类的输入；④多 Agent——简单抽象可扩展到 Agent→Agent 请求响应；⑤持久化——结合 factor-06 形成持久、可靠、可内省的多玩家工作流。"
+      ],
+      "how": [
+        "定义结构化的 RequestHumanInput 工具类，LLM 输出该 intent 时确定性地保存状态、通知人类、跳出循环。",
+        "写 webhook 端点接收人类回复：threadId 定位状态、push response_from_human 事件、重新调用 determine_next_step 继续。",
+        "上下文示例：request_human_input（问题+上下文+选项）→ human_response（回复+approved+timestamp+user）→ deploy_backend → deploy_backend_result。",
+        "与 factor-03/04/05/06/08/11 组合使用。"
+      ],
+      "anti_patterns": [
+        "让 LLM 靠「第一个 token 选择纯文本还是 JSON」来隐式决定是否联系人类，而不是显式声明意图。",
+        "只支持 Human→Agent 的传统 chat 流，无法支持 Agent 主动联系人类（outer loop）的工作流。"
+      ],
+      "cases": [
+        "the weather in tokyo vs fetch_weather 的 token 对比示例。",
+        "RequestHumanInput 数据类（Options: urgency/format/choices）。",
+        "Agent loop 与 /webhook 端点的 Python 代码。",
+        "XML 上下文流示例：slack_message → request_human_input → human_response → deploy_backend → deploy_backend_result。",
+        "延伸阅读：The Outer Loop substack 文章（OpenAI realtime API 相关）。"
+      ]
+    },
+    {
+      "id": "factor-08",
+      "name": "Own your control flow",
+      "definition": "自己掌控控制流，为特定用例构建自己的控制结构——尤其是允许在工具选择与工具执行之间中断并恢复 Agent。",
+      "what": [
+        "某些类型的工具调用可能是跳出循环的理由：等人类回复，或等一个长时间运行的任务（如训练流水线）。",
+        "可以融入自定义实现：工具调用结果的摘要/缓存、对结构化输出的 LLM-as-judge、上下文窗口压缩/内存管理、日志/追踪/指标、客户端限速、持久 sleep/暂停/「等事件」。",
+        "示例 handle_next_step 展示三种控制流：request_clarification（跳出循环等人类）、fetch_open_issues（同步拿结果追加上下文后 continue 回到模型）、create_issue（需要人类审批，跳出循环等 webhook）。",
+        "核心诉求：能中断工作中的 Agent 并在稍后恢复，尤其是工具「选择」与「调用」之间——没有这个粒度就无法在工具执行前复核/审批工具调用。"
+      ],
+      "why": [
+        "没有工具选择与执行之间的可恢复粒度，你被迫三选一：①在内存里 while...sleep 暂停任务等待长任务完成，进程中断就从头重来；②把 Agent 限制在低风险低赌注的调用（如研究、摘要）；③给 Agent 更高权限直接做更有用的事然后祈祷它不出错。",
+        "自建控制流才能支持更自然的人机对话与工作流。"
+      ],
+      "how": [
+        "在 while True 循环里 determine_next_step → 按 intent 分支：async 步骤（等人类/webhook）就 break，sync 步骤（拿到数据继续推理）就 continue。",
+        "每个分支把事件追加进 thread 并保存状态，供恢复时加载。",
+        "可独立实现，也与 factor-05、factor-06 密切相关。"
+      ],
+      "anti_patterns": [
+        "while...sleep 在内存里等待长任务、进程中断即从零重来。",
+        "把 Agent 限制在低风险调用（研究/摘要）而不敢做有实际价值的事。",
+        "给 Agent 放开高赌注操作但没有任何复核/审批机制（yolo）。"
+      ],
+      "cases": [
+        "Python handle_next_step 代码：request_clarification / fetch_open_issues（Linear client）/ create_issue（request_human_approval）三分支。",
+        "工具选择与调用之间中断是作者对每个 AI 框架的首要功能诉求。"
+      ]
+    },
+    {
+      "id": "factor-09",
+      "name": "Compact Errors into Context Window",
+      "definition": "把错误压缩进上下文窗口：工具调用失败时，把格式化后的错误追加进上下文让 LLM 自愈重试。",
+      "what": [
+        "Agent 的收益之一是「自愈」：短任务中 LLM 调用某个工具失败，好的 LLM 大概率能读懂错误信息或堆栈，在后续工具调用中自行修正。",
+        "大多数框架都实现了这点，但你完全可以只做这一条而不管其余 11 个 factor。",
+        "核心代码：try handle_next_step，异常时把 type='error' 的事件（format_error(e) 的结果）追加进 thread 并继续循环。",
+        "可以加 errorCounter 限制某个工具最多重试约 3 次；达到连续错误阈值时，可跳出循环、重置部分上下文、或升级给人类处理（factor-07），无论是模型决策还是确定性接管控制流。"
+      ],
+      "why": [
+        "收益：①自愈——LLM 读错误信息后在后续调用中自我修正；②持久化——单个工具调用失败后 Agent 仍能继续运行。",
+        "错误压缩 + 连续错误阈值是「把人类拉进循环」的绝佳触发点。"
+      ],
+      "how": [
+        "把错误作为结构化事件写回上下文窗口（type='error'，data=format_error(e)）后继续循环。",
+        "用 consecutive_errors 计数器：成功则清零，失败自增，<3 继续重试，≥3 break（或重置部分上下文/升级人类）。",
+        "结合 factor-08/factor-03：不必原样把错误放回去，可以重构错误表示、从上下文移除此前事件等。",
+        "防止错误空转（error spin-out）的头号方法：拥抱 factor-10（小而专注的 Agent）。"
+      ],
+      "anti_patterns": [
+        "过度依赖错误重试：做得太多 Agent 会「空转」，一遍遍重复同一个错误。",
+        "把原始错误原样塞回上下文而不做任何压缩/结构重组。"
+      ],
+      "cases": [
+        "Python 基础版：thread events + try/except 追加 error 事件。",
+        "Python 进阶版：consecutive_errors 计数 + 3 次阈值 + break 升级。",
+        "GIF：img/195-factor-09-errors.gif。"
+      ]
+    },
+    {
+      "id": "factor-10",
+      "name": "Small, Focused Agents",
+      "definition": "与其构建试图包办一切的单体 Agent，不如构建小而专注、一件事做得很好的 Agent；Agent 只是更大、基本确定性的系统中的一个构件。",
+      "what": [
+        "核心洞察源于 LLM 局限：任务越大越复杂，步骤越多，上下文窗口就越长；上下文增长时 LLM 更容易迷失或失焦。",
+        "让 Agent 聚焦特定领域、控制在约 3-10 步（最多 20 步），保持上下文窗口可控、LLM 性能保持高位。",
+        "收益：可控上下文（更小的窗口=更好性能）、职责清晰、更可靠（复杂流程中不易迷失）、易测试、易调试。",
+        "关于「LLM 更聪明了还需要吗」：是的。Agent 与 LLM 改进后可能自然扩展处理更长上下文，即处理更大的 DAG；小而专注的路线确保「今天就能出结果」，同时为上下文窗口更可靠后逐步扩展 Agent 范围做准备（像重构大型确定性代码库一样）。"
+      ],
+      "why": [
+        "上下文增长 → LLM 迷失/失焦，是小而专注 Agent 的存在理由。",
+        "有意识地把控 Agent 规模/范围、只以能维持质量的方式增长，是关键。"
+      ],
+      "how": [
+        "把任务拆成多个单领域的小 Agent（3-10 步，最多 20 步），由更大的确定性系统编排。",
+        "随 LLM 能力提升逐步扩展单个 Agent 范围（gif 演示 scope grow），但只在能维持质量的前提下。"
+      ],
+      "anti_patterns": [
+        "构建什么都做的单体 Agent，导致上下文爆长、LLM 迷失。",
+        "在 LLM 上下文还不可靠时就激进扩大 Agent 范围。"
+      ],
+      "cases": [
+        "引述 NotebookLM 团队的话：最有魔力的 AI 构建时刻往往是「紧贴模型能力边界」时。",
+        "GIF：img/1a5-agent-scope-grow.gif 展示 Agent 范围随能力增长。"
+      ]
+    },
+    {
+      "id": "factor-11",
+      "name": "Trigger from anywhere, meet users where they are",
+      "definition": "让用户能从 slack、email、sms 或任何他们所在渠道触发 Agent，也让 Agent 通过同样的渠道回复。",
+      "what": [
+        "做完 factor-06（简单 API 的启动/暂停/恢复）与 factor-07（用工具调用联系人类）后即可整合本 factor。",
+        "收益：①「用户在哪儿就服务到哪儿」——帮助构建感觉像真人、至少像数字同事的 AI 应用；②外循环 Agent——被非人类触发（事件、cron、故障等），可能工作 5/20/90 分钟，到关键点就联系人类求助/反馈/审批；③高赌注工具——能快速拉入多种人类时，就能给 Agent 更高赌注的操作（发外部邮件、改生产数据等）。"
+      ],
+      "why": [
+        "多通道触发与回复让 AI 应用像数字同事一样融入用户工作流。",
+        "维持清晰标准获得可审计性与对「执行更大更好事」的 Agent 的信心。"
+      ],
+      "how": [
+        "暴露多通道触发入口（slack/email/sms/webhook 等），Agent 通过同一批通道回复。",
+        "长任务可运行 5/20/90 分钟，到关键决策点通过结构化事件联系人类（结合 factor-07）。"
+      ],
+      "anti_patterns": [
+        "把 Agent 限制在单一入口/单一聊天界面，忽略用户在 slack/email/sms 等已习惯的通道。",
+        "因为无法快速拉人复核而不给 Agent 高价值操作权限。"
+      ],
+      "cases": [
+        "人类触发源：slack/email/sms。",
+        "非人类触发：events、crons、outages。",
+        "与 factor-10「What if LLMs get smarter」链接（perform bigger better things）。"
+      ]
+    },
+    {
+      "id": "factor-12",
+      "name": "Make your agent a stateless reducer",
+      "definition": "把 Agent 做成无状态归约器（stateless reducer）——把 thread/状态当作可以 fold 的累积值。",
+      "what": [
+        "本文到此已超 1000 行 markdown，这一条「mostly just for fun」（主要是玩）。",
+        "核心概念配图：agent-foldl（img/1c5-agent-foldl.png），把 Agent 视为对状态列表做左折叠（foldl）的归约器。",
+        "延续 factor-05 的「统一执行状态与业务状态」思路，把 thread 作为纯数据累积。"
+      ],
+      "why": [
+        "作为收官 factor，把前面各 factor 的统一状态（thread）思想收束为函数式编程视角：Agent 是无状态的归约函数，输入历史事件序列，产出下一个动作。"
+      ],
+      "how": [
+        "把 Agent 循环建模为 reducer：每次迭代把新事件归约进 thread（类似 foldl 的累积）。",
+        "无状态化让 thread 可序列化、可恢复、可分叉（承接 factor-05）。"
+      ],
+      "anti_patterns": [],
+      "cases": [
+        "概念图：img/1c5-agent-foldl.png（agent 作 foldl）。",
+        "下篇预告：Appendix - Pre-Fetch Context。"
+      ]
+    }
+  ]
+}
