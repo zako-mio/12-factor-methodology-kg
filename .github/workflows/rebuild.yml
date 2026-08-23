@@ -1,0 +1,51 @@
+name: Rebuild Deliverables
+
+# 数据（01-dag-data/）或生成脚本（07-checkpoint/）变更时，自动重新生成全部交付物并提交。
+# 生成产物位于 02-node-pages/ 03-groups/ 05-views/ 04-interactive/ 06-md/ index.html，
+# 因 paths 过滤只匹配源文件，产物提交不会再次触发本工作流（防循环）。
+# Pages 由 master 分支 root 构建，master 更新后 GitHub 自动重新部署。
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '01-dag-data/**'
+      - '07-checkpoint/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Rebuild all deliverables
+        working-directory: 07-checkpoint
+        run: |
+          python3 gen-nodes.py
+          python3 gen-groups.py
+          python3 gen-views.py
+          python3 gen-interactive.py
+          python3 gen-index.py
+          python3 gen-md.py
+
+      - name: Commit regenerated deliverables
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: 重新生成交付物 [skip ci]"
+            git push
+          fi
