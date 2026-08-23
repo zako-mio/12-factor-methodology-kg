@@ -1,0 +1,17 @@
+# ===== 12 Factor 方法论合并知识图谱 .gitignore =====
+
+# --- Python 缓存 ---
+__pycache__/
+*.pyc
+
+# --- 临时/系统文件 ---
+.DS_Store
+Thumbs.db
+*.log
+
+# --- 编辑器 ---
+.vscode/
+.idea/
+
+# --- 本地临时产物（保留 01-dag-data 数据与 07-checkpoint 脚本，重建产物不入库）---
+/tmp/
