@@ -15,7 +15,9 @@
   code { background: #eff1f3; border-radius: 4px; padding: 2px 6px; font-size: 0.88em; }
   li { margin: 6px 0; }
   .lesson { background: #fff8c5; border-left: 4px solid #d4a72c; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 10px 0; }
-  .ok { color: #1a7f37; font-weight: 600; }
+  .phase { background: #dafbe1; border-left: 4px solid #1a7f37; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 10px 0; }
+  a { color: #0969da; text-decoration: none; }
+  a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -25,12 +27,17 @@
 <div class="meta">
   <strong>日期</strong>：2026-08-23<br>
   <strong>任务目录</strong>：<code>~/opencode/archive/Mission-file/2026-08/0823-12factor-methodology/</code><br>
-  <strong>GATE</strong>：Plan 13 → Deep；Build 17 → Deep（Variant 继承 <code>[COMPLEXITY: 15/20]</code>）
+  <strong>GATE</strong>：Plan 13 → Deep；Build 17 → Deep；GitHub 上传 9 → Daily；内容扩充 18 → Deep（Variant 继承 <code>[COMPLEXITY: 15/20]</code>）<br>
+  <strong>GitHub</strong>：<a href="https://github.com/zako-mio/12-factor-methodology-kg">zako-mio/12-factor-methodology-kg</a>（公开）｜ <strong>Pages</strong>：<a href="https://zako-mio.github.io/12-factor-methodology-kg/">在线预览</a>
 </div>
 
 <div class="section">
 <h2>一、当时情况</h2>
 <p>用户先下载了 12 Factor App（heroku/12factor）与 12 Factor Agent（humanlayer/12-factor-agents）两个项目，随后提出：参考此前两个方法论库（0822-plugin-dag 的动态图技术、0820-algorithm-knowledge-graph 的知识图谱组织思路），将这两套 12-factor 方法论<strong>合并为一个统一的知识图谱</strong>（本质都是软件工程思路），并保留"AI 友好 + 人类友好"双交付结构。Plan 阶段用户补充：两库中存在的<strong>工具类内容</strong>（脚手架、教程生成器、工作坊等）也应设法融入图谱。</p>
+<div class="phase"><strong>后续期望演进</strong>（Build 后两轮用户反馈）：<br>
+1. 用户要求<strong>上传 GitHub</strong>（公开仓库 + 在线 Pages 浏览），并补充 LICENSE、Actions 自动重建、仓库描述与主题标签。<br>
+2. 用户指出<strong>知识图谱内容量太少</strong>（每节点页子 HTML 应详细准确解释），困惑"原库那么大（109M）、图谱这么小（1.7M）"。<br>
+3. 用户升级期望：图谱不只是方法论，还要<strong>融入两个原库的工具源码作为实践参考</strong>，实现<strong>有机重构索引</strong>，并让 <strong>AI 友好侧不仅读方法论、还能读例子和按索引调用工具</strong>。</div>
 </div>
 
 <div class="section">
@@ -43,6 +50,11 @@
   <li><strong>工具融入</strong>：新增 4 工具节点（create-agent/walkthroughgen/workshops/12factor.net 站点），重跑生成链。</li>
   <li><strong>质量门控</strong>：七项门控（覆盖/结构/断链/无环/四向覆盖/抽查/交互一致）+ 报告双版本。</li>
 </ol>
+<div class="phase"><strong>后续阶段计划</strong>（用户反馈驱动的增量）：<br>
+7. <strong>GitHub 上传</strong>：公开仓库 + Pages 在线浏览 + README/LICENSE/.gitignore/Actions 自动重建 + 仓库描述与主题标签。<br>
+8. <strong>构建可复现性保障</strong>：Actions 环境与本地产物一致性（拓扑排序稳定性修复，防重建循环）。<br>
+9. <strong>内容深度扩充</strong>：38 节点从摘要级（17KB）扩充为原文级（105KB），每节点 1500-3000 字。<br>
+10. <strong>源码资产融入</strong>：精选复制两原库源码到 08-source/（454 文件），节点页 + MD 双索引。</div>
 </div>
 
 <div class="section">
@@ -58,6 +70,16 @@
   <li><strong>文案修正</strong>：gen-index.py 3 处硬编码旧数字（15 组/34 节点）改为动态取数并加工具统计。</li>
   <li><strong>质量门控</strong>：独立脚本实测——61 HTML 0 错误（UTF-8/div 平衡/断链）；DAG Kahn 无环（38/38）；四向覆盖 38 全一致；交互图 DATA 与 DAG 一致（38/61/16）。</li>
 </ol>
+<div class="phase"><strong>后续阶段执行</strong>：<br>
+10. <strong>GitHub 上传</strong>：<code>gh repo create</code> 创建公开仓库；配置 Pages（master 分支 root）；补 README/.gitignore/.nojekyll/LICENSE（MIT）；设置仓库描述与 7 个主题标签；GitHub Actions 自动重建 workflow。<br>
+11. <strong>workflow scope 授权</strong>：推送 workflow 被 GitHub 拒绝（token 缺 <code>workflow</code> scope）。用户 <code>gh auth refresh --scopes workflow</code> 走代理后授权成功。<br>
+12. <strong>构建可复现性修复</strong>：Actions 重建产生多余提交（gen-md.py 独立 topo 用 set 无序遍历）。修复为字典序稳定版；闭环验证：修复后 Actions 重建不再产生新提交。<br>
+13. <strong>12 Factor 自我审查</strong>：用户要求用 12 Factor 原则审查图谱库本身。发现并修复：①无 .git（补 git init）；②gen-interactive.py 硬依赖外部 0820 vendor（改自包含）；③gen-md.py 硬编码绝对路径（改相对）。可再构建性实测：/tmp 全新重建 61 HTML+42 MD 零失败。<br>
+14. <strong>内容深度扩充</strong>：3 路并行子Agent 基于完整原文扩充（app 20,960 字 / agent 31,264 字 / bridge+工具 39,382 字），合并后 node-content 17KB → 105KB。<br>
+15. <strong>源码资产融入</strong>：精选复制两原库到 08-source/（排除翻译/图片/博客/git 历史，109M → 2.3M 精选）。<br>
+16. <strong>双索引实现</strong>：节点页"实践资源"区块 + 06-md"源码索引"段；修复路径双写 bug 与 source_refs 格式不一致（规范化 113 条）。<br>
+17. <strong>README/index 更新</strong>：补充 08-source 目录说明、内容深度与源码资产说明、方法说明卡片。<br>
+18. <strong>最终推送与闭环</strong>：提交 <code>2eeccd0</code> 推送 → Actions 自动重建 success → 无多余重建提交 → Pages 在线全部 200（含 08-source 源码文件）。</div>
 </div>
 
 <div class="section">
@@ -65,29 +87,45 @@
 <table>
   <tr><th>交付物</th><th>数量</th><th>说明</th></tr>
   <tr><td><code>01-dag-data/methodology-dag.json</code></td><td>38 节点/16 组/61 边</td><td>5 类边，DAG 无环</td></tr>
-  <tr><td><code>01-dag-data/node-content.json</code></td><td>38 节点</td><td>五段式内容，bridge 含三栏对比</td></tr>
-  <tr><td><code>02-node-pages/</code></td><td>38 页</td><td>节点详情页（五段式）</td></tr>
+  <tr><td><code>01-dag-data/node-content.json</code></td><td>38 节点</td><td><strong>深度内容 105KB</strong>，bridge 三栏，含 source_refs</td></tr>
+  <tr><td><code>01-dag-data/expansion-*.json</code></td><td>3 文件</td><td>三路扩充中间产物</td></tr>
+  <tr><td><code>01-dag-data/source-inventory.json</code></td><td>1</td><td>64 项源码资产索引映射</td></tr>
+  <tr><td><code>02-node-pages/</code></td><td>38 页</td><td>节点详情页（<strong>13-16KB/页</strong>，含实践资源区块）</td></tr>
   <tr><td><code>03-groups/</code></td><td>17 文件</td><td>16 组页 + 组总索引</td></tr>
   <tr><td><code>05-views/</code></td><td>4 页</td><td>总览/阶段/学习路径/跨体系对照</td></tr>
   <tr><td><code>04-interactive/</code></td><td>index + vendor</td><td>cytoscape 两级下钻 + 桥接高亮</td></tr>
-  <tr><td><code>06-md/</code></td><td>42 文件</td><td>AI 友好镜像（4 索引 + 38 节点 MD）</td></tr>
-  <tr><td><code>07-checkpoint/</code></td><td>7 个 py</td><td>可重复生成脚本链</td></tr>
+  <tr><td><code>06-md/</code></td><td>42 文件</td><td>AI 友好镜像（含源码索引段）</td></tr>
+  <tr><td><code>07-checkpoint/</code></td><td>7 个 py</td><td>可重复生成脚本链（含 Actions 自动重建）</td></tr>
+  <tr><td><code>08-source/</code></td><td><strong>454 文件 / 3.9MB</strong></td><td><strong>精选源码资产</strong>（原文/脚手架/工作坊/部署参考）</td></tr>
+  <tr><td><code>.github/workflows/rebuild.yml</code></td><td>1</td><td>GitHub Actions 自动重建</td></tr>
+  <tr><td><code>README.md / LICENSE / .gitignore / .nojekyll</code></td><td>4</td><td>GitHub 发布配套</td></tr>
   <tr><td><code>research/</code></td><td>3 文件</td><td>内容来源与桥接设计依据</td></tr>
   <tr><td><code>quality-gate.md</code></td><td>1</td><td>七项门控全部通过</td></tr>
   <tr><td><code>report.md / report.html</code></td><td>2</td><td>本报告双版本</td></tr>
 </table>
-<p>根入口 <code>index.html</code>：统计 38 节点 / 16 组 / 61 边，12+12+10+4 构成，快速开始指引。</p>
+<ul>
+  <li><strong>GitHub 仓库</strong>：<a href="https://github.com/zako-mio/12-factor-methodology-kg">zako-mio/12-factor-methodology-kg</a>（公开，2 次发布提交：完整交付 → 内容扩充+源码融入）</li>
+  <li><strong>GitHub Pages</strong>：<a href="https://zako-mio.github.io/12-factor-methodology-kg/">在线可浏览</a>（含 08-source 源码）</li>
+  <li><strong>git 历史</strong>：6 次提交（feat 完整交付 / docs 发布准备 / chore LICENSE+Actions / fix 拓扑稳定 / feat 内容扩充+源码融入 / chore 重建）</li>
+</ul>
 </div>
 
 <div class="section">
 <h2>五、反思 / 分析 / 建议</h2>
 <div class="lesson"><strong>用户中途补充"工具融入"需求验证了脚本链价值</strong>：数据更新 → 重跑 gen-*.py 即全量再生成（约 10 秒），无需手改任何页面。这正是保留 07-checkpoint 的意义。</div>
-<div class="lesson"><strong>硬编码文案陷阱</strong>：gen-index.py 中 3 处"15 组/34 节点"硬编码未随数据变化自动更新，靠人工 grep 才发现。教训：生成脚本中的统计类文案应一律从 DAG meta 动态取数，不写死数字（已修复）。</div>
-<div class="lesson"><strong>MD 镜像曾被遗漏</strong>：子Agent 生成的 6 个脚本未覆盖 06-md（设计决策 12 要求）。主Agent 补写 gen-md.py。教训：委派 prompt 应显式列出全部交付物清单并逐一核对，不能默认子Agent 全覆盖。</div>
+<div class="lesson"><strong>硬编码文案陷阱</strong>：gen-index.py 中 3 处"15 组/34 节点"硬编码未随数据变化自动更新。教训：生成脚本中的统计类文案应一律从 DAG meta 动态取数，不写死数字（已修复）。</div>
+<div class="lesson"><strong>MD 镜像曾被遗漏</strong>：子Agent 生成的 6 个脚本未覆盖 06-md。教训：委派 prompt 应显式列出全部交付物清单并逐一核对。</div>
 <ul>
-  <li><strong>工具节点是加分项</strong>：create-12-factor-agent 模板、walkthroughgen、工作坊材料让图谱从"纯理论原则"升级为"可实操方法论"，12factor.net 站点作为 App 原则参考实现补齐了 App 侧工具视角。</li>
-  <li><strong>桥接主题设计是灵魂</strong>：10 个主题经 prerequisite（App→主题→Agent）构成"打通路径"，variant 标注语义对应——这是两套方法论合并的价值核心，也是后续扩展（如新增第 13 因子）的挂载点。</li>
+  <li><strong>工具节点是加分项</strong>：create-12-factor-agent 模板、walkthroughgen、工作坊材料让图谱从"纯理论原则"升级为"可实操方法论"。</li>
+  <li><strong>桥接主题设计是灵魂</strong>：10 个主题经 prerequisite 构成"打通路径"，variant 标注语义对应——这是两套方法论合并的价值核心。</li>
 </ul>
+<div class="phase"><strong>后续阶段反思</strong>：<br>
+6. <strong>用方法论审查产物本身是高效的质量手段</strong>：用户要求"应用 12 Factor 原则检查图谱库"——立刻抓出 3 个常规验证发现不了的缺陷（无 .git、硬依赖外部 vendor、硬编码路径）。可再构建性（V）与依赖显式化（II）的审视视角可直接复用。<br>
+7. <strong>构建可复现性必须防"环境漂移"</strong>：Actions 重建产生额外提交的根因是 gen-md.py 用 set 无序遍历。"重建后 diff 为零"是验证可复现性的黄金标准，也天然防 Actions 重建循环。<br>
+8. <strong>委派内容的"深度预期"要显式设定</strong>：第一轮 17KB 摘要级（用户不满），第二轮明确"每节点 1500-3000 字 + 忠实原文 + 保留技术细节"产出 105KB。内容类委派 prompt 必须显式给出字数下限与忠实度要求。<br>
+9. <strong>精选复制 vs 全量复制的决策需量化论证</strong>：全量 109M（80% 低价值内容）vs 精选 2.3M（100% 方法论+工具核心），用"对学习实践的价值"逐类分析。<br>
+10. <strong>GitHub workflow scope 的坑</strong>：首次推送含 <code>.github/workflows/</code> 会被 GitHub 拒绝（token 需 <code>workflow</code> scope）；且授权走代理才能成功（境外访问）。<br>
+11. <strong>用户期望的动态演进</strong>：从"合并方法论"→"上传分享"→"内容详细准确"→"融入源码资产+AI 可调用索引"。脚本链+数据驱动架构使每次演进都是增量（改数据→重跑→推送），而非推翻重来，这是本任务最大的架构红利。</div>
 </div>
 
 </body>
