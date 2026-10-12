@@ -4,6 +4,12 @@ name: Rebuild Deliverables
 # 生成产物位于 02-node-pages/ 03-groups/ 05-views/ 04-interactive/ 06-md/ index.html，
 # 因 paths 过滤只匹配源文件，产物提交不会再次触发本工作流（防循环）。
 # Pages 由 master 分支 root 构建，master 更新后 GitHub 自动重新部署。
+#
+# ★ 第 1 轮 b 新增「Gate tokens」步（令牌门控），位置是**硬约束**：
+#   必须在「Rebuild all deliverables」**之后**、「Commit regenerated deliverables」**之前**。
+#   放在重生成之前 ⇒ 判的是上一次的产物（等于没判）；放在回写之后 ⇒ 坏产物已经进 master。
+#   ⛔ 发布形态本身（产物入库 + 回写 master + 单 job）**未改动**：ADR-003 §七已把本站的发布形态
+#   收敛显式排除为后续独立议题，本步只往既有管线里插一步（该站方案 Q2-A 同此）。
 
 on:
   push:
@@ -37,6 +43,23 @@ jobs:
           python3 gen-interactive.py
           python3 gen-index.py
           python3 gen-md.py
+
+      - name: Gate tokens (report mode)
+        # ★ 令牌门控：判据 G1–G10 见 gate_tokens.py；清单登记 gate-manifest.json；
+        #   扫描面/目标由 build/profile.json 决定。脚本与值件都是**仓内版本化**的薄副本
+        #   （vendor/，ADR-003 条款六：⛔ 不依赖工作站绝对路径或仓外输入）。
+        # 执行强度＝Qc 裁定 A（首轮报告模式）：本站接入前**从未跑过任何设计判据**，先记基线。
+        #   ⛔ 不是放宽阈值换绿灯：判据与阈值一字未改。空集守卫（G1）不随报告模式放宽，
+        #   致盲即 exit 1 ⇒ 本步会失败、回写被挡（「报告模式全绿」不能是假绿）。
+        # 转硬条件见 build/profile.json 的 gates.mode_now_transition。
+        run: |
+          python3 gate_tokens.py --site-root . --manifest gate-manifest.json --mode report \
+            --baseline-out "$RUNNER_TEMP/gate-baseline.json"
+          echo "----- 门控基线（报告模式，随 run 留档） -----"
+          cat "$RUNNER_TEMP/gate-baseline.json"
+          echo "----- 门控清单双向校验 -----"
+          python3 vendor/pipeline/check_gate_manifest.py --manifest gate-manifest.json \
+            --profile build/profile.json
 
       - name: Commit regenerated deliverables
         run: |

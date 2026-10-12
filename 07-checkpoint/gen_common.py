@@ -155,7 +155,7 @@ def edge_chip(e, node_id, node_by_id, other_dir_ok=True):
 
 # ---------------------------------------------------------------- 共享 CSS
 BASE_CSS = """
-:root{--bg:#0f1117;--panel:#161a22;--border:#2a2f3a;--text:#e6e8ee;--dim:#9aa3b2;--accent:#4f8cff;--ok:#2fb98a;--warn:#e8933b;--err:#c0504d;}
+:root{--text:#e6e8ee;--dim:#9aa3b2;--accent:#4f8cff;--border:#6b7280;--border-subtle:#2a2f3a;--bg:#0f1117;--panel:#161a22;--ok:#2fb98a;--warn:#e8933b;--err:#e05563;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,'PingFang SC','Microsoft YaHei',sans-serif;line-height:1.7;}
 header{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 24px;}

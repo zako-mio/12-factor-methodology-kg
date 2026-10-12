@@ -1,0 +1,132 @@
+{
+  "site": "12-factor-methodology-kg",
+  "site_number": "10",
+  "repo": "zako-mio/12-factor-methodology-kg",
+  "default_branch": "master",
+  "form": "inline-single-source",
+  "form_reason": "本站实测外链 CSS = 0、每页内联 <style> 1 块、仓内 .css 文件 0 ⇒ 形态 2（主动选择：单文件交付是既有形态）。SH1 §4.5.2 逐站表登记为「形态 2（主动选择）」。第 1 轮 b 未改形态（⛔ 不引入外链 CSS，见 SH1 §4.5 三态）。",
+  "publish_dir": ".",
+  "publish_dir_shape": "root",
+  "value_file": "pipeline/values/12-factor-methodology-kg.json",
+  "local_clone": "",
+  "local_clone_note": "★ 站点仓内不设本地克隆：AUD 侧的 C12（克隆 HEAD 与工作树对账）依赖仓外路径，在 GitHub Actions 上不成立 ⇒ 站点侧改由 gate_tokens.py 判，骨架契约门控留在 AUD 侧跑（tools/verify_batch_d.py D9）。",
+  "generator_dirs": [
+    "07-checkpoint"
+  ],
+  "generator_commands": [
+    "python3 gen-nodes.py",
+    "python3 gen-groups.py",
+    "python3 gen-views.py",
+    "python3 gen-interactive.py",
+    "python3 gen-index.py",
+    "python3 gen-md.py"
+  ],
+  "build_cwd": "07-checkpoint",
+  "python_version": "3.11",
+  "targets": [
+    {
+      "path": "07-checkpoint/gen_common.py",
+      "mode": "root-block",
+      "family": "default",
+      "frozen_sha256": null,
+      "note": "族默认：BASE_CSS 常量内的 :root 块。★ **生成器源码**（源），不是产物 —— 改它才能在重生成后保持。"
+    },
+    {
+      "path": "07-checkpoint/gen-interactive.py",
+      "mode": "root-block",
+      "family": "04-interactive",
+      "frozen_sha256": null,
+      "note": "★ 第 1 轮 b 新增的**源**目标：该生成器自持 :root 块（CSS 常量，:114 起）。改动前只把产物 04-interactive/index.html 列为目标 ⇒ 派生产物会在下次重生成时被源里的旧字面值打回（**静默回退通道**）。"
+    },
+    {
+      "path": "04-interactive/index.html",
+      "mode": "root-block",
+      "family": "04-interactive",
+      "frozen_sha256": null,
+      "note": "页面族覆盖的**产物**面：--warn=#e0c35e 与 --danger=#e05563 在本族独立于默认族。源与产物同族 ⇒ C9 会同时对账两侧。"
+    },
+    {
+      "path": "05-views/index.html",
+      "mode": "root-block",
+      "family": "05-views",
+      "frozen_sha256": null,
+      "note": "本族取值与默认族一致（产物由 gen-views.py 引用 BASE_CSS 得到，故本族无须源目标）。"
+    },
+    {
+      "path": "index.html",
+      "mode": "root-block",
+      "family": "index",
+      "frozen_sha256": null,
+      "note": "★ 第 1 轮 b 新增族与目标：根首页。改动前它持有**第三份自持块**（7 令牌、无 --warn/--err）；现由 gen-index.py 从 gen_common.BASE_CSS 取（该文件的块在 .format 模板内、双大括号，无法被 root-block 写手定位，故不列为源目标）。"
+    }
+  ],
+  "page_families": [
+    {
+      "glob": "02-node-pages/*.html",
+      "family": "default",
+      "note": "38 页，由 gen-nodes.py 引用 gen_common.BASE_CSS 产出。"
+    },
+    {
+      "glob": "03-groups/*.html",
+      "family": "default",
+      "note": "17 页（16 组页 + 目录页），由 gen-groups.py 引用 BASE_CSS 产出。★ 批 D 曾登记「03-groups 的令牌结构未抽样」，第 1 轮 b 已实测：与 02-node-pages 同构。"
+    },
+    {
+      "glob": "05-views/*.html",
+      "family": "05-views",
+      "note": "4 页，由 gen-views.py 引用 BASE_CSS 产出（本族无 overrides ⇒ 取值与默认族一致）。"
+    },
+    {
+      "glob": "04-interactive/*.html",
+      "family": "04-interactive",
+      "note": "1 页，由 gen-interactive.py 自持 CSS 块产出（本族有 overrides）。"
+    },
+    {
+      "glob": "index.html",
+      "family": "index",
+      "note": "1 页，由 gen-index.py 从 gen_common.BASE_CSS 取令牌块产出。"
+    }
+  ],
+  "page_families_note": "★ 站点侧 gate_tokens.py 的扫描面**只由本表决定**：本表覆盖 61 个 HTML（= 62 个 HTML 减去 no_root_pages 的 1 个）。⛔ 表外新增页不会「默认通过」——G1 会把「glob 未命中/解析出 0 令牌」判为门控致盲。",
+  "no_root_pages": [
+    "report.html"
+  ],
+  "no_root_pages_note": "report.html 是仓内**手写**的审计报告（无 <style>、无 :root）⇒ 声明为「确实无 :root」；G10 的反向判据会检查它**真的**没有 :root（若哪天有人给它加了 :root 而没更新本表，即 FAIL）。",
+  "single_source_invariants": {
+    "base_css_module": "07-checkpoint/gen_common.py",
+    "base_css_attr": "BASE_CSS",
+    "literal_free_generators": [
+      "07-checkpoint/gen-index.py"
+    ],
+    "note": "★ 本步「建单源」的可机检形态：① gen_common.BASE_CSS 的**首个非空行**必须就是 `:root{...}` 块（gen-index.py 按此约定取用）；② gen-index.py 不得再持有任何令牌字面值块。两条由 gate_tokens.py 的 G8 判据实测（含 subprocess 真导入）。"
+  },
+  "gate_entry": "gate_tokens.py",
+  "gates": {
+    "manifest": "gate-manifest.json",
+    "hard_blocking": [
+      "token-consistency",
+      "contrast",
+      "empty-set-guard",
+      "artifact-existence"
+    ],
+    "report_only": [
+      "dead-css",
+      "a11y",
+      "responsive",
+      "metadata"
+    ],
+    "mode_now": "report",
+    "mode_now_reason": "★ Qc 裁定 A：本站**从未跑过任何设计判据**，首轮以报告模式记基线，逐类转硬阻断。⛔ 这不是「放宽阈值换绿灯」——判据与阈值一字未改，只是执行强度分阶段；空集守卫（G-blind）不随报告模式放宽。",
+    "mode_now_transition": "转硬触发条件：连续两轮 rebuild 的 gate_tokens 报告无新增 FAIL 类，则由本轮结论件逐类转 hard 并更新 gate-manifest.json 的 mode 字段。",
+    "commands": [
+      "python3 gate_tokens.py --site-root . --manifest gate-manifest.json",
+      "python3 vendor/pipeline/check_gate_manifest.py --manifest gate-manifest.json --profile build/profile.json"
+    ],
+    "commands_note": "★ 站点侧只跑这两条。**不**在站点 CI 里调 `check_site_tokens.py`：它的 C12 要读 `~/opencode/projects/fe-starter-kit` 与本地克隆，在 GitHub Actions 上必然 FAIL（判据成立但环境不成立）⇒ 骨架级契约门控留在 AUD 侧跑（tools/verify_batch_d.py D9），站点侧由 gate_tokens.py 承担本站判据。"
+  },
+  "non_target_guard": {
+    "kind": "rules-segment",
+    "regex": ":root\\s*\\{[^{}]*\\}",
+    "note": "★ 本站 gen_common.py 的 BASE_CSS 是「令牌块 + 大量布局规则」同处一个常量 ⇒ 必须用非目标段 sha256 判据证明只动了令牌块。"
+  }
+}

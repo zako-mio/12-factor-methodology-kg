@@ -4,9 +4,17 @@
 import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gen_common import ROOT, TITLE, SUBTITLE, load_all, esc
+from gen_common import ROOT, TITLE, SUBTITLE, load_all, esc, BASE_CSS
 
 OUT = os.path.join(ROOT, 'index.html')
+
+# ------------------------------------------------------------------ 令牌单源
+# ★ 本页令牌块**不再自持字面值**：直接取 gen_common.BASE_CSS 的首行（该行即 `:root{...}` 块）。
+#   BASE_CSS 的令牌块由 pipeline 的派生器从站点值件写入，故本站的令牌字面值只有
+#   gen_common.BASE_CSS（default 族）与 gen-interactive.CSS（04-interactive 族）两处来源，
+#   本文件不再持有第三份。不变量（BASE_CSS 首个非空行即 :root 块）由仓内 gate_tokens.py
+#   的 G9 判据看住（见 gate-manifest.json）。
+ROOT_TOKENS = BASE_CSS.strip().split('\n', 1)[0]
 
 
 def main():
@@ -51,7 +59,7 @@ def main():
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} — 总览入口</title>
 <style>
-  :root {{ --bg:#0f1117; --panel:#161a22; --border:#2a2f3a; --text:#e6e8ee; --dim:#9aa3b2; --accent:#4f8cff; --ok:#2fb98a; }}
+  {root_tokens}
   * {{ box-sizing:border-box; margin:0; padding:0; }}
   body {{ background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,'PingFang SC','Microsoft YaHei',sans-serif; line-height:1.7; }}
   header {{ background:var(--panel); border-bottom:1px solid var(--border); padding:28px 32px; }}
@@ -104,7 +112,7 @@ def main():
 </body>
 </html>
 """.format(title=esc(TITLE), subtitle=esc(SUBTITLE), src_desc='，'.join(src_desc),
-           stats=stats, cards=cards, quick=quick)
+           stats=stats, cards=cards, quick=quick, root_tokens=ROOT_TOKENS)
     with open(OUT, 'w', encoding='utf-8') as f:
         f.write(html)
     print('root index written')

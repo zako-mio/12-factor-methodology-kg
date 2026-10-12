@@ -1,0 +1,56 @@
+{
+  "site": "12-factor-methodology-kg",
+  "schema_note": "范式沿用 hub 的 scripts/check_ci_manifest.py（见 AUD 侧 pipeline/check_gate_manifest.py 的 M1–M6）。★ 本文件由**站点仓内**版本化，⛔ 不含任何豁免/白名单字段（M4 会主动拒绝 waivers/exempt/allow/skip/ignore 一类键）。",
+  "generated_by": "第 1 轮 b（首个真实站点改动）；判据实现见仓根 gate_tokens.py 的 G1–G10",
+  "gates": [
+    {
+      "id": "gate-tokens",
+      "script": "gate_tokens.py",
+      "reads": [
+        "各页面内联 <style> 里的首个 :root{...} 令牌块（扫描面由 build/profile.json 的 page_families 决定）",
+        "生成器源码：07-checkpoint/gen_common.py（BASE_CSS）与 07-checkpoint/gen-interactive.py（CSS）",
+        "值件：vendor/pipeline/values/12-factor-methodology-kg.json（含 dead_tokens 登记表）",
+        "profile：build/profile.json（targets / page_families / no_root_pages / single_source_invariants）"
+      ],
+      "selftest": true,
+      "mode": "report",
+      "mode_note": "★ Qc 裁定 A：首轮报告模式（本站接入前从未跑过任何设计判据）。转硬条件见 build/profile.json 的 gates.mode_now_transition。空集守卫（G1）不随此模式放宽。",
+      "judges": [
+        {"id": "G1", "name": "空集守卫（扫描面/族/令牌名均非空）", "class": "blind"},
+        {"id": "G2", "name": "族内唯一值（同族同名同值；⛔ 不判全站唯一值）", "class": "hard"},
+        {"id": "G3", "name": "派生一致性（页面与生成器源的首个 :root 块 == 值件派生）", "class": "hard"},
+        {"id": "G4", "name": "跨族差异逐族登记", "class": "hard"},
+        {"id": "G5", "name": "border 分档极性（强 > 弱）", "class": "hard"},
+        {"id": "G6", "name": "成对对比度（按 usage_tiers 的 min_contrast 与 gate 逐档）", "class": "hard/report"},
+        {"id": "G7", "name": "零引用令牌登记（站点级 hard / 页级 report；登记不得过期）", "class": "hard/report"},
+        {"id": "G8", "name": "生成器单源不变量", "class": "hard"},
+        {"id": "G9", "name": "未声明令牌（盘上 ⊆ 值件声明面）", "class": "hard"},
+        {"id": "G10", "name": "目标存在性（targets 全在 ＋ no_root_pages 真的无 :root）", "class": "hard"}
+      ],
+      "not_enforced_here": [
+        "C1–C12 骨架级契约门控（值件 schema / 幂等 / 改动前令牌集覆盖 / 克隆零改动）——在 AUD 侧跑（tools/verify_batch_d.py D9），⛔ 不复制到站点侧：C12 依赖仓外的本地克隆与 fe-starter-kit，在 Actions 上必然 FAIL（判据成立但环境不成立）",
+        "三 job 发布形态（ADR-003）——本站发布形态未收敛（Qd 裁定 A）"
+      ]
+    },
+    {
+      "id": "manifest-check",
+      "script": "check_gate_manifest.py",
+      "reads": [
+        "本清单与 build/profile.json 的 gates.commands 的**双向**一致性（登记⇒被调用 / 被调用⇒登记）",
+        "清单项数、命令数、每项的 reads 与 selftest 声明、未覆盖面声明"
+      ],
+      "selftest": true,
+      "mode": "hard",
+      "note": "本项是清单自身的守门人（vendored 薄副本，AUD 侧 pipeline/check_gate_manifest.py 为唯一真相源）。"
+    }
+  ],
+  "not_covered": [
+    "★ 三 job 发布形态未验（本站不采用；其真实 Actions 运行亦未验——本机无 actionlint）",
+    "像素层视觉回归未测（agent-browser 不在 PATH）⇒ 只做到「计算样式解析值」层",
+    "CSS 规则级「死选择器」未测（G7 只测令牌引用面，不测选择器命中面）",
+    "运行期由 JS 动态拼出的 var() 引用未形式化证明（本站 JS 不拼 CSS 变量，但未证明）",
+    "无障碍 / 响应式 / SEO 元数据未纳入判据（属本站标准档 §4.2 第 3–4 步，不在最小档）",
+    "px→rem 单位体系迁移未纳入（C6-N12，属理想档）",
+    "『门控真的在真实 Actions 上跑过』本轮未验：本步只做到「本地对仓内现状实跑 0 阻断级 FAIL ＋ 静态核对 workflow 步骤顺序」"
+  ]
+}

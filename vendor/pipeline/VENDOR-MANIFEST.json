@@ -1,0 +1,20 @@
+{
+  "site": "12-factor-methodology-kg",
+  "source": "AUD pipeline/（唯一真相源）",
+  "generated_by": "evidence/e/tools/vendor_into_site.py",
+  "note": "薄副本：sha256 由站点侧 check_gate_manifest.py 的「登记⇒被调用」一侧看住；⛔ 不在此处改语义。",
+  "files": {
+    "vendor/pipeline/derive_site_tokens.py": "bd1bd4266776daea72ba3af1c258ece2b8cdaaa01658a2f8af7140c40b8ccada",
+    "vendor/pipeline/write_site_tokens.py": "5d6158650baaf97ec0c51695574e138a9178f4cd863318e20f177079f376b06a",
+    "vendor/pipeline/check_site_tokens.py": "9455c9106f40416ca9239a610670722ec1d464c0754f5790b841d340425798ca",
+    "vendor/pipeline/check_gate_manifest.py": "aa458eeefd5c929f285cd229334945aab2b37fed644c3c876360f269cf44ab9d",
+    "vendor/pipeline/check_workflow_contract.py": "16e86e1a6503e6bd76cfa06da78f67cf023b83531da4ab360b2245246921adae",
+    "vendor/pipeline/site-value-contract.schema.json": "30a73f90290ce8d547a3c77f75c62659ad6e736d56666329351b913af74d870d",
+    "vendor/pipeline/site-profile.schema.json": "4a4c505b32e0e27f9817e7f0029919544f483afcd953597468a9d2571638472e",
+    "vendor/pipeline/workflow-3job.template.yml": "c7d6bd6d69a066d07e6ef6e0db917995cf805db541348cc8f4062b451603fb1f",
+    "vendor/pipeline/values/12-factor-methodology-kg.json": "2483ddeb60427b6967023249c4059be776adea3ff49b880d1dc91954eb70aa81",
+    "vendor/pipeline/profiles/12-factor-methodology-kg.json": "5b1733c2afe0640f2c136a4c42c91e82a56983c0d58ef5cd5344bb9981ca65a0",
+    "build/profile.json": "5b1733c2afe0640f2c136a4c42c91e82a56983c0d58ef5cd5344bb9981ca65a0",
+    "vendor/tools/contrast.py": "1b9291c935b0db1d8901f1cafcc1c29681b86061f4164496401af0b45b9e01c7"
+  }
+}
