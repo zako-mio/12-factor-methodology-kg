@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="可处置性 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 快速启动与优雅终止，最大化鲁棒性 十二要素应用的进程是可处置（disposable）的：可随时启动或停止，这促成快速弹性扩展、代码/config。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="可处置性 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="可处置性 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 快速启动与优雅终止，最大化鲁棒性 十二要素应用的进程是可处置（disposable）的：可随时启动或停止，这促成快速弹性扩展、代码/config。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-disposability.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-disposability.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>可处置性 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GA.html">12 Factor App 体系</a> / <span>可处置性</span></div>
   <h1>可处置性</h1>
   <div class="badges"><span class="badge src" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">App 体系</span><span class="badge st" style="color:#e0a75e;background:#332412;border-color:#e8933b">进阶</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GA · 12 Factor App 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GA"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GA.html"><span class="dir">返回组</span><span class="v">12 Factor App 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">快速启动与优雅终止，最大化鲁棒性</div><div class="bullet">十二要素应用的进程是可处置（disposable）的：可随时启动或停止，这促成快速弹性扩展、代码/config 变更的快速部署以及生产 deploy 的健壮性。</div><div class="bullet">进程应尽量最小化启动时间：理想情况下从启动命令执行到进程就绪接收请求或任务只需几秒，这使弹性扩展与频繁部署成为可能。</div><div class="bullet">短启动时间为 release 过程与扩容提供更多敏捷性，也因进程管理器更易把进程搬到新物理机而增强健壮性。</div><div class="bullet">进程收到进程管理器发出的 SIGTERM 信号时优雅关闭，完成善后工作再退出，是生产环境健壮性的重要保障之一。</div><div class="bullet">web 进程的优雅关闭：停止监听服务端口（拒绝新请求）、允许当前请求完成、然后退出，任务与请求因此能在任何进程变更下安全完成。</div><div class="bullet">该模型隐含 HTTP 请求应短（不超过几秒）；长轮询场景下客户端应在连接丢失时无缝尝试重连，崩溃或重启的影响被控制在最小范围。</div><div class="bullet">worker 进程的优雅关闭：把当前任务归还工作队列，如 RabbitMQ 上发送 NACK，Beanstalkd 上 worker 断连时任务自动归队。</div><div class="bullet">锁型系统如 Delayed Job 需确保释放任务记录上的锁，否则任务被永久卡住，让进程迁移与故障恢复都快速而安全。</div><div class="bullet">该模型隐含所有任务可重入（reentrant），通常经把结果包进事务或使操作幂等实现，从机制上保证不丢任务、不重任务。</div><div class="bullet">进程还应健壮应对突然死亡（底层硬件故障时）：比 SIGTERM 优雅关闭更罕见但可能发生，优雅关闭与快速启动共同支撑了高可用设计。</div><div class="bullet">推荐用健壮队列后端（如 Beanstalkd），客户端断连或超时时任务自动归队；Crash-only design 把此概念推向逻辑终点。</div></div>
 

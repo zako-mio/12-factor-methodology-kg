@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="掌控你的 Prompt · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor Agent 体系 交互图 打开总览 What · 是什么 像管理代码一样版本化、测试、部署 prompt 不要把 prompt 工程外包给框架，这是本因子最核心的一句话：prompt。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="掌控你的 Prompt · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="掌控你的 Prompt · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor Agent 体系 交互图 打开总览 What · 是什么 像管理代码一样版本化、测试、部署 prompt 不要把 prompt 工程外包给框架，这是本因子最核心的一句话：prompt。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/ag-prompts.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/ag-prompts.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>掌控你的 Prompt · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GB.html">12 Factor Agent 体系</a> / <span>掌控你的 Prompt</span></div>
   <h1>掌控你的 Prompt</h1>
   <div class="badges"><span class="badge src" style="color:#ff8a97;background:#3a1520;border-color:#e05563">Agent 体系</span><span class="badge st" style="color:#2fb98a;background:#122b22;border-color:#2fb98a">基础</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GB · 12 Factor Agent 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GB"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GB.html"><span class="dir">返回组</span><span class="v">12 Factor Agent 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">像管理代码一样版本化、测试、部署 prompt</div><div class="bullet">不要把 prompt 工程外包给框架，这是本因子最核心的一句话：prompt 必须由你亲自掌控，而不是交给黑盒。</div><div class="bullet">框架常提供『黑盒』式抽象，如 agent = Agent(role=…, goal=…, personality=…, tools=[…]) 加 task = Task(instructions=…) 后 agent.run(task)。</div><div class="bullet">黑盒方式适合快速起步，能借用顶级 prompt 工程经验，但往往难以调优，也无法逆向工程出『到底把哪些 token 送进了模型』。</div><div class="bullet">替代方案：把 prompt 当作一等公民代码对待，用带类型签名的函数表达，例如 Rust 风格函数声明返回 DoneForNow | ListGitTags 等联合类型。</div><div class="bullet">原文用 BAML 生成 prompt：在模板里用 {{ _.role(&quot;system&quot;) }} / {{ _.role(&quot;user&quot;) }} 组织角色与内容，通过类型签名约束输出。</div><div class="bullet">签名看起来『有点怪』的部分会在 factor 4（工具即结构化输出）得到解释——函数返回的联合类型就是工具集合。</div><div class="bullet">prompt 是应用逻辑与 LLM 之间的主接口，谁掌控 prompt，谁就掌控了 Agent 行为的最终决定权与可调性。</div><div class="bullet">原文引用 Hamel 的博客，强调『这是远非新颖的建议』，即掌控 prompt 早已是被反复验证的工程常识。</div><div class="bullet">prompt 内容直接决定模型能调用哪些工具、按什么顺序思考、何时请求人类介入，是所有后续因子落实的落点。</div></div>
 

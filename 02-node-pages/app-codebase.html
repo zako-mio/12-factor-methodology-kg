@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="代码库 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 一个代码库，多环境部署，版本控制跟踪一切 十二要素应用总是被版本控制系统（VCS）跟踪，例如 Git、Mercurial 或 Subversion。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="代码库 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="代码库 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 一个代码库，多环境部署，版本控制跟踪一切 十二要素应用总是被版本控制系统（VCS）跟踪，例如 Git、Mercurial 或 Subversion。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-codebase.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-codebase.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>代码库 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GA.html">12 Factor App 体系</a> / <span>代码库</span></div>
   <h1>代码库</h1>
   <div class="badges"><span class="badge src" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">App 体系</span><span class="badge st" style="color:#2fb98a;background:#122b22;border-color:#2fb98a">基础</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GA · 12 Factor App 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GA"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GA.html"><span class="dir">返回组</span><span class="v">12 Factor App 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">一个代码库，多环境部署，版本控制跟踪一切</div><div class="bullet">十二要素应用总是被版本控制系统（VCS）跟踪，例如 Git、Mercurial 或 Subversion；修订跟踪数据库的一份副本称为代码仓库，常简写为 code repo 或 repo。</div><div class="bullet">codebase 指任意单个仓库（如集中式 VCS 的 Subversion），或共享同一根提交的一组仓库（如去中心化 VCS 的 Git）。</div><div class="bullet">codebase 与应用之间永远存在一对一关系：若存在多个 codebase，那它不是应用而是分布式系统，分布式系统的每个组件各自是独立应用，可各自符合十二要素。</div><div class="bullet">多个应用共享同一份代码是十二要素的违规行为，正确解法是把共享代码抽取为库，经依赖管理器引入，而非在各应用中复制。</div><div class="bullet">一个应用只有一个 codebase，但会有许多 deploy；deploy 是应用的一个运行实例，通常是生产站点加一个或多个预发布（staging）站点。</div><div class="bullet">每位开发者的本地开发环境也各自运行一份应用副本，每份副本同样算作一个 deploy，是同一应用的多个运行实例之一。</div><div class="bullet">所有 deploy 共享同一 codebase，尽管各 deploy 可能运行不同版本：例如开发者有尚未部署到 staging 的提交，staging 有尚未部署到生产的提交。</div><div class="bullet">正因为所有 deploy 共享同一 codebase，它们才可被识别为同一应用的不同 deploy，各处版本差异因此清晰可追踪、可解释。</div></div>
 

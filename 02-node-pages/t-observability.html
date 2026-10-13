@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="可观测性与错误可见性 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 可观测性与错误可见性 交互图 打开总览 What · 是什么 运行可见性是传统日志与 Agent 错误压缩的共同目标 App 把日志视为聚合、有序的事件流，而非文件；关注可见性而非存储格式（logs.md）。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="可观测性与错误可见性 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="可观测性与错误可见性 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 可观测性与错误可见性 交互图 打开总览 What · 是什么 运行可见性是传统日志与 Agent 错误压缩的共同目标 App 把日志视为聚合、有序的事件流，而非文件；关注可见性而非存储格式（logs.md）。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-observability.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-observability.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>可观测性与错误可见性 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GT04.html">可观测性与错误可见性</a> / <span>可观测性与错误可见性</span></div>
   <h1>可观测性与错误可见性</h1>
   <div class="badges"><span class="badge src" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge st" style="color:#c9a8ef;background:#2b2040;border-color:#b48ae0">高级</span><span class="badge tp" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge grp">GT04 · 可观测性与错误可见性</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GT04"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GT04.html"><span class="dir">返回组</span><span class="v">可观测性与错误可见性</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">运行可见性是传统日志与 Agent 错误压缩的共同目标</div><div class="bullet">App 把日志视为聚合、有序的事件流，而非文件；关注可见性而非存储格式（logs.md）</div><div class="bullet">Agent 把错误压缩成事件回写上下文窗口，供模型在下一次决策中自愈（factor-09）</div><div class="bullet">运行可见性是排障、审计、趋势、告警的共同基础（logs.md）</div><div class="bullet">Agent 的自愈能力完全依赖错误消息可见：LLM 读错误后修正下一次工具调用（factor-09）</div><div class="bullet">App 的十二因子应用永不关心输出流的路由或存储（logs.md）</div><div class="bullet">Agent 的错误通过 format_error 摘要而非原始堆栈进入上下文（factor-09 代码）</div><div class="bullet">可观测性从辅助手段变为运行机制：App 事后分析，Agent 实时决策</div><div class="bullet">错误重试需设阈值防 spin-out：单工具约 3 次尝试上限（factor-09）</div></div>
 

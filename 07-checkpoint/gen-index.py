@@ -4,7 +4,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gen_common import ROOT, TITLE, SUBTITLE, load_all, esc, BASE_CSS
+from gen_common import ROOT, TITLE, SUBTITLE, load_all, esc, BASE_CSS, inject_shell
 
 OUT = os.path.join(ROOT, 'index.html')
 
@@ -119,6 +119,7 @@ def main():
 </html>
 """.format(title=esc(TITLE), subtitle=esc(SUBTITLE), src_desc='，'.join(src_desc),
            stats=stats, cards=cards, quick=quick, root_tokens=ROOT_TOKENS)
+    html = inject_shell(html, 'index.html')
     with open(OUT, 'w', encoding='utf-8') as f:
         f.write(html)
     print('root index written')

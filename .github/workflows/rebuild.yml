@@ -43,6 +43,8 @@ jobs:
           python3 gen-interactive.py
           python3 gen-index.py
           python3 gen-md.py
+          # ★ 批 J：站点级元信息产物（sitemap.xml + robots.txt）。确定性：⛔ 无 lastmod / 无墙钟时间戳。
+          python3 gen_sitemap_robots.py --root .. --repo 12-factor-methodology-kg
 
       - name: Gate tokens (report mode)
         # ★ 令牌门控：判据 G1–G10 见 gate_tokens.py；清单登记 gate-manifest.json；
@@ -54,7 +56,8 @@ jobs:
         # 转硬条件见 build/profile.json 的 gates.mode_now_transition。
         #
         # ★ 第 2 轮 批 H 标准档在**同一步**里新增四道门控（⛔ 不新建 CI、⛔ 不改 job 结构）：
-        #   dead-css / a11y / responsive / metadata —— 全部 report_only（Q7 裁定 A），
+        #   dead-css / responsive 仍 report_only；a11y / metadata 已由批 J（2026-10-14）**转硬档**
+#   （`gate-manifest.json` 的 mode=hard ＋ 脚本退出码；⛔ 未扩 site-profile.schema.json 的枚举），
         #   每道都带 --selftest 与空集守卫；未覆盖面逐条写在 gate-manifest.json 的
         #   not_enforced_here 与 not_covered（尤其：本机无浏览器 ⇒ 响应式只做静态判据）。
         run: |
@@ -64,11 +67,11 @@ jobs:
           cat "$RUNNER_TEMP/gate-baseline.json"
           echo "----- 死 CSS 门控（report_only） -----"
           python3 gate_dead_css.py --site-root . --profile build/profile.json
-          echo "----- 无障碍门控（report_only） -----"
+          echo "----- 无障碍门控（★ 批 J 转硬档 mode=hard，判据与阈值未改） -----"
           python3 gate_a11y.py --site-root . --profile build/profile.json
           echo "----- 响应式门控（report_only；★ 像素层未测） -----"
           python3 gate_responsive.py --site-root . --profile build/profile.json
-          echo "----- 元数据门控（report_only） -----"
+          echo "----- 元数据门控（★ 批 J 转硬档 mode=hard，判据与阈值未改） -----"
           python3 gate_seo_meta.py --site-root . --profile build/profile.json
           echo "----- 门控清单双向校验 -----"
           python3 vendor/pipeline/check_gate_manifest.py --manifest gate-manifest.json \

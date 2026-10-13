@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="端口绑定 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 通过端口绑定自含导出服务，不依赖注入的 Web 服务器 web 应用有时在 webserver 容器内执行：PHP 应用作为 Apache HT。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="端口绑定 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="端口绑定 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 通过端口绑定自含导出服务，不依赖注入的 Web 服务器 web 应用有时在 webserver 容器内执行：PHP 应用作为 Apache HT。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-port.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-port.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>端口绑定 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GA.html">12 Factor App 体系</a> / <span>端口绑定</span></div>
   <h1>端口绑定</h1>
   <div class="badges"><span class="badge src" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">App 体系</span><span class="badge st" style="color:#2fb98a;background:#122b22;border-color:#2fb98a">基础</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GA · 12 Factor App 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GA"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GA.html"><span class="dir">返回组</span><span class="v">12 Factor App 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">通过端口绑定自含导出服务，不依赖注入的 Web 服务器</div><div class="bullet">web 应用有时在 webserver 容器内执行：PHP 应用作为 Apache HTTPD 内的模块运行，Java 应用跑在 Tomcat 内。</div><div class="bullet">十二要素应用完全自包含，不依赖运行时注入 webserver 到执行环境来创建面向 web 的服务。</div><div class="bullet">web 应用通过绑定端口把 HTTP 作为服务导出，并监听该端口上到来的请求，契约简单清晰，这正是端口绑定模型的自包含体现。</div><div class="bullet">本地开发中开发者访问如 http://localhost:5000/ 的服务 URL 来使用应用导出的服务。</div><div class="bullet">部署中由 routing layer 处理从公开主机名到端口绑定 web 进程的请求路由，应用无需关心。</div><div class="bullet">典型实现：用依赖声明把 webserver 库加入应用，如 Python 的 Tornado、Ruby 的 Thin、Java/JVM 的 Jetty。</div><div class="bullet">webserver 库完全在 user space（应用代码内部）运行，与运行环境的契约就是绑定端口服务请求。</div><div class="bullet">HTTP 不是唯一可经端口绑定导出的服务：几乎任何服务器软件都能经进程绑定端口等待请求，如 ejabberd（XMPP）、Redis（Redis 协议）。</div><div class="bullet">端口绑定还意味着一个应用可成为另一应用的 backing service：把 backing app 的 URL 作为消费方 config 中的资源句柄即可。</div></div>
 

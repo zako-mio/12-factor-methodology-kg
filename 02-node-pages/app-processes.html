@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="进程 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 以一个或多个无状态进程执行应用 应用在运行环境中作为一个或多个进程执行；最简情形是独立脚本 + 本地笔记本运行时 + 命令行启动，如 python。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="进程 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="进程 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 以一个或多个无状态进程执行应用 应用在运行环境中作为一个或多个进程执行；最简情形是独立脚本 + 本地笔记本运行时 + 命令行启动，如 python。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-processes.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-processes.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>进程 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GA.html">12 Factor App 体系</a> / <span>进程</span></div>
   <h1>进程</h1>
   <div class="badges"><span class="badge src" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">App 体系</span><span class="badge st" style="color:#2fb98a;background:#122b22;border-color:#2fb98a">基础</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GA · 12 Factor App 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GA"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GA.html"><span class="dir">返回组</span><span class="v">12 Factor App 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">以一个或多个无状态进程执行应用</div><div class="bullet">应用在运行环境中作为一个或多个进程执行；最简情形是独立脚本 + 本地笔记本运行时 + 命令行启动，如 python my_script.py。</div><div class="bullet">复杂生产部署可含多种进程类型，实例化为零或多个运行进程，形成完整的运行拓扑，这使进程可以任意复制、迁移与水平扩展。</div><div class="bullet">十二要素进程是无状态、share-nothing 的：任何需持久化的数据存入有状态 backing service，通常是数据库。</div><div class="bullet">进程的内存空间或文件系统可作短暂的单事务缓存，如下载大文件、处理并把结果存入数据库，是应用横向扩展与弹性伸缩的前提条件。</div><div class="bullet">十二要素应用绝不假设缓存于内存或磁盘的东西在未来请求/任务中仍可用——多进程运行时，未来请求很可能由另一个进程处理。</div><div class="bullet">即使单进程，重启（代码部署、config 变更或运行环境把进程搬迁到不同物理位置）通常也会抹掉全部本地状态。</div><div class="bullet">django-assetpackager 等资源打包器把文件系统当编译资源的缓存，十二要素更倾向在 build 阶段完成编译。</div><div class="bullet">Jammit、Rails asset pipeline 可配置为在 build 阶段打包资源，避免运行期编译。</div><div class="bullet">sticky sessions（把用户会话数据缓存于进程内存并期待同访客被路由到同进程）是十二要素违规，绝不应使用或依赖。</div><div class="bullet">会话状态数据适合存入带时间过期的 datastore，如 Memcached 或 Redis，而非进程内存。</div></div>
 

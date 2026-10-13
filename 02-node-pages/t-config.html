@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="配置与可变性外置 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 配置与可变性外置 交互图 打开总览 What · 是什么 可变部分（环境变量 / prompt）外置于代码之外 App 的 config 是随 deploy 变化的一切：数据库/缓存句柄、外部服务凭据、每部署特。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="配置与可变性外置 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="配置与可变性外置 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 配置与可变性外置 交互图 打开总览 What · 是什么 可变部分（环境变量 / prompt）外置于代码之外 App 的 config 是随 deploy 变化的一切：数据库/缓存句柄、外部服务凭据、每部署特。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-config.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-config.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>配置与可变性外置 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GT03.html">配置与可变性外置</a> / <span>配置与可变性外置</span></div>
   <h1>配置与可变性外置</h1>
   <div class="badges"><span class="badge src" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge st" style="color:#c9a8ef;background:#2b2040;border-color:#b48ae0">高级</span><span class="badge tp" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge grp">GT03 · 配置与可变性外置</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GT03"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GT03.html"><span class="dir">返回组</span><span class="v">配置与可变性外置</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">可变部分（环境变量 / prompt）外置于代码之外</div><div class="bullet">App 的 config 是随 deploy 变化的一切：数据库/缓存句柄、外部服务凭据、每部署特有值（config.md）</div><div class="bullet">App 要求 config 与代码严格分离，代码常量式 config 明确违规（config.md）</div><div class="bullet">Agent 不把 prompt 工程外包给框架，prompt 应作为一等代码受控（factor-02）</div><div class="bullet">Agent 的 prompt 是应用逻辑与 LLM 之间的主接口，是 Agent 的配置面（factor-02）</div><div class="bullet">可变部分外置是版本化、回滚、审计的前提：App 外置运行时值，Agent 外置指令策略</div><div class="bullet">App 试金石：代码库能否随时开源而不泄露任何凭据（config.md）</div><div class="bullet">Agent 侧同样要求：prompt 可版本化、可回滚、可测试（factor-02）</div><div class="bullet">config 随部署变化而代码不变；prompt 随策略演进而逻辑不变</div><div class="bullet">内层可变点也需显式化：App 的 routes/模块连接留代码，Agent 的推理步骤留 prompt</div></div>
 

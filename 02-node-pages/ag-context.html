@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="掌控上下文窗口 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor Agent 体系 交互图 打开总览 What · 是什么 对上下文进行工程化管理（上下文工程） 你不需要拘泥于标准消息格式来向 LLM 传递上下文：『任何时刻，你给 LLM 的输入本质上就是。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="掌控上下文窗口 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="掌控上下文窗口 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor Agent 体系 交互图 打开总览 What · 是什么 对上下文进行工程化管理（上下文工程） 你不需要拘泥于标准消息格式来向 LLM 传递上下文：『任何时刻，你给 LLM 的输入本质上就是。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/ag-context.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/ag-context.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>掌控上下文窗口 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GB.html">12 Factor Agent 体系</a> / <span>掌控上下文窗口</span></div>
   <h1>掌控上下文窗口</h1>
   <div class="badges"><span class="badge src" style="color:#ff8a97;background:#3a1520;border-color:#e05563">Agent 体系</span><span class="badge st" style="color:#e0a75e;background:#332412;border-color:#e8933b">进阶</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GB · 12 Factor Agent 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GB"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GB.html"><span class="dir">返回组</span><span class="v">12 Factor Agent 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">对上下文进行工程化管理（上下文工程）</div><div class="bullet">你不需要拘泥于标准消息格式来向 LLM 传递上下文：『任何时刻，你给 LLM 的输入本质上就是：到目前为止发生了什么，下一步是什么』。</div><div class="bullet">一切都是上下文工程。LLM 是『把输入变成输出的无状态函数』，要得到最好的输出，就必须给它最好的输入。</div><div class="bullet">好的上下文包括：给模型的 prompt 与指令、检索到的文档或外部数据（如 RAG）、过去状态/工具调用/结果等历史、记忆、结构化输出指令。</div><div class="bullet">原文声明不讨论 temperature/top_p/frequency_penalty/presence_penalty 等采样参数，也不讨论训练模型或微调——本指南聚焦纯上下文构造。</div><div class="bullet">标准消息格式是 role=system/user/assistant/tool 的数组，assistant 消息里带 tool_calls（id/name/arguments），tool 消息用 tool_call_id 回传结果。</div><div class="bullet">替代方案：自建针对你用例优化的上下文格式，把自定义对象打包/展开进一个或多个 user/system/assistant/tool 消息中。</div><div class="bullet">原文示例把整个上下文窗口放进一条 user 消息：用 &lt;slack_message&gt;、&lt;list_git_tags&gt;、&lt;list_git_tags_result&gt; 等 XML 标签表达事件流。</div><div class="bullet">你可以完全控制『存什么 vs 传给 LLM 什么』：实验不同的上下文结构会带来明显的质量提升，这是上下文工程的核心杠杆。</div><div class="bullet">上下文窗口是你与 LLM 的主接口，掌控其结构能大幅提升 Agent 性能；原文给出信息密度对比图证明同语义可更少 token。</div><div class="bullet">发布约两月后『context engineering』流行：原文引用 Karpathy、Tobi 讨论与 @lenadroid 的 Context Engineering Cheat Sheet 佐证。</div></div>
 

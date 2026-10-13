@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="控制流与阶段治理 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 控制流与阶段治理 交互图 打开总览 What · 是什么 确定性控制流 / 阶段分离保证可预测交付 App 严格分离 build/release/run 三阶段，运行时不可能改代码（build-release-。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="控制流与阶段治理 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="控制流与阶段治理 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 控制流与阶段治理 交互图 打开总览 What · 是什么 确定性控制流 / 阶段分离保证可预测交付 App 严格分离 build/release/run 三阶段，运行时不可能改代码（build-release-。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-control.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-control.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>控制流与阶段治理 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GT06.html">控制流与阶段治理</a> / <span>控制流与阶段治理</span></div>
   <h1>控制流与阶段治理</h1>
   <div class="badges"><span class="badge src" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge st" style="color:#c9a8ef;background:#2b2040;border-color:#b48ae0">高级</span><span class="badge tp" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge grp">GT06 · 控制流与阶段治理</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GT06"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GT06.html"><span class="dir">返回组</span><span class="v">控制流与阶段治理</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">确定性控制流 / 阶段分离保证可预测交付</div><div class="bullet">App 严格分离 build/release/run 三阶段，运行时不可能改代码（build-release-run.md）</div><div class="bullet">Agent 控制流由确定性代码决定，LLM 只在决策点选路（factor-08）</div><div class="bullet">App 的 release 是不可变只追加账本，创建后不可变更（build-release-run.md）</div><div class="bullet">Agent 的 while-loop 中 async 步骤 break 等待、sync 步骤 continue 回环（factor-08）</div><div class="bullet">阶段分离/控制流治理共同目标：可预测、可回滚、可审计的交付</div><div class="bullet">App 每 release 有唯一 ID（时间戳或递增号），变更即新建（build-release-run.md）</div><div class="bullet">Agent 可在工具选择与执行之间插入审批等确定性中断（factor-08）</div><div class="bullet">确定性控制流是 reducer 语义、暂停恢复、错误压缩的前提（factor-08/09/12）</div></div>
 

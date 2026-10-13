@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="依赖与工具显式化 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 依赖与工具显式化 交互图 打开总览 What · 是什么 显式声明依赖 / 工具，不隐式依赖环境 App 显式声明并隔离全部依赖，绝不依赖系统级隐式包存在（dependencies.md） Agent 把工具建。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="依赖与工具显式化 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="依赖与工具显式化 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 依赖与工具显式化 交互图 打开总览 What · 是什么 显式声明依赖 / 工具，不隐式依赖环境 App 显式声明并隔离全部依赖，绝不依赖系统级隐式包存在（dependencies.md） Agent 把工具建。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-deps.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/t-deps.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>依赖与工具显式化 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GT05.html">依赖与工具显式化</a> / <span>依赖与工具显式化</span></div>
   <h1>依赖与工具显式化</h1>
   <div class="badges"><span class="badge src" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge st" style="color:#c9a8ef;background:#2b2040;border-color:#b48ae0">高级</span><span class="badge tp" style="color:#6fd3ae;background:#0f2b1f;border-color:#2fb98a">桥接主题</span><span class="badge grp">GT05 · 依赖与工具显式化</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GT05"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GT05.html"><span class="dir">返回组</span><span class="v">依赖与工具显式化</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">显式声明依赖 / 工具，不隐式依赖环境</div><div class="bullet">App 显式声明并隔离全部依赖，绝不依赖系统级隐式包存在（dependencies.md）</div><div class="bullet">Agent 把工具建模为 LLM 的结构化输出，触发确定性代码执行（factor-04）</div><div class="bullet">App 声明清单 + 隔离工具必须同时使用，仅其一不满足十二因子（dependencies.md）</div><div class="bullet">Agent 的工具即 intent schema：LLM 输出 JSON 描述确定性代码该做什么（factor-04）</div><div class="bullet">隐式依赖无法保证存在与版本兼容，这是两侧共同的显式化动机（dependencies.md）</div><div class="bullet">工具决策（LLM）与工具执行（代码）分离，使工具可组合可测试（factor-04）</div><div class="bullet">App shell out 系统工具需 vendored 而非假设存在（dependencies.md）</div><div class="bullet">Agent 的 BAML 工具类（Add/Subtract/Multiply/Divide）即声明式的工具清单（tool_calculator.baml）</div></div>
 

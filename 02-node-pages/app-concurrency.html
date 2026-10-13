@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="并发 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 通过进程模型横向扩展 任何计算机程序一经运行即由一个或多个进程表示；web 应用进程执行形态多样：PHP 进程作为 Apache 子进程按需启动。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="并发 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="并发 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 通过进程模型横向扩展 任何计算机程序一经运行即由一个或多个进程表示；web 应用进程执行形态多样：PHP 进程作为 Apache 子进程按需启动。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-concurrency.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-concurrency.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>并发 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GA.html">12 Factor App 体系</a> / <span>并发</span></div>
   <h1>并发</h1>
   <div class="badges"><span class="badge src" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">App 体系</span><span class="badge st" style="color:#e0a75e;background:#332412;border-color:#e8933b">进阶</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GA · 12 Factor App 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GA"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GA.html"><span class="dir">返回组</span><span class="v">12 Factor App 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">通过进程模型横向扩展</div><div class="bullet">任何计算机程序一经运行即由一个或多个进程表示；web 应用进程执行形态多样：PHP 进程作为 Apache 子进程按需启动。</div><div class="bullet">Java 走另一极端：JVM 提供一个启动时预留大块系统资源（CPU 与内存）的巨型 uberprocess，并发由内部线程管理。</div><div class="bullet">上述两种传统形态下，运行中的进程对应用开发者几乎不可见，运维与调试困难，这使并发扩展成为简单可靠的横向操作。</div><div class="bullet">十二要素中进程是一等公民，强烈借鉴 unix 运行服务 daemon 的进程模型来组织应用，是十二要素进程模型的核心优势所在。</div><div class="bullet">用该模型把每种工作指派给一种进程类型：HTTP 请求由 web 进程处理，长跑后台任务由 worker 进程处理。</div><div class="bullet">这不排除单进程内部多路复用：运行时 VM 内的线程，或 EventMachine、Twisted、Node.js 的 async/evented 模型。</div><div class="bullet">单个 VM 只能长到一定规模（纵向扩展），应用必须能跨多台物理机的多个进程运行（横向扩展），工作负载多样性因此得到清晰的结构化表达。</div><div class="bullet">进程模型在 scale out 时真正发光：share-nothing、可水平分区的特性使增加并发成为简单可靠的操作。</div><div class="bullet">进程类型数组及每种类型的进程数合称 process formation，是并发部署的完整描述，运维与开发都能清楚理解并管理进程拓扑。</div><div class="bullet">十二要素进程绝不应 daemonize 或写 PID 文件，而应依赖 OS 进程管理器（systemd、云平台分布式进程管理器、开发期 Foreman）管理输出流、响应崩溃并处理用户发起的重启与停机。</div></div>
 

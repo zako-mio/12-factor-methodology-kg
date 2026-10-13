@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="统一执行/业务状态 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor Agent 体系 交互图 打开总览 What · 是什么 将执行状态与业务状态统一为单一事实源 在 AI 世界之外，许多基础设施系统也倾向于把『执行状态』与『业务状态』分开管理；对 AI。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="统一执行/业务状态 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="统一执行/业务状态 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor Agent 体系 交互图 打开总览 What · 是什么 将执行状态与业务状态统一为单一事实源 在 AI 世界之外，许多基础设施系统也倾向于把『执行状态』与『业务状态』分开管理；对 AI。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/ag-state.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/ag-state.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>统一执行/业务状态 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GB.html">12 Factor Agent 体系</a> / <span>统一执行/业务状态</span></div>
   <h1>统一执行/业务状态</h1>
   <div class="badges"><span class="badge src" style="color:#ff8a97;background:#3a1520;border-color:#e05563">Agent 体系</span><span class="badge st" style="color:#e0a75e;background:#332412;border-color:#e8933b">进阶</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GB · 12 Factor Agent 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GB"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GB.html"><span class="dir">返回组</span><span class="v">12 Factor Agent 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">将执行状态与业务状态统一为单一事实源</div><div class="bullet">在 AI 世界之外，许多基础设施系统也倾向于把『执行状态』与『业务状态』分开管理；对 AI 应用而言这可能需要跟踪当前步骤、下一步、等待状态、重试计数等。</div><div class="bullet">这种分离会引入复杂度，有时值得，但很可能对你这个用例是过度设计——是否分开管理完全由你决定，别以为非分开不可。</div><div class="bullet">执行状态（execution state）指：当前步骤、下一步、等待状态、重试次数等过程性的元数据。</div><div class="bullet">业务状态（business state）指：Agent 工作流迄今为止发生的事，例如 OpenAI 消息列表、工具调用及其结果的列表。</div><div class="bullet">核心建议：尽可能简化，把两者尽量统一成一份状态，而不是维护两套并行数据，同一 thread 事件流即承载全部状态。</div><div class="bullet">实际上你可以这样设计应用：让所有执行状态都能从上下文窗口推断出来，很多情况下执行状态只是『发生了什么』的元数据。</div><div class="bullet">确实有些东西放不进上下文窗口，如 session id、密码上下文等，但你的目标应该是把这类东西最小化。</div><div class="bullet">借助 factor 3（掌控上下文窗口），你可以精确控制到底什么进 LLM、什么只留在外部状态存储里。</div><div class="bullet">原文用动画演示统一前后：分离的两列状态（execution/business）最终合并为单一的 thread 事件流。</div></div>
 

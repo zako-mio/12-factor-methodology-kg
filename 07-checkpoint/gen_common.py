@@ -232,3 +232,85 @@ footer{margin-top:2.75rem;padding:1rem 1.5rem;border-top:0.0625rem solid var(--b
   th,td{border-color:#999;color:#000;}
 }
 """
+
+
+# ============================================================================
+# ★ 批 J：页面骨架与元数据（a11y / SEO 实缺修实）—— 唯一注入口
+# ============================================================================
+import re as _re
+
+REPO = "12-factor-methodology-kg"
+BASE_URL = "https://zako-mio.github.io/12-factor-methodology-kg/"
+OG_IMAGE = BASE_URL + "og.png"
+FAVICON_HREF = "/12-factor-methodology-kg/favicon.svg"
+SITE_DESC = "12 要素方法论知识图谱：节点页、分组目录、阶段视图与交互式 DAG 总览。"
+
+J_SHELL_CSS = (
+    ":focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}\n"
+    ".skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);"
+    "color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}\n"
+    ".skip-link:focus{left:0}\n")
+
+_META_ANCHOR = _re.compile(r'(<meta\s+name="viewport"[^>]*>)', _re.I)
+_BODY_ANCHOR = _re.compile(r'(<body[^>]*>)', _re.I)
+_MAIN_ANCHOR = _re.compile(r'<main(?![^>]*\bid\s*=)([^>]*)>', _re.I)
+
+
+def page_url(rel):
+    if rel == "index.html":
+        return BASE_URL
+    if rel.endswith("/index.html"):
+        return BASE_URL + rel[: -len("index.html")]
+    return BASE_URL + rel
+
+
+def _plain(frag):
+    t = _re.sub(r"<[^>]+>", " ", frag)
+    for a, b in (("&nbsp;", " "), ("&amp;", "&"), ("&larr;", "\u2190"), ("&rarr;", "\u2192"),
+                 ("&#10003;", "\u2713")):
+        t = t.replace(a, b)
+    return _re.sub(r"\s+", " ", t).strip()
+
+
+def page_title(html):
+    m = _re.search(r"<title[^>]*>(.*?)</title>", html, _re.S | _re.I)
+    return _plain(m.group(1)) if m else TITLE
+
+
+def make_desc(html):
+    tt = page_title(html)
+    m = _re.search(r"<main[^>]*>(.*?)</main>", html, _re.S | _re.I)
+    body = _plain(m.group(1)) if m else ""
+    d = ("%s ｜ %s" % (tt, body)).strip(" ｜")
+    d = d[:150].rstrip("，。、；：:;,. ")
+    if len(d) < 24:
+        d = "%s ｜ %s" % (tt, SITE_DESC)
+    return d + "。"
+
+
+def inject_shell(html, rel):
+    """★ 三处插入：`<head>` 元数据 / `<body>` 后 skip link / 首个 `<main>` 补 id。
+
+    ⛔ 不改任何既有模板变量与结构；★ 幂等（已注入则原样返回）。
+    """
+    if 'name="description"' in html and 'class="skip-link"' in html:
+        return html
+    desc = make_desc(html)
+    title = page_title(html)
+    u = page_url(rel)
+    meta = (
+        '<meta name="description" content="%s">\n'
+        '<meta property="og:type" content="website">\n'
+        '<meta property="og:title" content="%s">\n'
+        '<meta property="og:description" content="%s">\n'
+        '<meta property="og:url" content="%s">\n'
+        '<meta property="og:image" content="%s">\n'
+        '<link rel="canonical" href="%s">\n'
+        '<link rel="icon" type="image/svg+xml" href="%s">\n'
+        '<style>\n%s</style>\n'
+        % (esc(desc), esc(title), esc(desc), u, OG_IMAGE, u, FAVICON_HREF, J_SHELL_CSS))
+    out = _META_ANCHOR.sub(lambda m: m.group(1) + "\n" + meta, html, count=1)
+    out = _BODY_ANCHOR.sub(
+        lambda m: m.group(1) + '\n<a class="skip-link" href="#main">跳到主要内容</a>', out, count=1)
+    out = _MAIN_ANCHOR.sub(lambda m: '<main id="main"%s>' % m.group(1), out, count=1)
+    return out

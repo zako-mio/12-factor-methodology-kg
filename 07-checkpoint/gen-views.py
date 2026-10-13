@@ -9,7 +9,8 @@
 import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gen_common import (ROOT, TITLE, SUBTITLE, load_all, esc, build_indexes,
+from gen_common import (
+    inject_shell,ROOT, TITLE, SUBTITLE, load_all, esc, build_indexes,
                         topo_sort, stage_badge, src_badge, BASE_CSS,
                         STAGE_STYLE, SRC_STYLE, EDGE_STYLE, KIND_ORDER)
 
@@ -337,6 +338,7 @@ def main():
         '04-cross-mapping.html': cross_mapping_html(dag, by_id, c_by_id, edges),
     }
     for name, html in files.items():
+        html = inject_shell(html, '05-views/%s' % name)
         with open(os.path.join(VIEWS_DIR, name), 'w', encoding='utf-8') as f:
             f.write(html)
         print('view written:', name)

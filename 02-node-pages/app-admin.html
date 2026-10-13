@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="管理进程 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 管理/维护任务作为一次性进程运行 process formation 是应用运行时做常规业务（如处理 web 请求）的进程数组；开发者还常想对应。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="管理进程 · 12 Factor 方法论合并知识图谱">
+<meta property="og:description" content="管理进程 · 12 Factor 方法论合并知识图谱 ｜ 全局 交互总览 返回组 12 Factor App 体系 交互图 打开总览 What · 是什么 管理/维护任务作为一次性进程运行 process formation 是应用运行时做常规业务（如处理 web 请求）的进程数组；开发者还常想对应。">
+<meta property="og:url" content="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-admin.html">
+<meta property="og:image" content="https://zako-mio.github.io/12-factor-methodology-kg/og.png">
+<link rel="canonical" href="https://zako-mio.github.io/12-factor-methodology-kg/02-node-pages/app-admin.html">
+<link rel="icon" type="image/svg+xml" href="/12-factor-methodology-kg/favicon.svg">
+<style>
+:focus-visible{outline:0.125rem solid var(--accent,#4f8cff);outline-offset:0.125rem}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--accent,#4f8cff);color:#fff;padding:0.5rem 1rem;z-index:1000;border-radius:0 0 0.375rem 0}
+.skip-link:focus{left:0}
+</style>
+
 <title>管理进程 · 12 Factor 方法论合并知识图谱</title>
 <style>
 
@@ -88,12 +102,13 @@ td.diffsrc{color:#cfe8dd;background:#0d1a14;}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要内容</a>
 <header>
   <div class="crumb"><a href="../index.html">12 Factor 方法论合并知识图谱</a> / <a href="../03-groups/index.html">分组目录</a> / <a href="../03-groups/GA.html">12 Factor App 体系</a> / <span>管理进程</span></div>
   <h1>管理进程</h1>
   <div class="badges"><span class="badge src" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">App 体系</span><span class="badge st" style="color:#e0a75e;background:#332412;border-color:#e8933b">进阶</span><span class="badge tp" style="color:#9cc2ff;background:#16273f;border-color:#4f8cff">方法原则</span><span class="badge grp">GA · 12 Factor App 体系</span></div>
 </header>
-<main>
+<main id="main">
 <div class="navseq"><a class="nav-index" href="../04-interactive/index.html#GA"><span class="dir">全局</span><span class="v">交互总览</span></a><a class="nav-index" href="../03-groups/GA.html"><span class="dir">返回组</span><span class="v">12 Factor App 体系</span></a><a class="nav-index" href="../04-interactive/index.html"><span class="dir">交互图</span><span class="v">打开总览</span></a></div>
 <div class="section"><h2>What · 是什么</h2><div class="brieflead">管理/维护任务作为一次性进程运行</div><div class="bullet">process formation 是应用运行时做常规业务（如处理 web 请求）的进程数组；开发者还常想对应用做一次性管理/维护任务。</div><div class="bullet">一次性任务例子：数据库迁移，Django 用 manage.py migrate、Rails 用 rake db:migrate。</div><div class="bullet">一次性任务例子：运行 console（REPL shell）执行任意代码或对实时数据库检查模型；多数语言无参运行解释器即得 REPL（python、perl），或独立命令（Ruby 的 irb、Rails 的 rails console）。</div><div class="bullet">一次性任务例子：运行提交进应用 repo 的一次性脚本，如 php scripts/fix_bad_records.php 修复坏数据。</div><div class="bullet">一次性 admin 进程应在与常规长跑进程相同的环境中运行，针对某个 release 运行，这保证管理操作与线上环境完全一致。</div><div class="bullet">admin 进程使用与该 release 任何进程相同的 codebase 与 config，保证操作的是线上同款数据环境。</div><div class="bullet">admin 代码必须随应用代码一起发布，以避免同步问题，保证版本一致，是数据迁移与修复类操作安全性的前提。</div><div class="bullet">所有进程类型应使用相同的依赖隔离技术：Ruby web 进程用 bundle exec thin start，则数据库迁移用 bundle exec rake db:migrate。</div><div class="bullet">Python 用 Virtualenv 的应用，Tornado webserver 与 manage.py admin 进程都应使用 vendored 的 bin/python。</div><div class="bullet">十二要素强烈偏好开箱即提供 REPL shell、且便于运行一次性脚本的语言，减少开发摩擦，管理任务因此可重复、可预期、可审计。</div><div class="bullet">本地 deploy：开发者在应用检出目录内用直接 shell 命令调用一次性 admin 进程，简单直接。</div><div class="bullet">生产 deploy：开发者可用 ssh 或该 deploy 执行环境提供的远程命令执行机制运行此类进程。</div></div>
 
