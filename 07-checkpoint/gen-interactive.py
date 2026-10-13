@@ -112,46 +112,46 @@ def node_group_of(dag, nid):
 
 
 CSS = """
-  :root{--text:#e6e8ee;--dim:#9aa3b2;--accent:#4f8cff;--border:#6b7280;--border-subtle:#2a2f3a;--bg:#0f1117;--panel:#161a22;--ok:#2fb98a;--warn:#e0c35e;--err:#e05563;--danger:#e05563;}
+  :root{--text:#e6e8ee;--dim:#9aa3b2;--accent:#4f8cff;--border:#6b7280;--border-subtle:#2a2f3a;--bg:#0f1117;--panel:#161a22;--ok:#2fb98a;--warn:#e0c35e;--err:#e05563;}
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; height:100vh; overflow:hidden; }
-  header { position:fixed; top:0; left:0; right:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--border); padding:8px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-  header h1 { font-size:15px; font-weight:600; white-space:nowrap; }
-  header a { color:var(--accent); text-decoration:none; font-size:13px; }
+  header { position:fixed; top:0; left:0; right:0; z-index:10; background:var(--panel); border-bottom:0.0625rem solid var(--border); padding:0.5rem 1rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
+  header h1 { font-size:0.9375rem; font-weight:600; white-space:nowrap; }
+  header a { color:var(--accent); text-decoration:none; font-size:0.8125rem; }
   header a:hover { text-decoration:underline; }
-  .badge { background:#20324f; color:#7fb0ff; padding:2px 10px; border-radius:20px; font-size:12px; white-space:nowrap; }
-  .hint { color:var(--dim); font-size:11px; }
-  .controls { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .seg { display:inline-flex; background:#0b0e14; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
-  .seg button { background:transparent; color:var(--dim); border:none; padding:5px 12px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .badge { background:#20324f; color:#7fb0ff; padding:0.125rem 0.625rem; border-radius:1.25rem; font-size:0.75rem; white-space:nowrap; }
+  .hint { color:var(--dim); font-size:0.6875rem; }
+  .controls { display:flex; align-items:center; gap:0.375rem; flex-wrap:wrap; }
+  .seg { display:inline-flex; background:#0b0e14; border:0.0625rem solid var(--border); border-radius:0.5rem; overflow:hidden; }
+  .seg button { background:transparent; color:var(--dim); border:none; padding:0.3125rem 0.75rem; font-size:0.75rem; cursor:pointer; white-space:nowrap; }
   .seg button.active { background:var(--accent); color:#fff; }
   .seg button:hover:not(.active) { color:var(--text); }
-  .btn { background:#20324f; color:#7fb0ff; border:1px solid #2a3a55; border-radius:20px; padding:4px 14px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .btn { background:#20324f; color:#7fb0ff; border:0.0625rem solid #2a3a55; border-radius:1.25rem; padding:0.25rem 0.875rem; font-size:0.75rem; cursor:pointer; white-space:nowrap; }
   .btn:hover { background:#2a3a55; }
   .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
   .btn.on { background:#0f2b1f; color:#6fd3ae; border-color:#2fb98a; }
-  #side { position:fixed; right:0; top:52px; bottom:0; width:300px; background:var(--panel); border-left:1px solid var(--border); padding:14px; overflow:auto; z-index:9; }
-  #side h2 { font-size:13px; margin-bottom:8px; color:var(--dim); }
-  #side .legend { font-size:12px; color:var(--dim); line-height:1.9; }
+  #side { position:fixed; right:0; top:3.25rem; bottom:0; width:18.75rem; background:var(--panel); border-left:0.0625rem solid var(--border); padding:0.875rem; overflow:auto; z-index:9; }
+  #side h2 { font-size:0.8125rem; margin-bottom:0.5rem; color:var(--dim); }
+  #side .legend { font-size:0.75rem; color:var(--dim); line-height:1.9; }
   #side .legend b { color:var(--text); }
-  #side .legend .sw { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
-  #zoominfo { position:fixed; bottom:14px; left:18px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:12px; color:var(--dim); z-index:9; }
+  #side .legend .sw { display:inline-block; width:0.75rem; height:0.75rem; border-radius:0.1875rem; margin-right:0.375rem; vertical-align:-1px; }
+  #zoominfo { position:fixed; bottom:0.875rem; left:1.125rem; background:var(--panel); border:0.0625rem solid var(--border); border-radius:0.5rem; padding:0.4375rem 0.75rem; font-size:0.75rem; color:var(--dim); z-index:9; }
   #zoominfo b { color:var(--text); }
-  #crumb { position:fixed; top:52px; left:18px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:12px; color:var(--dim); z-index:9; display:none; align-items:center; gap:8px; }
+  #crumb { position:fixed; top:3.25rem; left:1.125rem; background:var(--panel); border:0.0625rem solid var(--border); border-radius:0.5rem; padding:0.375rem 0.75rem; font-size:0.75rem; color:var(--dim); z-index:9; display:none; align-items:center; gap:0.5rem; }
   #crumb b { color:var(--accent); }
   #crumb a { color:var(--dim); cursor:pointer; text-decoration:underline; }
   #crumb a:hover { color:var(--accent); }
-  #graph { position:fixed; top:52px; left:0; right:0; bottom:0; }
-  #glegend { margin-top:6px; }
-  #glegend .row { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--dim); margin:3px 0; cursor:pointer; }
+  #graph { position:fixed; top:3.25rem; left:0; right:0; bottom:0; }
+  #glegend { margin-top:0.375rem; }
+  #glegend .row { display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--dim); margin:0.1875rem 0; cursor:pointer; }
   #glegend .row:hover { color:var(--text); }
-  #glegend .row .sw { width:14px; height:14px; border-radius:3px; flex:0 0 auto; }
+  #glegend .row .sw { width:0.875rem; height:0.875rem; border-radius:0.1875rem; flex:0 0 auto; }
   #glegend .row.active { color:var(--text); font-weight:600; }
-  #empty { position:fixed; inset:0; top:52px; display:none; align-items:center; justify-content:center; color:var(--dim); font-size:14px; background:var(--bg); z-index:5; }
+  #empty { position:fixed; inset:0; top:3.25rem; display:none; align-items:center; justify-content:center; color:var(--dim); font-size:0.875rem; background:var(--bg); z-index:5; }
   @media (max-width:768px){
-    #side { width:220px; }
-    header { padding:6px 10px; gap:8px; }
-    header h1 { font-size:13px; }
+    #side { width:13.75rem; }
+    header { padding:0.375rem 0.625rem; gap:0.5rem; }
+    header h1 { font-size:0.8125rem; }
     .hint { display:none; }
   }
 """
@@ -514,7 +514,7 @@ def main():
 <div id="side">
   <h2>图例</h2>
   <div class="legend" id="legend"></div>
-  <h2 style="margin-top:12px;">组配色</h2>
+  <h2 style="margin-top:0.75rem;">组配色</h2>
   <div id="glegend"></div>
 </div>
 <div id="zoominfo">模式 <b id="zmode">组级</b> · 节点 <b id="zcount">0</b></div>

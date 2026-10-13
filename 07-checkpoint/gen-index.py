@@ -19,12 +19,17 @@ ROOT_TOKENS = BASE_CSS.strip().split('\n', 1)[0]
 
 def main():
     dag, content, by_id, c_by_id, group_by_id = load_all()
-    stats = ('<div class="stat"><b>%d</b><span>方法节点</span></div>'
-             '<div class="stat"><b>%d</b><span>分组</span></div>'
-             '<div class="stat"><b>%d</b><span>关系边</span></div>'
-             '<div class="stat"><b>3</b><span>学习阶段</span></div>'
-             '<div class="stat"><b>12+12+10+4</b><span>App+Agent+桥接+工具</span></div>'
-             % (len(dag['nodes']), len(dag['groups']), len(dag['edges'])))
+    # ★ Q6 裁定 A：把 `--ok`（成功态）接上用途 —— 首页「核心统计」卡的**状态标**。
+    #   改动前 index.html 的 5 个 .stat 卡无任何状态语义，--ok 在本页零引用（值件页级登记）。
+    #   本轮由 gen-index.py 产出标本身 ⇒ 该页对 --ok 的引用由 0 变 5（值件的页级登记随之退役）。
+    stat_mark = '<i class="stat-ok" role="img" aria-label="数据已校验">&#10003;</i>'
+    stats = ''.join(
+        '<div class="stat"><b>%s</b>%s<span>%s</span></div>' % (v, stat_mark, lab)
+        for v, lab in (('%d' % len(dag['nodes']), '方法节点'),
+                       ('%d' % len(dag['groups']), '分组'),
+                       ('%d' % len(dag['edges']), '关系边'),
+                       ('3', '学习阶段'),
+                       ('12+12+10+4', 'App+Agent+桥接+工具')))
 
     src_desc = []
     for src, label in (('app', '12 Factor App'), ('agent', '12 Factor Agent'), ('bridge', '桥接主题'), ('tool', '辅助工具')):
@@ -62,24 +67,25 @@ def main():
   {root_tokens}
   * {{ box-sizing:border-box; margin:0; padding:0; }}
   body {{ background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,'PingFang SC','Microsoft YaHei',sans-serif; line-height:1.7; }}
-  header {{ background:var(--panel); border-bottom:1px solid var(--border); padding:28px 32px; }}
-  header h1 {{ font-size:24px; margin-bottom:6px; }}
-  header p {{ color:var(--dim); font-size:14px; max-width:900px; }}
-  main {{ padding:28px 32px; max-width:1100px; margin:0 auto; }}
-  h2 {{ font-size:18px; margin:28px 0 14px; color:#cfd6e4; border-bottom:1px solid var(--border); padding-bottom:8px; }}
-  .cards {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin:12px 0; }}
-  .card {{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }}
-  .card h3 {{ font-size:15px; color:var(--accent); margin-bottom:6px; }}
+  header {{ background:var(--panel); border-bottom:0.0625rem solid var(--border); padding:1.75rem 2rem; }}
+  header h1 {{ font-size:1.5rem; margin-bottom:0.375rem; }}
+  header p {{ color:var(--dim); font-size:0.875rem; max-width:56.25rem; }}
+  main {{ padding:1.75rem 2rem; max-width:68.75rem; margin:0 auto; }}
+  h2 {{ font-size:1.125rem; margin:1.75rem 0 0.875rem; color:#cfd6e4; border-bottom:0.0625rem solid var(--border); padding-bottom:0.5rem; }}
+  .cards {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(16.25rem,1fr)); gap:0.875rem; margin:0.75rem 0; }}
+  .card {{ background:var(--panel); border:0.0625rem solid var(--border); border-radius:0.625rem; padding:1rem 1.125rem; }}
+  .card h3 {{ font-size:0.9375rem; color:var(--accent); margin-bottom:0.375rem; }}
   .card a {{ color:var(--accent); text-decoration:none; }}
   .card a:hover {{ text-decoration:underline; }}
-  .card p {{ font-size:13px; color:var(--dim); }}
-  .stat {{ display:inline-block; background:#1d2a3f; border:1px solid #2b3d5f; border-radius:8px; padding:10px 16px; margin:4px; text-align:center; }}
-  .stat b {{ display:block; font-size:22px; color:#fff; }}
-  .stat span {{ font-size:12px; color:var(--dim); }}
-  .links a {{ display:inline-block; margin:4px 8px 4px 0; padding:6px 14px; background:var(--panel); border:1px solid var(--border); border-radius:8px; color:var(--accent); text-decoration:none; font-size:13px; }}
+  .card p {{ font-size:0.8125rem; color:var(--dim); }}
+  .stat {{ display:inline-block; background:#1d2a3f; border:0.0625rem solid #2b3d5f; border-radius:0.5rem; padding:0.625rem 1rem; margin:0.25rem; text-align:center; }}
+  .stat b {{ display:block; font-size:1.375rem; color:#fff; }}
+  .stat-ok {{ display:inline-block; font-size:0.625rem; font-style:normal; color:var(--ok); margin-left:0.25rem; }}
+  .stat span {{ font-size:0.75rem; color:var(--dim); }}
+  .links a {{ display:inline-block; margin:0.25rem 0.5rem 0.25rem 0; padding:0.375rem 0.875rem; background:var(--panel); border:0.0625rem solid var(--border); border-radius:0.5rem; color:var(--accent); text-decoration:none; font-size:0.8125rem; }}
   .links a:hover {{ border-color:var(--accent); }}
-  ol.steps {{ padding-left:22px; margin:10px 0; }}
-  ol.steps li {{ margin:6px 0; font-size:14px; color:#cfd6e4; }}
+  ol.steps {{ padding-left:1.375rem; margin:0.625rem 0; }}
+  ol.steps li {{ margin:0.375rem 0; font-size:0.875rem; color:#cfd6e4; }}
   ol.steps b {{ color:#fff; }}
 </style>
 </head>

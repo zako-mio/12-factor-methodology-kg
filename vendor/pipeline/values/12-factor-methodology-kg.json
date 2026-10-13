@@ -1,9 +1,9 @@
 {
   "meta": {
     "id": "value-contract.12-factor-methodology-kg",
-    "contract_version": "1.1.0-round1b",
+    "contract_version": "1.2.0-round2h",
     "frozen_at": "2026-10-13",
-    "round": "批 E · ROLLOUT-PLAN 第 1 轮 b（本站最小档 ＋ 接门控；首个真实站点改动）",
+    "round": "批 H · ROLLOUT-PLAN 第 2 轮（本站**标准档**：令牌接上用途 ＋ px→rem ＋ 四类新门控；在批 E 最小档之上扩展）",
     "title": "12-factor-methodology-kg 站点值件（形态 2 内联单源 · 三级覆盖的成因实例）",
     "nature": "站点侧独立机读值件 —— 单一真相源；⛔ 不直接改站点模板文件",
     "authority": "角色口径沿用 fe-starter-kit/tokens/contract.json 与 solutions/_shared/SH0-tokens-draft.json；取值逐条取自本站实测（见 palettes.provenance）",
@@ -16,9 +16,17 @@
         "effect": "families.default / 05-views / index 的 --warn = #e8933b；families['04-interactive'].overrides['--warn'] = #e0c35e"
       },
       "Qb_err_danger": {
-        "ruling": "B",
+        "ruling": "B（★ 已被本批 Q5-A 取代，见 Q5_err_danger_names）",
         "text": "--err 与 --danger 两名并存，值统一为 #e05563（--danger 登记为 --err 的别名）",
-        "effect": "roles.err → --err #e05563（known_value_changes 登记 #c0504d → #e05563）；families['04-interactive'].overrides['--danger'] = #e05563"
+        "effect": "【历史】roles.err → --err #e05563（known_value_changes 登记 #c0504d → #e05563）；families['04-interactive'].overrides['--danger'] = #e05563。★ 该形态**已退役**：批 H 按 Q5-A 收敛为一个名。",
+        "superseded_by": "Q5_err_danger_names"
+      },
+      "Q5_err_danger_names": {
+        "ruling": "A",
+        "source": "★ 本会话用户（批 H · ROLLOUT-PLAN 第 2 轮 · 标准档）；值由批 E 裁为 #e05563",
+        "text": "收敛为规范角色集里的**一个**「错误」角色，保留 **`--err`**（值 #e05563），**退役 `--danger`**",
+        "effect": "① families['04-interactive'].overrides 删 `--danger`（本族只保留 `--warn` 的差异）；② binding.aliases 退役 `--danger`；③ dead_tokens.site_level_zero_ref 删 `--danger`；④ 站点侧 gen-interactive.py:115 的自持 `:root` 删 `--danger`（售 B2）；⑤ roles.err 的 canonical 名回到 `--err`。★ 站点**实测无任何 `var(--danger)`**引用 ⇒ 退役不动规则层。",
+        "gate_handling": "★ 只改站点不改本件 ⇒ gate_tokens.py 的 **G7**（`--danger` 登记过期）与 **G9**（盘上未声明令牌）**硬 FAIL**；两处同时改才闭合。"
       },
       "Qc_gate_strength": {
         "ruling": "A",
@@ -39,6 +47,36 @@
         "ruling": "A",
         "text": "允许直接提交并推送 master（本站发布形态本就是「产物入库 ＋ 回写 master」）",
         "effect": "V5 的线上验收按 GitHub Pages 真实可达性执行"
+      },
+      "Q1_warn_convergence_reaffirmed": {
+        "ruling": "A",
+        "source": "批 E 已裁（Qa）· 批 H 复核后维持",
+        "text": "默认族 / 05-views / index 的 `--warn` = #e8933b；`04-interactive` 逐族保留 #e0c35e（**这是有意的族差异**）",
+        "effect": "★ 方案 §7 **判据 1** 的重述依据：判据按「**族内**同名同值 ＋ 跨族差异**逐族登记**」判（gate_tokens.py 的 G2/G4 已如此实现）；⛔ 不按「全站唯一值数 = 1」判，⛔ 不把有意的族差异收敛成一个值。"
+      },
+      "Qe_dead_tokens_reaffirmed": {
+        "ruling": "A",
+        "source": "批 E 已裁（Qe）· 批 H 复核后维持",
+        "text": "零引用令牌**逐枚登记保留**，⛔ 不删除",
+        "effect": "★ 方案 §7 **判据 2** 的重述依据：判据重述为「零引用令牌**逐枚登记**且**登记不得过期**」（gate_tokens.py 的 G7）；⛔ 不按「零引用令牌数 = 0」判 —— 那等于要求删除令牌，与 Qe-A 直接冲突，且会打红 C7「防静默丢令牌」。"
+      },
+      "Q6_ok_token": {
+        "ruling": "A",
+        "source": "★ 本会话用户（批 H）",
+        "text": "`--ok` 接上用途 —— 接到首页「核心统计」卡的**状态标**",
+        "effect": "站点侧 gen-index.py 的 `.stat` 区新增 `<i class=\"stat-ok\" role=\"img\" aria-label=\"数据已校验\">✓</i>`，CSS 用 `var(--ok)` ⇒ `index.html` 对 `--ok` 的引用由 0 变 5；本件 dead_tokens.page_level_unused 中 `(--ok, index.html)` 条目**随之退役**（否则 G7 的「页级登记过期」会红）。"
+      },
+      "Q8_px_to_rem": {
+        "ruling": "A",
+        "source": "★ 本会话用户（批 H）",
+        "text": "px→rem 与令牌层**同批**（两者触及同一批 6 个生成器）",
+        "effect": "6 个生成器的**字面量区**（内联进 <style> 的 CSS 串与 HTML 模板内的内联 style）共 348 处 px 改 rem（base=16）；★ **`@media` 断点保持 px**（2 处）；★ base 16 且站内无 `html{font-size}` 覆盖 ⇒ 默认设置下渲染逐像素等价。⛔ 不改 JS 常量区（cytoscape 的 `'font-size':9` / `width:130` 是**画布数值**，非 CSS 属性，属另一个对象）——1 处在 gen-groups.py 的 HTML 拼接串内、25 处在 gen-interactive.py 的 JS 内，如实登记为未改。"
+      },
+      "Q7_gate_strength_reaffirmed": {
+        "ruling": "A",
+        "source": "批 E 已裁（Qc）· 批 H 复核后维持",
+        "text": "门控首轮**报告模式**；`--selftest` 与**空集守卫不随报告模式放宽**",
+        "effect": "四道新门控（死 CSS / 无障碍 / 响应式 / 元数据）一律登记进 `gates.report_only` 的**执行强度**，⛔ **不进** `hard_blocking` 枚举（schema 枚举只有四项，扩枚举＝改 schema）。★ 但每道门控的「0 个文件被扫」仍 exit 1（空集守卫不放宽）。"
       }
     }
   },
@@ -156,8 +194,8 @@
     "err": {
       "tier": "body",
       "kind": "semantic-text",
-      "purpose": "错误态",
-      "site_source": "★ 原 --err:#c0504d 对 --bg 仅 4.04（不达 body 4.5）⇒ 取本站 CSS 中**已存在**的 --danger:#e05563（5.08）。由 known_value_changes 登记，门控驱动。Qb 裁定 B（两名并存、值统一）。"
+      "purpose": "错误态（★ 本站唯一的「错误」角色名）",
+      "site_source": "★ 原 --err:#c0504d 对 --bg 仅 4.04（不达 body 4.5）⇒ 取本站 CSS 中**已存在**的 --danger 值 #e05563（5.08）。由 known_value_changes 登记，门控驱动。Qb 裁定 B（两名并存）→ **Q5 裁定 A（收敛为一个名，保留 --err、退役 --danger）**。"
     }
   },
   "palettes": {
@@ -212,13 +250,15 @@
       "err": "--err"
     },
     "aliases": {
-      "--danger": {
-        "canonical_role": "err",
-        "note": "04-interactive 族的历史名，语义＝错误态。Qb 裁定 B：**只登记别名、不强制收敛名**（名字收敛属该站方案 Q5，⛔ 不在本步）。"
-      },
       "--dim": {
         "canonical_role": "text.secondary",
         "note": "本站既有名，逐字节保留"
+      },
+      "--danger": {
+        "canonical_role": "err",
+        "retired": true,
+        "retired_in": "批 H（Q5 裁定 A）",
+        "note": "04-interactive 族的**历史名**，语义＝错误态。★ 本批已**退役**：`--err` 是唯一的「错误」角色名，`--danger` 不再被声明、也不在盘上出现。保留本条目只为留下「曾用名」这一事实（⛔ 不再声明别名）；G9 只判**盘上令牌名 ⊆ 值件声明面**，`declared_token_names()` 只取 `site_token_names` ∪ `overrides`，⛔ 不读 aliases，故本条目不影响 G9。"
       }
     },
     "note": "本站角色集是**子集绑定**（10 角色）：只绑定本站真实存在或本轮按方案新增的档位，⛔ 不为凑齐 19 角色而生造本站不用的令牌。角色集完整化属站点标准档。",
@@ -241,10 +281,9 @@
       ],
       "generator": "07-checkpoint/gen-interactive.py（CSS 常量，:114 起）",
       "overrides": {
-        "--warn": "#e0c35e",
-        "--danger": "#e05563"
+        "--warn": "#e0c35e"
       },
-      "note": "★ 页面族覆盖的成因实例：本族 --warn 与默认族不同值，必须逐族登记，⛔ 不得按「全站唯一值」判据把它判成 FAIL。★ 本轮的**源**目标是生成器自身（`07-checkpoint/gen-interactive.py`）——它是**自持令牌块**的生成器：只改产物会在下次重生成时被打回，故必须同时把源纳入派生目标。"
+      "note": "★ 页面族覆盖的成因实例：本族 --warn 与默认族不同值，必须逐族登记，⛔ 不得按「全站唯一值」判据把它判成 FAIL。★ 本轮的**源**目标是生成器自身（`07-checkpoint/gen-interactive.py`）——它是**自持令牌块**的生成器：只改产物会在下次重生成时被打回，故必须同时把源纳入派生目标。★ 本批 Q5-A 后本族 overrides **只剩 `--warn` 一项**（`--danger` 已退役）。"
     },
     "05-views": {
       "targets": [
@@ -297,66 +336,49 @@
   "dead_tokens": {
     "metric": "★ 分两级计量（避免把合法的族声明判成死令牌）：**站点级**＝该令牌在**全站任何页**内都无 `var()` 引用；**页级**＝该令牌在某页声明但在**同一页**内无 `var()` 引用（同站他处仍有用）。站点级才是真死。",
     "measured_at": "2026-10-13",
-    "measurement_tool": "evidence/e/tools/measure_var_refs.py（本步为补批 D 未覆盖的 `var()` 引用面而写；覆盖 62 个 HTML）",
+    "measurement_tool": "evidence/e/tools/measure_var_refs.py（批 E 写；覆盖 62 个 HTML）＋ 批 H 由仓内 gate_tokens.py 的 G7 在**改后盘面**复测（同一口径）",
     "measurement_artifacts": [
-      "evidence/e/var-refs-pre-change.json（改动前：62 页 / 61 页有 :root；站点级零引用 2 枚）",
-      "evidence/e/var-refs-post-change.json（改动后：62 页 / 61 页有 :root；站点级零引用 3 枚）"
+      "evidence/e/var-refs-pre-change.json（批 E 改动前：62 页 / 61 页有 :root；站点级零引用 2 枚）",
+      "evidence/e/var-refs-post-change.json（批 E 改动后：62 页 / 61 页有 :root；站点级零引用 3 枚）",
+      "★ 批 H 改动后：仓内 `python3 gate_tokens.py --site-root . --manifest gate-manifest.json --mode report` 的 G7 实跑（判据对象＝仓内 61 个有 :root 的页）＋ evidence/h/_tmp/h_measure_varrefs.py 的独立复测（同一口径、独立实现）：61 页 / 10 枚令牌名 / **站点级零引用 1 枚（--err）** / 页级未用 5 条"
     ],
-    "ruling": "Qe-A：逐枚登记保留，⛔ 不删除。删除会被 C7「防静默丢令牌」硬判据打红（原始目标令牌集 ⊆ 派生声明），而删该判据＝放宽判据（ADR-003 回退条款明禁）。★ 本表按**改动后**实测填数（改动前数字并列留档）。",
-    "change_effect_on_counts": "本步把「补齐角色令牌」作为有意产物 ⇒ --err/--ok/--warn 的声明页数从 59/60/60 升到 61，并新增 --border-subtle（0 → 61）；站点级零引用从 2 枚升到 3 枚（新增的那枚＝--border-subtle）。",
+    "ruling": "Qe-A：逐枚登记保留，⛔ 不删除。删除会被 C7「防静默丢令牌」硬判据打红（原始目标令牌集 ⊆ 派生声明），而删该判据＝放宽判据（ADR-003 回退条款明禁）。★ 本表按**改动后**实测填数（批 E 数字并列留档）。★ 批 H 的**判据重述**见 meta.decisions.Qe_dead_tokens_reaffirmed（方案 §7 判据 2「零引用令牌数 = 0」按裁定重述为「逐枚登记且登记不得过期」）。",
+    "change_effect_on_counts": "批 E 把「补齐角色令牌」作为有意产物 ⇒ --err/--ok/--warn 的声明页数从 59/60/60 升到 61，并新增 --border-subtle（0 → 61）；站点级零引用从 2 枚升到 3 枚（新增的那枚＝--border-subtle）。★ 批 H 的效果（**改后独立复测**，见 measurement_artifacts[3]）：`--border-subtle` 由「到货即死」变为**已接上用途**（59 页引用）⇒ 站点级零引用 3 → **1 枚**（只剩 --err）；`--danger` 退役 ⇒ 全站令牌名 11 → **10 枚**；`--ok` 在首页接上用途（60 页引用）⇒ 页级未用登记 3 → 5 条（`--border-subtle` 在 index.html 与 04-interactive 两页声明但未用，属**新增**的页级条目，按定义不是死码）。",
     "site_level_zero_ref": [
-      {
-        "token": "--border-subtle",
-        "declared_in_pages_before": 0,
-        "declared_in_pages_after": 61,
-        "var_uses_pages_site_wide": 0,
-        "disposition": "登记保留（本轮新增）",
-        "reason": "★ 本步实测到的**到货即死**令牌：最小档只改**令牌层**（新增弱分隔档），⛔ 不改规则层（§2.1 排除项 3 禁止动页型与版式）⇒ 现有 CSS 规则仍全部引用 --border（已升为强档 #6b7280），无人引用 --border-subtle。它承接的「弱分隔」语义要等**标准档**把容器描边/分隔线改指到它才落地。",
-        "gate_handling": "site 侧 gate_tokens.py 的 G7（未登记即 FAIL）；★ 本条同时是「最小档会产生到货即死的令牌」这一事实的留痕，⛔ 不得读作「已接上用途」"
-      },
       {
         "token": "--err",
         "declared_in_pages_before": 59,
         "declared_in_pages_after": 61,
         "var_uses_pages_site_wide": 0,
-        "disposition": "登记保留",
-        "reason": "语义角色「错误态」是 ADR-002 角色集的规范成员（本站子集绑定为 10 角色之一）；本站三种页型（节点页/组页/视图页）均无错误态元素，故全站无 var() 引用。⇒ 属「声明了但当前页型用不到」，不是「写错了」；未来加错误态元素即自动可用。",
+        "disposition": "登记保留（★ 批 H 后是本站**唯一**的「错误」角色名）",
+        "reason": "语义角色「错误态」是 ADR-002 角色集的规范成员（本站子集绑定为 10 角色之一）；本站四种页型（节点页/组页/视图页/首页）均无错误态元素，故全站无 var() 引用。⇒ 属「声明了但当前页型用不到」，不是「写错了」；未来加错误态元素即自动可用。★ 批 H 的 Q5-A 把 `--danger` 退役 ⇒ 本枚成为**唯一**候选名（⛔ 不再有「同义两名」）。",
         "gate_handling": "site 侧 gate_tokens.py 的 G7：站点级零引用**必须出现在本表**，未登记即 FAIL（Qe-A 后的判据方向）"
-      },
-      {
-        "token": "--danger",
-        "declared_in_pages_before": 1,
-        "declared_in_pages_after": 1,
-        "var_uses_pages_site_wide": 0,
-        "disposition": "登记保留（别名）",
-        "reason": "04-interactive 族的历史名（= --err 的别名，Qb-B 裁定「两名并存、值统一 #e05563」）；该页无错误态元素故无引用。",
-        "gate_handling": "同上（G7）"
       }
     ],
     "page_level_unused": [
-      {
-        "token": "--ok",
-        "page": "index.html",
-        "var_uses_in_page": 0,
-        "var_uses_pages_site_wide": 59,
-        "disposition": "登记保留（按定义不算零引用）",
-        "reason": "根首页无成功态元素；但该令牌在 59 个页里真实使用 ⇒ 它是**族声明**而非该页死码。"
-      },
       {
         "token": "--warn",
         "page": "index.html",
         "var_uses_in_page": 0,
         "var_uses_pages_site_wide": 59,
         "disposition": "登记保留（按定义不算零引用）",
-        "reason": "根首页无告警态元素；同一令牌在全站 59 页真实使用 ⇒ 族声明。★ 本页是本步「补齐角色令牌」的产物（改动前 index.html 只有 7 枚、根本没有 --warn）。"
+        "reason": "根首页无告警态元素；同一令牌在全站 59 页真实使用 ⇒ 族声明。★ 本页是批 E「补齐角色令牌」的产物（改动前 index.html 只有 7 枚、根本没有 --warn）。★ 批 H 复核后**维持**：Q6-A 给首页接上的是 `--ok`（成功态），**不是** `--warn`（警告态）。"
+      },
+      {
+        "token": "--border-subtle",
+        "page": "index.html",
+        "var_uses_in_page": 0,
+        "var_uses_pages_site_wide": 59,
+        "disposition": "登记保留（按定义不算零引用）★ 批 H 新增条目",
+        "reason": "★ 首页没有走 BASE_CSS 的弱分隔规则（它的 CSS 是 gen-index.py 模板内的一份自有样式）⇒ 该页声明了 `--border-subtle` 却不用它。同一令牌在全站 **59** 页真实使用（= BASE_CSS 的 7 条弱分隔规则覆盖的那些页）⇒ 族声明，⛔ 不是死码。★ 站点级仍判定为「有引用」⇒ 不进 `site_level_zero_ref`。"
       },
       {
         "token": "--ok",
         "page": "04-interactive/index.html",
         "var_uses_in_page": 0,
-        "var_uses_pages_site_wide": 59,
+        "var_uses_pages_site_wide": 60,
         "disposition": "登记保留（按定义不算零引用）",
-        "reason": "交互页无成功态元素（它把状态语义落在内联色上）；同一令牌在全站 59 页真实使用 ⇒ 族声明。★ 本页是本步「补齐角色令牌」的产物（改动前 04-interactive 只有 8 枚、无 --ok）。"
+        "reason": "交互页无成功态元素（它把状态语义落在内联色上）；同一令牌在全站 60 页真实使用 ⇒ 族声明。★ 本页是批 E「补齐角色令牌」的产物（改动前 04-interactive 只有 8 枚、无 --ok）。"
       },
       {
         "token": "--warn",
@@ -365,11 +387,41 @@
         "var_uses_pages_site_wide": 59,
         "disposition": "登记保留（按定义不算零引用）",
         "reason": "交互页当前把告警语义落在 `.badge` 的内联色上（#20324f/#7fb0ff），未走 var(--warn)；同一令牌在全站 59 页真实使用 ⇒ 族声明。★ 注意它与默认族**不同值**（#e0c35e）——族覆盖已登记，⛔ 不得按全站唯一值判。"
+      },
+      {
+        "token": "--border-subtle",
+        "page": "04-interactive/index.html",
+        "var_uses_in_page": 0,
+        "var_uses_pages_site_wide": 59,
+        "disposition": "登记保留（按定义不算零引用）★ 批 H 新增条目",
+        "reason": "★ 交互页的 CSS 是 gen-interactive.py 的**自持块**（不复用 BASE_CSS 的弱分隔规则）⇒ 该页声明了 `--border-subtle` 却不用它。同一令牌在全站 59 页真实使用 ⇒ 族声明。"
+      }
+    ],
+    "retired_registrations": [
+      {
+        "token": "--danger",
+        "page": "04-interactive/index.html",
+        "retired_in": "批 H（Q5 裁定 A）",
+        "reason": "★ 令牌本身被退役（唯一错误名＝--err）⇒ 盘上不再出现该名，登记随之作废。⛔ 若保留登记，G7 的「登记过期」会硬 FAIL。"
+      },
+      {
+        "token": "--ok",
+        "page": "index.html",
+        "retired_in": "批 H（Q6 裁定 A）",
+        "reason": "★ 该页已接上用途（首页「核心统计」卡的 5 个状态标用 `var(--ok)`）⇒ 盘上该页对 --ok 有引用。⛔ 若保留登记，G7 的「页级登记过期」会硬 FAIL（这正是 H-T3 预警的第二处联动）。"
+      },
+      {
+        "token": "--border-subtle",
+        "page": "（站点级）",
+        "retired_in": "批 H（交付物 1）",
+        "reason": "★ 批 E 的「到货即死」令牌：**批 H 已接上用途**（BASE_CSS 的 7 条弱分隔规则改指它）⇒ 盘上 61 页全部引用它，`var_uses_pages_site_wide` 由 0 变 61。⛔ 若保留站点级零引用登记，G7 的「登记过期」会硬 FAIL。★ 本条是「最小档产生到货即死的令牌、标准档把它接上」这一跨批事实的留痕（弱分隔落点：`th,td` 内部格线 · `.whybox` · `.bullet` · `.navseq a` · `.pathbox` · `.dep-list li` · `.treenav` 容器描边；⛔ `header` 底边 / `h2` 下划线 / `footer` 顶边三条**强分隔**仍用 `--border`）。"
       }
     ],
     "not_measured": [
-      "CSS 规则级的「死选择器」（本件只测令牌引用面，不测选择器命中面）",
-      "运行期由 JS 动态拼出的 var() 引用（本站 JS 不拼 CSS 变量，但未形式化证明）"
+      "CSS 规则级的「死选择器」（★ 批 H 已补：站点侧 gate_dead_css.py 判「产物 class 集合 − 选择器集合 = 空」；⛔ 但**不含** JS 动态加的 class 与伪类语义）",
+      "运行期由 JS 动态拼出的 var() 引用（本站 JS 不拼 CSS 变量，但未形式化证明）",
+      "★ 批 H 新增未覆盖面：px→rem 的**渲染层等价**未在真实浏览器里验证（本机 agent-browser 不在 PATH）⇒ 只证「base=16 ＋ 无 html{font-size} 覆盖 ⇒ 逐像素等价」这一**代数**结论",
+      "★ 批 H 新增未覆盖面：响应式门控的**像素层**（documentElement.scrollWidth 四视口）未测 ⇒ 实现为「读 @media 与固定宽度的静态判据」，已在 gate-manifest.json 的 not_enforced_here 如实声明"
     ]
   },
   "known_value_changes": {
@@ -397,41 +449,74 @@
     "purpose": "建立「站点现状 → 值件 → 派生产物」的可复现基线"
   },
   "transition": {
-    "state": "site-change-applied",
+    "state": "site-change-applied-standard-tier",
     "guard_expiry": "本步未解除任何护栏",
+    "done_in_round2h": [
+      "★ `--border-subtle` 接上用途：BASE_CSS 的 7 条**弱分隔**规则改指它（详见 dead_tokens.site_level_zero_ref[0]）",
+      "★ `--ok` 接上用途：首页「核心统计」卡的 5 个状态标用 `var(--ok)`（Q6-A）",
+      "★ `--danger` 退役、`--err` 成为唯一的「错误」角色名（Q5-A）",
+      "★ px→rem（Q8-A）：base=16，字面量区 348 处；`@media` 断点保持 px（2 处）",
+      "★ 四类新门控落地并接进既有 CI 的 Gate 步：gate_dead_css.py · gate_a11y.py · gate_responsive.py · gate_seo_meta.py（全部 report_only ＋ 各自 `--selftest` ＋ 空集守卫）",
+      "★ `03-groups/` 17 页纳入（Q4-A；令牌结构与 02-node-pages 同构已实测）"
+    ],
     "not_yet_done": [
-      "无障碍 / 响应式 / SEO 元数据 / px→rem（属本站标准档 §4.2 第 3–4 步与 Q8，⛔ 不在最小档）",
-      "--err 与 --danger 的**名字**收敛未做（属该站方案 Q5；Qb 裁定 B 只统一值）",
-      "发布形态收敛到 ADR-003 三 job 未做（Qd 裁定 A；ADR-003 §七列为后续独立议题）",
-      "像素层视觉回归未测（本机 agent-browser 不在 PATH）",
-      "03-groups/ 17 页已由 BASE_CSS 派生覆盖，但**逐页版式**未做任何改动（§2.1 排除项 3）"
+      "发布形态收敛到 ADR-003 三 job 未做（Q2-A；ADR-003 §七列为后续独立议题）",
+      "★ 像素层视觉回归未测（本机 agent-browser 不在 PATH）⇒ 四类新门控与 px→rem 都只做到「静态/代数」层",
+      "★ 四类新门控的**执行强度**仍是 report_only（Q7-A）：转硬条件见 build/profile.json 的 gates.mode_now_transition",
+      "★ 用户字号偏好下的**真实渲染**未测：本步只证默认设置下逐像素等价（base 16 无覆盖）",
+      "★ JS 常量区的数值未改（gen-interactive.py 的 cytoscape `'font-size':9` / `width:130` 等 25 处 ＋ gen-groups.py 的 1 处拼接串）——它们是**画布数值**而非 CSS 属性，属另一个对象"
     ]
   },
   "known_site_defects_registered": [
     {
-      "id": "C6-N2",
+      "id": "C6-N1",
       "defect": "站内两处 --warn 取值不一致（#e8933b / #e0c35e）",
-      "handling": "已按 Qa-A 显式登记为页面族覆盖，逐族保留；门控按「同族同值 ＋ 跨族逐族登记」判，⛔ 不按全站唯一值判"
+      "handling": "已按 Qa/Q1-A 显式登记为页面族覆盖，逐族保留；门控按「同族同值 ＋ 跨族逐族登记」判（G2/G4），⛔ 不按全站唯一值判。★ 批 H 维持该裁定（⛔ 不收敛成一个值）。"
+    },
+    {
+      "id": "C6-N1b",
+      "defect": "「错误」语义同义不同名（--err / --danger）",
+      "handling": "★ 批 H 按 Q5-A **收敛为一个名**（保留 --err #e05563、退役 --danger）：站点侧 gen-interactive.py 的自持 `:root` 删该名、值件四处同步退役。站点实测**无任何 `var(--danger)`** ⇒ 退役不动规则层。"
+    },
+    {
+      "id": "C6-N2",
+      "defect": "语义色令牌声明后零引用（批 E 实测 3 枚站点级）",
+      "handling": "★ 批 H 把其中两枚接上用途（`--border-subtle` 弱分隔 59 页引用 ＋ `--ok` 首页状态标 60 页引用）⇒ 站点级零引用降为 **1 枚**（只剩 `--err`：本站四种页型都无错误态元素）；余下按 Qe-A 逐枚登记保留（见 dead_tokens）。"
     },
     {
       "id": "C6-N3",
       "defect": "--err:#c0504d 作为正文仅 4.04（不达 4.5）",
-      "handling": "本步按 known_value_changes 改值为 #e05563（门控驱动）"
+      "handling": "批 E 按 known_value_changes 改值为 #e05563（门控驱动）；批 H 保留该值并让它成为唯一错误名。"
     },
     {
       "id": "C6-N5/N6",
       "defect": "本站从未跑过任何设计判据；rebuild.yml 只重生成不校验",
-      "handling": "本步新增 gate_tokens.py 并接进既有 rebuild.yml 的「重生成后 / 回写前」（Qc-A 报告模式起步）"
+      "handling": "批 E 新增 gate_tokens.py 并接进既有 rebuild.yml 的「重生成后 / 回写前」（Qc/Q7-A 报告模式起步）；★ 批 H 在同一个 Gate 步里**再加四道门控**（死 CSS / 无障碍 / 响应式 / 元数据），⛔ 不新建 CI、不改 job 结构。"
     },
     {
       "id": "C6-N7",
       "defect": "三处令牌块各自字面声明（漂移的结构成因）",
-      "handling": "本步第 1 件事已收敛（见 derivation.single_source）"
+      "handling": "批 E 第 1 件事已收敛（见 derivation.single_source）；批 H 未破坏该不变量（G8 实跑 0 FAIL）。"
+    },
+    {
+      "id": "C6-N9",
+      "defect": "单一 --border 无法表达强/弱两档 ⇒ 弱分隔不可见",
+      "handling": "批 E 新增 --border-subtle 承接弱分隔语义；★ 批 H 把它**接上规则层**（7 条弱分隔规则改指它）⇒ 该缺陷关闭（G5 极性判据仍守）。"
+    },
+    {
+      "id": "C6-N12",
+      "defect": "全站单位体系全 px（rem 0 / clamp() 0）⇒ 用户字号设置完全不起作用",
+      "handling": "★ 批 H 按 Q8-A 与令牌层**同批**把字面量区 348 处 px 改 rem（base=16）；`@media` 断点保持 px；⛔ 未引入 clamp()（属后续档）。"
+    },
+    {
+      "id": "C6-N10",
+      "defect": "04-interactive 的 #graph 铺满、侧栏覆盖其上（375px 下可视区被盖）",
+      "handling": "★ 批 H **不改版式**（⛔ 触版式即越出「令牌层同批」的范围）；改为由 gate_responsive.py 的静态判据**登记**该风险，并在清单里声明「像素层未测」。"
     },
     {
       "id": "03-groups",
       "defect": "03-groups/ 17 页的令牌结构未进过任何抽样（批 D 登记）",
-      "handling": "★ 本步已实测：17 页与 02-node-pages 同构（9 令牌 / --warn:#e8933b / 均来自 BASE_CSS）⇒ 该未覆盖面**已关闭**"
+      "handling": "批 E 已实测：17 页与 02-node-pages 同构（10 令牌 / --warn:#e8933b / 均来自 BASE_CSS）⇒ 该未覆盖面**已关闭**；批 H 按 Q4-A 把这 17 页纳入扫描面（profile.page_families 已有其 glob）。"
     }
   ],
   "not_provided": [

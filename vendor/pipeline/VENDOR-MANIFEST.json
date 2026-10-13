@@ -12,9 +12,9 @@
     "vendor/pipeline/site-value-contract.schema.json": "30a73f90290ce8d547a3c77f75c62659ad6e736d56666329351b913af74d870d",
     "vendor/pipeline/site-profile.schema.json": "4a4c505b32e0e27f9817e7f0029919544f483afcd953597468a9d2571638472e",
     "vendor/pipeline/workflow-3job.template.yml": "c7d6bd6d69a066d07e6ef6e0db917995cf805db541348cc8f4062b451603fb1f",
-    "vendor/pipeline/values/12-factor-methodology-kg.json": "2483ddeb60427b6967023249c4059be776adea3ff49b880d1dc91954eb70aa81",
-    "vendor/pipeline/profiles/12-factor-methodology-kg.json": "5b1733c2afe0640f2c136a4c42c91e82a56983c0d58ef5cd5344bb9981ca65a0",
-    "build/profile.json": "5b1733c2afe0640f2c136a4c42c91e82a56983c0d58ef5cd5344bb9981ca65a0",
+    "vendor/pipeline/values/12-factor-methodology-kg.json": "28d33f51f08a25c1afa20ab54dab6d3829aca675ec60aac649325b0f67c61b74",
+    "vendor/pipeline/profiles/12-factor-methodology-kg.json": "4b0a924034367c3f44d8684286f37c2ede23cdf5240feb2a9e4c65def2f31e70",
+    "build/profile.json": "4b0a924034367c3f44d8684286f37c2ede23cdf5240feb2a9e4c65def2f31e70",
     "vendor/tools/contrast.py": "1b9291c935b0db1d8901f1cafcc1c29681b86061f4164496401af0b45b9e01c7"
   }
 }

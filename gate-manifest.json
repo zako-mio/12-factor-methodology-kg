@@ -1,7 +1,7 @@
 {
   "site": "12-factor-methodology-kg",
   "schema_note": "范式沿用 hub 的 scripts/check_ci_manifest.py（见 AUD 侧 pipeline/check_gate_manifest.py 的 M1–M6）。★ 本文件由**站点仓内**版本化，⛔ 不含任何豁免/白名单字段（M4 会主动拒绝 waivers/exempt/allow/skip/ignore 一类键）。",
-  "generated_by": "第 1 轮 b（首个真实站点改动）；判据实现见仓根 gate_tokens.py 的 G1–G10",
+  "generated_by": "第 1 轮 b（首个真实站点改动，判据 G1–G10）；第 2 轮 批 H 标准档在其上**扩展**：新增四道门控 C1–C5 / A1–A7 / R1–R7 / S1–S10（⛔ 未改 G1–G10 一字）",
   "gates": [
     {
       "id": "gate-tokens",
@@ -14,7 +14,7 @@
       ],
       "selftest": true,
       "mode": "report",
-      "mode_note": "★ Qc 裁定 A：首轮报告模式（本站接入前从未跑过任何设计判据）。转硬条件见 build/profile.json 的 gates.mode_now_transition。空集守卫（G1）不随此模式放宽。",
+      "mode_note": "★ Qc/Q7 裁定 A：首轮报告模式（本站接入前从未跑过任何设计判据）。转硬条件见 build/profile.json 的 gates.mode_now_transition。空集守卫（G1）不随此模式放宽。",
       "judges": [
         {"id": "G1", "name": "空集守卫（扫描面/族/令牌名均非空）", "class": "blind"},
         {"id": "G2", "name": "族内唯一值（同族同名同值；⛔ 不判全站唯一值）", "class": "hard"},
@@ -29,7 +29,122 @@
       ],
       "not_enforced_here": [
         "C1–C12 骨架级契约门控（值件 schema / 幂等 / 改动前令牌集覆盖 / 克隆零改动）——在 AUD 侧跑（tools/verify_batch_d.py D9），⛔ 不复制到站点侧：C12 依赖仓外的本地克隆与 fe-starter-kit，在 Actions 上必然 FAIL（判据成立但环境不成立）",
-        "三 job 发布形态（ADR-003）——本站发布形态未收敛（Qd 裁定 A）"
+        "三 job 发布形态（ADR-003）——本站发布形态未收敛（Q2 裁定 A）"
+      ]
+    },
+    {
+      "id": "dead-css",
+      "script": "gate_dead_css.py",
+      "reads": [
+        "产物的 class 属性集合（全树 *.html 去掉 vendor/，再由 build/profile.json 的 dead_css.not_products 逐页排除）",
+        "产物内联 <style> 块里的**选择器** class 集合（正则口径，含 C5 解析自检）",
+        "build/profile.json 的 dead_css.semantic_only_classes（语义专用 class 的**逐条**登记，含 why）"
+      ],
+      "selftest": true,
+      "mode": "report_only",
+      "mode_note": "★ Q7 裁定 A：四类新门控一律**报告模式**，⛔ 不进 gates.hard_blocking（site-profile.schema.json 的枚举只有四项，扩枚举＝改 schema）。★ 但空集守卫（C1）不随报告模式放宽：0 个文件被扫 ⇒ exit 1。",
+      "judges": [
+        {"id": "C1", "name": "空集守卫（文件/class/选择器/样式表字符数均非空）", "class": "blind"},
+        {"id": "C2", "name": "死 class 差集为空（产物 class ⊆ 选择器 ∪ 语义专用登记）", "class": "hard"},
+        {"id": "C3", "name": "语义专用登记不得过期（声明项须真的无选择器且真的在用）", "class": "hard"},
+        {"id": "C4", "name": "反向差集（选择器有、产物未用的 class）· 仅报告", "class": "report"},
+        {"id": "C5", "name": "解析口径自检（每页都解析出 ≥1 个 <style> 块）", "class": "blind"}
+      ],
+      "not_enforced_here": [
+        "★ JS 动态添加/移除的 class（如 04-interactive 的 .active/.on）未判：本门控是静态扫描，看不到运行期 class 集合",
+        "★ 选择器的**命中语义**未判：只判「选择器存在」，不判它是否真的作用到目标元素（如 .sec-card 与 .section 的命中关系）",
+        "★ 伪类/伪元素/属性选择器的**效果**未判（:hover / ::marker / [kind=\"node\"] 等只按名字计入选择器集合）",
+        "★ C4 的 7 枚「选择器有、产物未用」**只报告不阻断**：其中部分是为 JS 切换态预留的（.active/.on/.primary/.seg/.hint），另有 .links/.spacer 疑为真死码 —— 留给人判，⛔ 本步不删（删＝改规则层）"
+      ]
+    },
+    {
+      "id": "a11y",
+      "script": "gate_a11y.py",
+      "reads": [
+        "产物 HTML 的 <main> 地标计数（全树 *.html，去掉 vendor/ 与 profile.a11y.not_products）",
+        "产物的 skip link（href=\"#main|#content|#skip\"）",
+        "产物内联 <style> 里的 :focus-visible 声明",
+        "产物的 <img alt> 与 <svg role=\"img\"/aria-label/<title>（图件文本等价）",
+        "build/profile.json 的 a11y.main_landmark_exempt / a11y.skiplink_exempt（**逐页**登记，含 why）"
+      ],
+      "selftest": true,
+      "mode": "report_only",
+      "mode_note": "★ Q7 裁定 A（同上）。空集守卫（A1）不随报告模式放宽：0 页 / 0 个 <main> / 0 个图件载体 ⇒ exit 1。",
+      "judges": [
+        {"id": "A1", "name": "空集守卫（页数 > 0 且 <main> 与图件载体均非空）", "class": "blind"},
+        {"id": "A2", "name": "每页有且仅有 1 个 <main>（豁免项逐页登记）", "class": "hard"},
+        {"id": "A3", "name": "每页有 skip link", "class": "hard"},
+        {"id": "A4", "name": "每页样式表声明 :focus-visible", "class": "hard"},
+        {"id": "A5", "name": "图件文本等价（img 必有 alt；svg 必有 role=img ＋ 文本）", "class": "hard"},
+        {"id": "A6", "name": "豁免登记不得过期", "class": "hard"},
+        {"id": "A7", "name": "解析口径自检（每页都解析出 ≥1 个 <style> 块）", "class": "blind"}
+      ],
+      "not_enforced_here": [
+        "★ 对比度以外的 WCAG 判据未测：焦点**可见性的实际呈现**、颜色不作为唯一信息载体、动效熔断（prefers-reduced-motion）等都只做到「声明存在性」层",
+        "★ 键盘**实际可达性**未测（需真实浏览器）：本门控只判标记与 CSS 声明的存在",
+        "★ 语义树的**正确性**未判（如标题层级是否连续、地标是否嵌套合法）——只判 <main> 的数量",
+        "★ 屏幕阅读器实测未做（本机无浏览器、无 AT）"
+      ]
+    },
+    {
+      "id": "responsive",
+      "script": "gate_responsive.py",
+      "reads": [
+        "产物的 viewport meta（name=viewport 且含 width=device-width）",
+        "产物内联 <style> 里的 @media 断点（逐页计数）",
+        "产物内联 <style> 里的**固定** width（非 max-/min-）取值，与最窄被测视口 320px / 20rem 比较",
+        "build/profile.json 的 responsive.no_breakpoint_exempt（**逐页**登记，含 why）"
+      ],
+      "selftest": true,
+      "mode": "report_only",
+      "mode_note": "★ Q7 裁定 A（同上）。空集守卫（R1）不随报告模式放宽：0 页 / 0 个 viewport / 全部页无 @media ⇒ exit 1。",
+      "judges": [
+        {"id": "R1", "name": "空集守卫（页数 / viewport / @media 总数均非空）", "class": "blind"},
+        {"id": "R2", "name": "每页声明 viewport（width=device-width）", "class": "hard"},
+        {"id": "R3", "name": "每页至少一组 @media 断点（豁免项逐页登记）", "class": "hard"},
+        {"id": "R4", "name": "固定宽度不超出最窄被测视口（320px / 20rem @base16）", "class": "hard"},
+        {"id": "R5", "name": "豁免登记不得过期", "class": "hard"},
+        {"id": "R6", "name": "解析口径自检（每页都解析出 ≥1 个 <style> 块）", "class": "blind"},
+        {"id": "R7", "name": "断点档位分布（仅报告，⛔ 不判「够不够」）", "class": "report"}
+      ],
+      "not_enforced_here": [
+        "★★ **像素与渲染层完全未测**：SH5 §4.2 该类判据的原口径是「四视口（320/375/768/1280）下 documentElement.scrollWidth」——本机**无浏览器**（agent-browser 不在 PATH）⇒ 本门控降级为**静态判据**（viewport / @media / 固定宽度）。⛔ 不得把本门控的「0 FAIL」读作「四视口无溢出」。",
+        "★ 「侧栏覆盖画布」这类**可视区被盖**的缺陷（C6-N10：04-interactive 在 375px 下侧栏盖住图面）本门控**测不出** —— 它不是溢出而是覆盖，需像素层或几何计算",
+        "★ 断点的**有效性**（改了什么、够不够）未判 —— 只判「存在一组断点」",
+        "★ 字体加载/回退导致的回流（reflow）未测",
+        "★ 用户字号偏好下的真实渲染未测（本步只证 base=16 且无 html{font-size} 覆盖 ⇒ 默认设置下逐像素等价）"
+      ]
+    },
+    {
+      "id": "metadata",
+      "script": "gate_seo_meta.py",
+      "reads": [
+        "产物 <head> 里的 <title>、<meta name=\"description\">（非空）、og:title/description/type/url/image",
+        "产物 <head> 里的 <link rel=\"canonical\"> 与 <link rel=\"icon\">",
+        "仓根的 sitemap.xml / robots.txt（后者须含 Sitemap: 指向）",
+        "build/profile.json 的 seo_meta.og_url_image_exempt / favicon_exempt / sitemap_optional_reason"
+      ],
+      "selftest": true,
+      "mode": "report_only",
+      "mode_note": "★ Q7 裁定 A（同上）。空集守卫（S1）不随报告模式放宽：0 页 / 0 个 <title> / 0 个 <html lang> ⇒ exit 1。",
+      "judges": [
+        {"id": "S1", "name": "空集守卫（页数 / <title> / <html lang> 覆盖均非空）", "class": "blind"},
+        {"id": "S2", "name": "每页有 <title>", "class": "hard"},
+        {"id": "S3", "name": "每页有 <html lang>", "class": "hard"},
+        {"id": "S4", "name": "每页有非空 <meta name=\"description\">", "class": "hard"},
+        {"id": "S5", "name": "每页有 og:title/description/type（url/image 逐页登记豁免）", "class": "hard"},
+        {"id": "S6", "name": "每页有 <link rel=\"canonical\">", "class": "hard"},
+        {"id": "S7", "name": "favicon（每页 <link rel=icon>，或仓根有 favicon 文件）", "class": "hard"},
+        {"id": "S8", "name": "sitemap.xml ＋ robots.txt(含 Sitemap:)", "class": "hard"},
+        {"id": "S9", "name": "解析口径自检（每页都解析出 ≥1 个 <head> 块）", "class": "blind"},
+        {"id": "S10", "name": "description 长度分布（仅报告）", "class": "report"}
+      ],
+      "not_enforced_here": [
+        "★ 结构化数据（JSON-LD / schema.org）未判（本站 0 处，未列为判据）",
+        "★ og:image 的**图片可达性与尺寸**未测（只判标签存在）",
+        "★ canonical 的**目标可达性**未测（只判标签存在；本站当前 0 处）",
+        "★ sitemap.xml 的**内容正确性**（URL 集合是否等于产物页集合）未判",
+        "★ 线上真实抓取（搜索引擎收录、社交卡片渲染）未验"
       ]
     },
     {
@@ -46,11 +161,12 @@
   ],
   "not_covered": [
     "★ 三 job 发布形态未验（本站不采用；其真实 Actions 运行亦未验——本机无 actionlint）",
-    "像素层视觉回归未测（agent-browser 不在 PATH）⇒ 只做到「计算样式解析值」层",
-    "CSS 规则级「死选择器」未测（G7 只测令牌引用面，不测选择器命中面）",
-    "运行期由 JS 动态拼出的 var() 引用未形式化证明（本站 JS 不拼 CSS 变量，但未证明）",
-    "无障碍 / 响应式 / SEO 元数据未纳入判据（属本站标准档 §4.2 第 3–4 步，不在最小档）",
-    "px→rem 单位体系迁移未纳入（C6-N12，属理想档）",
-    "『门控真的在真实 Actions 上跑过』本轮未验：本步只做到「本地对仓内现状实跑 0 阻断级 FAIL ＋ 静态核对 workflow 步骤顺序」"
+    "★★ **像素层视觉回归与响应式像素判据完全未测**（agent-browser 不在 PATH）⇒ 六类门控里「响应式」一类只做到静态判据；px→rem 的渲染等价也只证到「base=16 且无 html{font-size} 覆盖 ⇒ 代数上逐像素等价」",
+    "★ 无障碍只做到「标记与声明存在性」层：键盘实际可达性、焦点呈现、屏幕阅读器实测均未做",
+    "★ SEO 元数据只判「标签存在」：canonical 目标可达性、og:image 图片可达性、sitemap 内容正确性、线上抓取均未验",
+    "★ 死 CSS 只做静态扫描：JS 动态 class、选择器命中语义、伪类效果未判；C4 的 7 枚未用选择器只报告不阻断",
+    "★ 运行期由 JS 动态拼出的 var() 引用未形式化证明（本站 JS 不拼 CSS 变量，但未证明）",
+    "★ 四道新门控的**执行强度**仍是 report_only（Q7 裁定 A）：转硬条件见 build/profile.json 的 gates.mode_now_transition",
+    "★ 『门控真的在真实 Actions 上跑过』本轮未验：只做到「本地对仓内现状实跑 0 阻断级 FAIL ＋ 静态核对 workflow 步骤顺序」"
   ]
 }

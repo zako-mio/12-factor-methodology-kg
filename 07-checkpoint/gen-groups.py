@@ -220,15 +220,15 @@ def index_html(dag, group_by_id, by_id):
 <title>分组目录 · {title}</title>
 <style>
 {extra_css}
-.cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin:12px 0;}}
-.card{{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}}
+.cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(18.75rem,1fr));gap:0.875rem;margin:0.75rem 0;}}
+.card{{background:var(--panel);border:0.0625rem solid var(--border);border-radius:0.625rem;padding:1rem 1.125rem;}}
 .card:hover{{border-color:var(--accent);}}
-.card h3{{font-size:15px;color:var(--accent);margin-bottom:6px;}}
-.card .meta{{font-size:12px;color:var(--dim);margin-bottom:6px;}}
-.stat{{display:inline-block;background:#1d2a3f;border:1px solid #2b3d5f;border-radius:8px;padding:10px 16px;margin:4px;text-align:center;}}
-.stat b{{display:block;font-size:22px;color:#fff;}}
-.stat span{{font-size:12px;color:var(--dim);}}
-.section-title{{display:flex;align-items:baseline;gap:10px;margin:24px 0 10px;}}
+.card h3{{font-size:0.9375rem;color:var(--accent);margin-bottom:0.375rem;}}
+.card .meta{{font-size:0.75rem;color:var(--dim);margin-bottom:0.375rem;}}
+.stat{{display:inline-block;background:#1d2a3f;border:0.0625rem solid #2b3d5f;border-radius:0.5rem;padding:0.625rem 1rem;margin:0.25rem;text-align:center;}}
+.stat b{{display:block;font-size:1.375rem;color:#fff;}}
+.stat span{{font-size:0.75rem;color:var(--dim);}}
+.section-title{{display:flex;align-items:baseline;gap:0.625rem;margin:1.5rem 0 0.625rem;}}
 .section-title h2{{margin:0;border:none;padding:0;}}
 </style>
 </head>

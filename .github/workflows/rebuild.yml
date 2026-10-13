@@ -52,11 +52,24 @@ jobs:
         #   ⛔ 不是放宽阈值换绿灯：判据与阈值一字未改。空集守卫（G1）不随报告模式放宽，
         #   致盲即 exit 1 ⇒ 本步会失败、回写被挡（「报告模式全绿」不能是假绿）。
         # 转硬条件见 build/profile.json 的 gates.mode_now_transition。
+        #
+        # ★ 第 2 轮 批 H 标准档在**同一步**里新增四道门控（⛔ 不新建 CI、⛔ 不改 job 结构）：
+        #   dead-css / a11y / responsive / metadata —— 全部 report_only（Q7 裁定 A），
+        #   每道都带 --selftest 与空集守卫；未覆盖面逐条写在 gate-manifest.json 的
+        #   not_enforced_here 与 not_covered（尤其：本机无浏览器 ⇒ 响应式只做静态判据）。
         run: |
           python3 gate_tokens.py --site-root . --manifest gate-manifest.json --mode report \
             --baseline-out "$RUNNER_TEMP/gate-baseline.json"
           echo "----- 门控基线（报告模式，随 run 留档） -----"
           cat "$RUNNER_TEMP/gate-baseline.json"
+          echo "----- 死 CSS 门控（report_only） -----"
+          python3 gate_dead_css.py --site-root . --profile build/profile.json
+          echo "----- 无障碍门控（report_only） -----"
+          python3 gate_a11y.py --site-root . --profile build/profile.json
+          echo "----- 响应式门控（report_only；★ 像素层未测） -----"
+          python3 gate_responsive.py --site-root . --profile build/profile.json
+          echo "----- 元数据门控（report_only） -----"
+          python3 gate_seo_meta.py --site-root . --profile build/profile.json
           echo "----- 门控清单双向校验 -----"
           python3 vendor/pipeline/check_gate_manifest.py --manifest gate-manifest.json \
             --profile build/profile.json

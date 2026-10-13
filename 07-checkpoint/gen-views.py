@@ -51,15 +51,15 @@ def stage_index_html(dag, by_id, group_by_id):
 <title>视图入口 · {title}</title>
 <style>
 {extra_css}
-.back a{{color:var(--accent);text-decoration:none;font-size:14px;}}
-.stat{{display:inline-block;background:#1d2a3f;border:1px solid #2b3d5f;border-radius:8px;padding:10px 16px;margin:4px;text-align:center;}}
-.stat b{{display:block;font-size:22px;color:#fff;}}
-.stat span{{font-size:12px;color:var(--dim);}}
-.cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin:12px 0;}}
-.card{{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;}}
-.card h3{{font-size:16px;color:var(--accent);margin:0 0 8px;}}
-.card p{{font-size:13px;color:var(--dim);margin-bottom:12px;}}
-.card .go{{display:inline-block;background:#1d2a3f;border:1px solid #2b3d5f;border-radius:8px;padding:6px 14px;color:#fff;font-size:13px;}}
+.back a{{color:var(--accent);text-decoration:none;font-size:0.875rem;}}
+.stat{{display:inline-block;background:#1d2a3f;border:0.0625rem solid #2b3d5f;border-radius:0.5rem;padding:0.625rem 1rem;margin:0.25rem;text-align:center;}}
+.stat b{{display:block;font-size:1.375rem;color:#fff;}}
+.stat span{{font-size:0.75rem;color:var(--dim);}}
+.cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(18.75rem,1fr));gap:0.875rem;margin:0.75rem 0;}}
+.card{{background:var(--panel);border:0.0625rem solid var(--border);border-radius:0.625rem;padding:1.125rem;}}
+.card h3{{font-size:1rem;color:var(--accent);margin:0 0 0.5rem;}}
+.card p{{font-size:0.8125rem;color:var(--dim);margin-bottom:0.75rem;}}
+.card .go{{display:inline-block;background:#1d2a3f;border:0.0625rem solid #2b3d5f;border-radius:0.5rem;padding:0.375rem 0.875rem;color:#fff;font-size:0.8125rem;}}
 .card .go:hover{{border-color:var(--accent);}}
 </style>
 </head>
@@ -69,11 +69,11 @@ def stage_index_html(dag, by_id, group_by_id):
 <h2>视图入口</h2>
 <div class="cards">{cards}</div>
 <h2>快速开始</h2>
-<ul style="padding-left:22px;font-size:14px;color:#cfd6e4;">
-<li style="margin:6px 0"><b>总览</b>：交互 DAG 总览看 15 组、34 节点在拓扑中的分布。</li>
-<li style="margin:6px 0"><b>按阶段</b>：阶段视图按 basic → intermediate → advanced 逐档推进。</li>
-<li style="margin:6px 0"><b>按路径</b>：三条学习路径分别面向传统工程 / Agent 工程 / 打通双体系。</li>
-<li style="margin:6px 0"><b>对照</b>：跨体系对照表逐条比对 App 与 Agent 的 12 条方法原则。</li>
+<ul style="padding-left:1.375rem;font-size:0.875rem;color:#cfd6e4;">
+<li style="margin:0.375rem 0"><b>总览</b>：交互 DAG 总览看 15 组、34 节点在拓扑中的分布。</li>
+<li style="margin:0.375rem 0"><b>按阶段</b>：阶段视图按 basic → intermediate → advanced 逐档推进。</li>
+<li style="margin:0.375rem 0"><b>按路径</b>：三条学习路径分别面向传统工程 / Agent 工程 / 打通双体系。</li>
+<li style="margin:0.375rem 0"><b>对照</b>：跨体系对照表逐条比对 App 与 Agent 的 12 条方法原则。</li>
 </ul>
 {footer}
 </body>
@@ -116,25 +116,25 @@ def stage_html(dag, by_id, group_by_id):
 <title>阶段视图 · {title}</title>
 <style>
 {extra_css}
-.back a{{color:var(--accent);text-decoration:none;font-size:14px;}}
-.row{{display:flex;align-items:baseline;gap:10px;padding:9px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap;}}
+.back a{{color:var(--accent);text-decoration:none;font-size:0.875rem;}}
+.row{{display:flex;align-items:baseline;gap:0.625rem;padding:0.5625rem 0.375rem;border-bottom:0.0625rem solid var(--border);flex-wrap:wrap;}}
 .row:hover{{background:rgba(79,140,255,.06);}}
-.row .nm{{min-width:200px;flex:0 0 auto;font-size:14px;font-weight:600;}}
+.row .nm{{min-width:12.5rem;flex:0 0 auto;font-size:0.875rem;font-weight:600;}}
 .row .nm a{{color:#dbe4f2;}}
-.row .brief{{flex:1 1 320px;font-size:12.5px;color:var(--dim);min-width:240px;}}
+.row .brief{{flex:1 1 20rem;font-size:0.78125rem;color:var(--dim);min-width:15rem;}}
 .badge.b-grp{{background:#1d2a3f;color:#7fb0ff;border-color:#2b3d5f;}}
-.sec-head{{display:flex;align-items:baseline;gap:10px;margin:34px 0 8px;border-bottom:1px solid var(--border);padding-bottom:8px;}}
+.sec-head{{display:flex;align-items:baseline;gap:0.625rem;margin:2.125rem 0 0.5rem;border-bottom:0.0625rem solid var(--border);padding-bottom:0.5rem;}}
 .sec-head h2{{margin:0;border:none;padding:0;}}
-.sec-head span{{color:var(--dim);font-size:13px;}}
-.sec-card{{background:var(--panel);border:1px solid var(--border);border-left-width:4px;border-radius:10px;padding:10px 18px;margin:12px 0;}}
-.layer-nav{{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px;}}
-.layer-nav a{{display:inline-block;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:13px;color:#b8c2d4;}}
+.sec-head span{{color:var(--dim);font-size:0.8125rem;}}
+.sec-card{{background:var(--panel);border:0.0625rem solid var(--border);border-left-width:0.25rem;border-radius:0.625rem;padding:0.625rem 1.125rem;margin:0.75rem 0;}}
+.layer-nav{{display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.625rem 0 0.25rem;}}
+.layer-nav a{{display:inline-block;background:var(--panel);border:0.0625rem solid var(--border);border-radius:0.5rem;padding:0.25rem 0.75rem;font-size:0.8125rem;color:#b8c2d4;}}
 .layer-nav a:hover{{border-color:var(--accent);color:#fff;}}
 </style>
 </head>
 <body>
 {header}
-<p class="dim" style="margin:6px 0 10px">分层: basic(基础) → intermediate(进阶) → advanced(高级)。层内按组排列。</p>
+<p class="dim" style="margin:0.375rem 0 0.625rem">分层: basic(基础) → intermediate(进阶) → advanced(高级)。层内按组排列。</p>
 {nav}
 {secs}
 {footer}
@@ -194,20 +194,20 @@ def path_html(dag, by_id, group_by_id, edges):
 <title>学习路径 · {title}</title>
 <style>
 {extra_css}
-.back a{{color:var(--accent);text-decoration:none;font-size:14px;}}
-.pathbox{{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:10px 0;}}
-.path-label{{font-size:12px;color:var(--dim);margin-bottom:8px;}}
-.path-seq{{display:flex;flex-wrap:wrap;gap:4px 0;font-size:13px;}}
-.path-seq a{{display:inline-block;background:#16273f;border:1px solid #2b3d5f;border-radius:6px;padding:2px 8px;color:#7fb0ff;text-decoration:none;margin:2px;}}
+.back a{{color:var(--accent);text-decoration:none;font-size:0.875rem;}}
+.pathbox{{background:var(--panel);border:0.0625rem solid var(--border);border-radius:0.5rem;padding:0.75rem 1rem;margin:0.625rem 0;}}
+.path-label{{font-size:0.75rem;color:var(--dim);margin-bottom:0.5rem;}}
+.path-seq{{display:flex;flex-wrap:wrap;gap:0.25rem 0;font-size:0.8125rem;}}
+.path-seq a{{display:inline-block;background:#16273f;border:0.0625rem solid #2b3d5f;border-radius:0.375rem;padding:0.125rem 0.5rem;color:#7fb0ff;text-decoration:none;margin:0.125rem;}}
 .path-seq a:hover{{background:#2b3d5f;}}
-.sec-head{{display:flex;align-items:baseline;gap:10px;margin:34px 0 8px;border-bottom:1px solid var(--border);padding-bottom:8px;}}
+.sec-head{{display:flex;align-items:baseline;gap:0.625rem;margin:2.125rem 0 0.5rem;border-bottom:0.0625rem solid var(--border);padding-bottom:0.5rem;}}
 .sec-head h2{{margin:0;border:none;padding:0;}}
-.sec-head span{{color:var(--dim);font-size:13px;}}
+.sec-head span{{color:var(--dim);font-size:0.8125rem;}}
 </style>
 </head>
 <body>
 {header}
-<p class="dim" style="margin:6px 0 10px">三条路径均由 prerequisite 边做拓扑排序自动生成。</p>
+<p class="dim" style="margin:0.375rem 0 0.625rem">三条路径均由 prerequisite 边做拓扑排序自动生成。</p>
 {secs}
 {footer}
 </body>
@@ -299,11 +299,11 @@ def cross_mapping_html(dag, by_id, c_by_id, edges):
 <title>跨体系对照 · {title}</title>
 <style>
 {extra_css}
-.back a{{color:var(--accent);text-decoration:none;font-size:14px;}}
-.badge.rl{{font-size:11px;padding:1px 8px;border-radius:20px;font-weight:600;border:1px solid transparent;margin-right:6px;}}
-.rl-evi{{font-size:11px;color:var(--dim);}}
-td.diff{{color:#cfe8dd;font-size:12.5px;}}
-td .nname{{font-weight:600;color:var(--text);font-size:13px;margin-top:2px;}}
+.back a{{color:var(--accent);text-decoration:none;font-size:0.875rem;}}
+.badge.rl{{font-size:0.6875rem;padding:0.0625rem 0.5rem;border-radius:1.25rem;font-weight:600;border:0.0625rem solid transparent;margin-right:0.375rem;}}
+.rl-evi{{font-size:0.6875rem;color:var(--dim);}}
+td.diff{{color:#cfe8dd;font-size:0.78125rem;}}
+td .nname{{font-weight:600;color:var(--text);font-size:0.8125rem;margin-top:0.125rem;}}
 </style>
 </head>
 <body>

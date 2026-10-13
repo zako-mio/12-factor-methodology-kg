@@ -109,20 +109,113 @@
       "empty-set-guard",
       "artifact-existence"
     ],
+    "hard_blocking_note": "★ 本批**未扩枚举**：`site-profile.schema.json` 的 `hard_blocking` 枚举只有这四项（token-consistency / contrast / empty-set-guard / artifact-existence），四类新门控一律进 `report_only`（Q7 裁定 A）。⛔ 擅自扩枚举＝改 schema，须走独立决策。",
     "report_only": [
       "dead-css",
       "a11y",
       "responsive",
       "metadata"
     ],
+    "report_only_note": "★ 四类新门控（gate_dead_css.py / gate_a11y.py / gate_responsive.py / gate_seo_meta.py）的执行强度是**报告模式**，⛔ 不是「判据被放宽」：判据与阈值一字未改，只是执行强度分阶段。★ 但每道门控的**空集守卫**（0 个文件被扫 / 判据对象集合为空）**不随报告模式放宽** —— 致盲即 exit 1。",
     "mode_now": "report",
-    "mode_now_reason": "★ Qc 裁定 A：本站**从未跑过任何设计判据**，首轮以报告模式记基线，逐类转硬阻断。⛔ 这不是「放宽阈值换绿灯」——判据与阈值一字未改，只是执行强度分阶段；空集守卫（G-blind）不随报告模式放宽。",
-    "mode_now_transition": "转硬触发条件：连续两轮 rebuild 的 gate_tokens 报告无新增 FAIL 类，则由本轮结论件逐类转 hard 并更新 gate-manifest.json 的 mode 字段。",
+    "mode_now_reason": "★ Qc/Q7 裁定 A：本站**从未跑过任何设计判据**，首轮以报告模式记基线，逐类转硬阻断。⛔ 这不是「放宽阈值换绿灯」——判据与阈值一字未改，只是执行强度分阶段；空集守卫（G-blind）不随报告模式放宽。",
+    "mode_now_transition": "转硬触发条件：连续两轮 rebuild 的 gate_tokens 报告无新增 FAIL 类，则由本轮结论件逐类转 hard 并更新 gate-manifest.json 的 mode 字段。★ 四类新门控的**首跑基线**（本批实测）：死 CSS C2/C3 通过、C4 报告 7 枚未用选择器；无障碍 A2/A3/A4 报告 3 类既有缺陷；响应式 R3 报告 2 页无断点；元数据 S4/S5/S6/S7/S8 报告 6 类缺口。",
     "commands": [
       "python3 gate_tokens.py --site-root . --manifest gate-manifest.json",
+      "python3 gate_dead_css.py --site-root . --profile build/profile.json",
+      "python3 gate_a11y.py --site-root . --profile build/profile.json",
+      "python3 gate_responsive.py --site-root . --profile build/profile.json",
+      "python3 gate_seo_meta.py --site-root . --profile build/profile.json",
       "python3 vendor/pipeline/check_gate_manifest.py --manifest gate-manifest.json --profile build/profile.json"
     ],
-    "commands_note": "★ 站点侧只跑这两条。**不**在站点 CI 里调 `check_site_tokens.py`：它的 C12 要读 `~/opencode/projects/fe-starter-kit` 与本地克隆，在 GitHub Actions 上必然 FAIL（判据成立但环境不成立）⇒ 骨架级契约门控留在 AUD 侧跑（tools/verify_batch_d.py D9），站点侧由 gate_tokens.py 承担本站判据。"
+    "commands_note": "★ 站点侧只跑这六条。**不**在站点 CI 里调 `check_site_tokens.py`：它的 C12 要读 `~/opencode/projects/fe-starter-kit` 与本地克隆，在 GitHub Actions 上必然 FAIL（判据成立但环境不成立）⇒ 骨架级契约门控留在 AUD 侧跑（tools/verify_batch_d.py D9），站点侧由 gate_tokens.py 承担本站判据。★ 四道新门控只加进**既有** rebuild.yml 的 Gate 步脚本清单，⛔ 不新建 CI、⛔ 不改 job 结构。"
+  },
+  "dead_css": {
+    "not_products": [
+      "report.html"
+    ],
+    "not_products_note": "report.html 是仓内**手写**的审计报告（无 <style>），不属生成管线产物 ⇒ 不纳入死 CSS 扫描面。★ 它**在**无障碍/响应式/元数据的扫描面内（那三类判据的「产物」口径按全树 *.html 计）。",
+    "semantic_only_classes": [
+      {
+        "class": "kind",
+        "why": "gen_common.kind_badge() 产出的**语义标记** class（与 .badge 组合），样式表只写 .badge 的规则；本轮不改规则层，故登记为「有意无选择器」"
+      },
+      {
+        "class": "src",
+        "why": "同上（src_badge() 的语义标记）"
+      },
+      {
+        "class": "st",
+        "why": "同上（stage_badge() 的语义标记）"
+      },
+      {
+        "class": "tp",
+        "why": "同上（type_badge() 的语义标记）"
+      },
+      {
+        "class": "nav-node",
+        "why": "gen-groups.navseq 的语义标记（与 .navseq a 组合命中，样式表未单写 .nav-node）"
+      },
+      {
+        "class": "rl-dependency",
+        "why": "05-views/04-cross-mapping 的图例徽章语义标记（颜色走内联 style）"
+      },
+      {
+        "class": "rl-prerequisite",
+        "why": "同上"
+      },
+      {
+        "class": "rl-variant",
+        "why": "同上"
+      }
+    ],
+    "semantic_only_classes_note": "★ 这是**语义专用白名单**，不是「豁免逃逸门」：C3 判据要求每条声明**真的**在产物里出现、且**真的**没有对应选择器 —— 登记过期即 FAIL。★ 白名单只覆盖「产物 class 集合 − 选择器集合」的差集方向；反向差集（选择器有、产物未用）**不做白名单**，一律进 C4 报告。"
+  },
+  "a11y": {
+    "not_products": [],
+    "not_products_note": "★ 本类的扫描面＝全树 62 个 *.html（含 report.html 与 04-interactive）：判据对象是「页面本身的无障碍结构」，手写页同样在线上可达。",
+    "main_landmark_exempt": [
+      {
+        "page": "04-interactive/index.html",
+        "why": "★ 该页是**全屏画布**页（#graph 铺满、侧栏固定覆盖），主内容区不是文档流里的 <main> ⇒ 加 <main> 会改变版式（⛔ 本步不动版式）。★ 这是一条**已确认未修的既有缺陷**，按 Q7-A 以报告模式登记，⛔ 不得读作「已修」。"
+      },
+      {
+        "page": "report.html",
+        "why": "仓内手写审计报告（非生成管线产物），本轮不纳入改造面"
+      }
+    ],
+    "skiplink_exempt": [],
+    "skiplink_exempt_note": "★ **空**：全站 62 页**都没有** skip link —— 这是一条已确认未修的既有缺陷（SH2 §4.2），按 Q7-A 以报告模式登记。⛔ 刻意不登记豁免：登记豁免＝把缺陷藏起来，与本步「如实暴露」的口径相反。",
+    "focus_visible_note": "★ 全站 62 页的样式表**都没有** `:focus-visible` —— 同上，作为报告类缺陷暴露，不设豁免。"
+  },
+  "responsive": {
+    "not_products": [],
+    "not_products_note": "★ 扫描面＝全树 62 个 *.html。",
+    "no_breakpoint_exempt": [
+      {
+        "page": "index.html",
+        "why": "★ 根首页**没有任何 @media**（首页内联 CSS 是 gen-index.py 模板里的一份自有样式，不含断点）—— 这是 SH3 与审计问题 5 都已登记的既有缺陷（「首页与交互族零适配」）。★ 按 Q7-A 以报告模式登记；⛔ 本步**不加断点**（加断点＝改版式，越出「令牌层同批」的范围）。"
+      },
+      {
+        "page": "report.html",
+        "why": "仓内手写审计报告，非生成管线产物"
+      }
+    ],
+    "no_breakpoint_exempt_note": "★ 这两条是**已确认未修**的登记，不是「允许无断点」；R3 仍会对任何**新**出现的无断点页 FAIL。",
+    "not_enforced_here": [
+      "★ **四视口 `documentElement.scrollWidth` 未测**：本机无浏览器（agent-browser 不在 PATH）⇒ 本门控按静态判据实现（viewport / @media / 固定宽度），**像素与渲染层未测**。",
+      "★ 「侧栏覆盖画布」这类**可视区被盖**的缺陷（C6-N10：375px 下侧栏盖住图面）本门控**测不出** —— 它不是溢出，是覆盖；需像素层或几何计算。",
+      "★ 断点的**有效性**（改了什么、够不够）未判 —— 只判「存在一组断点」。"
+    ]
+  },
+  "seo_meta": {
+    "not_products": [],
+    "not_products_note": "★ 扫描面＝全树 62 个 *.html。",
+    "og_url_image_exempt": [],
+    "og_url_image_exempt_note": "★ **空**：全站 62 页**都没有**任何 og 标签 —— 作为报告类缺陷暴露，不设豁免。",
+    "favicon_exempt": [],
+    "favicon_exempt_note": "★ **空**：全站 62 页都没有 `<link rel=\"icon\">`，仓根也没有 favicon 文件 —— 同上，如实暴露。",
+    "sitemap_optional_reason": "★ 本站**既无 sitemap.xml 也无 robots.txt**（SH4 §4.2 已登记）。本轮**不新建这两个文件**：它们是**新增交付物**（不是改既有生成器），且「发布形态收敛」是常设排除项（Q2-A）⇒ 按 Q7-A 以报告模式登记为未修。★ 该字段只声明「为何不适用」，**不豁免** S8 的判据本身 —— 一旦仓里出现 sitemap.xml 而 robots.txt 缺 Sitemap: 指向，S8 仍会 FAIL。"
   },
   "non_target_guard": {
     "kind": "rules-segment",
